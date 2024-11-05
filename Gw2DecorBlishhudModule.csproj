@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<!-- Or 9.0 or greater -->
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!--contentFiles: removes the Content folder that pops up in the solution explorer -->
+		<PackageReference Include="BlishHUD" Version="1.2.0" ExcludeAssets="runtime;contentFiles;analyzers" />
+		<PackageReference Include="Flurl.Http" Version="4.0.2" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.70" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+		<!--building the project fails otherwise, when BlishHud assets are excluded -->
+		<PackageReference Include="System.ComponentModel.Composition" Version="9.0.0-rc.2.24473.5" />
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+	</ItemGroup>
+
+</Project>

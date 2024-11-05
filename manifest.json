@@ -1,0 +1,70 @@
+{
+  "name": "Gw2Decor Module",
+  "version": "0.3.0",
+  "namespace": "bh.gw2decor.gw2decormodule",
+  "package": "Gw2DecorBlishhudModule.dll",
+  "manifest_version": 1,
+
+  "description": "Acts as an gw2decor on how to create a Blish HUD module.",
+  "dependencies": {
+    "bh.blishhud": ">=1.0.0"
+  },
+  "url": "https://github.com/blish-hud/Gw2Decor-Blish-HUD-Module",
+  "contributors": [
+    {
+      "name": "Me",
+      "username": "Gw2AccountName.1234",
+      "url": "https://github.com/yourGithubPage"
+    },
+    {
+      "name": "Myself",
+      "username": "Gw2AccountName2.1234"
+    }
+  ],
+
+  "directories": [ "gw2decor-module-data" ],
+  "enabled_without_gw2": false,
+
+  "api_permissions": {
+    "account": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "inventories": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "characters": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "tradingpost": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "wallet": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "unlocks": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "pvp": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "builds": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "progression": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    },
+    "guilds": {
+      "optional": false,
+      "details": "This will be shown as tooltip in the module settings for the api permissions. Explain here to the user why the permission is necessary for your module"
+    }
+  }
+}
