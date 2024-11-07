@@ -146,34 +146,7 @@ namespace Gw2DecorBlishhudModule
             _cornerIcon.Menu = _contextMenuStrip;
         }
 
-        List<string> categories = new List<string> {
-            "Architecture",
-            "Table, Seating, Etc.",
-            "Storage",
-            "Decor",
-            "Lighting",
-            "Planters and Topiaries",
-            "Trees and Foliage",
-            "Natural Features",
-            "Sculptures",
-            "Flags, Signs, Markers, Etc.",
-            "Weapons and Traps",
-            "Trophies",
-            "Racing",
-            "Other",
-            "Heart of Thorns",
-            "Path of Fire",
-            "End of Dragons",
-            "Secrets of the Obscure",
-            "Janthir Wilds",
-            "Lunar New Year",
-            "Super Adventure Box",
-            "Dragon Bash",
-            "Festival of the Four Winds",
-            "Shadow of the Mad King",
-            "Wintersday",
-            "Black Lion Decorations"
-        };
+        List<string> categories = Categories.GetCategories();
 
         private async Task CreateGw2StyleWindowThatDisplaysAllDecorations(AsyncTexture2D windowBackgroundTexture)
         {
@@ -183,46 +156,57 @@ namespace Gw2DecorBlishhudModule
                 using (var httpClient = new HttpClient())
                 {
                     string decorationsUrl = "https://api.guildwars2.com/v2/homestead/decorations";
-                    var decorationIds = await httpClient.GetStringAsync(decorationsUrl);
-                    var ids = JsonConvert.DeserializeObject<List<int>>(decorationIds);
 
-                    foreach (int id in ids.Take(10)) // Limiting to 10 for demonstration; adjust as needed
+                    // Step 1: Fetch all decoration IDs
+                    var decorationIdsResponse = await httpClient.GetStringAsync(decorationsUrl);
+                    var ids = JsonConvert.DeserializeObject<List<int>>(decorationIdsResponse);
+
+                    // Step 2: Process the IDs in batches of 200
+                    int batchSize = 200;
+                    for (int i = 0; i < ids.Count; i += batchSize)
                     {
-                        var decorationResponse = await httpClient.GetStringAsync($"{decorationsUrl}/{id}");
-                        var decoration = JsonConvert.DeserializeObject<Decoration>(decorationResponse);
-                        var decorationName = decoration.Name;
-                        string apiUrl = $"https://wiki.guildwars2.com/api.php?action=query&titles=File:{Uri.EscapeDataString(decorationName.Replace(":", "-"))}.jpg&format=json&prop=pageimages&pithumbsize=500";
+                        var batch = ids.Skip(i).Take(batchSize).ToList();
+                        var idsString = string.Join(",", batch);
+                        var batchUrl = $"{decorationsUrl}?ids={idsString}";
 
-                        using (var httpClientInner = new HttpClient())
+                        try
                         {
-                            try
+                            // Step 3: Fetch decorations for the batch of IDs
+                            var batchResponse = await httpClient.GetStringAsync(batchUrl);
+                            var batchDecorations = JsonConvert.DeserializeObject<List<Decoration>>(batchResponse);
+
+                            // Fetch all images in parallel for the current batch
+                            var imageTasks = new List<Task>();
+
+                            foreach (var decoration in batchDecorations)
                             {
-                                httpClientInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
+                                // Manipulation of the decoration name to find the correct image from the wiki api
+                                var decorationName = decoration.Name
+                                    .Replace("WvW", "")
+                                    .Replace(":", "-")
+                                    .Replace("Guild Ballista", "Guild Ballistae")
+                                    .Replace("Raven Spirit Statue", "Raven Statue (decoration)")
+                                    .TrimEnd();
+                                decorationName = decorationName.EndsWith("Siege")
+                                    ? decorationName.Substring(0, decorationName.Length - 6)
+                                    : decorationName;
 
-                                var response = await httpClientInner.GetStringAsync(apiUrl);
-                                var json = JsonConvert.DeserializeObject<JObject>(response);
-                                var pages = json["query"]?["pages"];
-                                string thumbnailPage = null;
+                                var apiUrl = $"https://wiki.guildwars2.com/api.php?action=query&titles=File:{Uri
+                                     .EscapeDataString(decorationName)}.jpg&format=json&prop=pageimages&pithumbsize=500";
 
-                                if (pages != null)
-                                {
-                                    foreach (var page in pages.Children())
-                                    {
-                                        var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
-                                        if (!string.IsNullOrEmpty(thumbnail))
-                                        {
-                                            thumbnailPage = thumbnail; // Return the URL of the thumbnail image
-                                        }
-                                    }
-                                }
-
-                                decoration.Image = thumbnailPage;
-                                decorationsList.Add(decoration);
+                                var imageTask = FetchDecorationImage(decoration, apiUrl);
+                                imageTasks.Add(imageTask);
                             }
-                            catch (Exception e)
-                            {
-                                Logger.Info("Failed to get decorations from API: " + e.Message);
-                            }
+
+                            // Wait for all image fetch tasks to complete
+                            await Task.WhenAll(imageTasks);
+
+                            // Add the decorated decorations to the list
+                            decorationsList.AddRange(batchDecorations);
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Warn($"Failed to fetch batch of decorations: {e.Message}");
                         }
                     }
                 }
@@ -232,7 +216,7 @@ namespace Gw2DecorBlishhudModule
                 Logger.Info("Failed to get decoration IDs from API: " + e.Message);
             }
 
-            // Create and display the gw2Decor window
+            // After all the decorations are fetched, create and display the window
             _gw2DecorWindow = new StandardWindow(
                 windowBackgroundTexture,
                 new Rectangle(25, 26, 560, 640),
@@ -257,17 +241,38 @@ namespace Gw2DecorBlishhudModule
                 PlaceholderText = "Search Decorations...",
             };
 
+            // Main container FlowPanel with scroll enabled
             var decorationsFlowPanel = new FlowPanel
             {
-                Title = "Decorations",
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 Width = 500,
-                Height = 780,
-                CanCollapse = true,
-                CanScroll = true,
+                Height = 640,
+                CanScroll = true, // Only main panel should scroll
                 Parent = _gw2DecorWindow,
-                Location = new Point(10, searchTextBox.Bottom + 10), // Place below the search box
+                Location = new Point(10, searchTextBox.Bottom + 10) // Place below the search box
             };
+
+            // Dictionary to store category-specific FlowPanels, mapped by category name
+            Dictionary<string, FlowPanel> categoryPanels = new Dictionary<string, FlowPanel>();
+
+            // Loop through categories to create and add each category panel
+            foreach (string category in categories)
+            {
+                // Create a FlowPanel for each category
+                var categoryFlowPanel = new FlowPanel
+                {
+                    Title = category,
+                    FlowDirection = ControlFlowDirection.LeftToRight,
+                    Width = decorationsFlowPanel.Width - 20, // Slightly less than main panel width to avoid overflow
+                    Height = decorationsFlowPanel.Height - 480,
+                    CanCollapse = true,
+                    CanScroll = false, // Individual category panels should not scroll
+                    Parent = decorationsFlowPanel // Set parent as the main FlowPanel
+                };
+
+                // Add category FlowPanel to the dictionary for later use
+                categoryPanels[category] = categoryFlowPanel;
+            }
 
             // Create a label to display the decoration name
             var decorationNameLabel = new Label
@@ -294,13 +299,16 @@ namespace Gw2DecorBlishhudModule
                 Location = new Point(decorationNameLabel.Left, _decorationIcon.Bottom + 5)
             };
 
-            // Create a function to update the decoration icons based on the search input
+            // Create a function to update the decorations based on the search input
             void UpdateDecorationList(string searchTerm)
             {
-                // Clear existing decoration icons
-                foreach (var control in decorationsFlowPanel.Children.ToList())
+                // Clear all decorations from each category panel before re-populating
+                foreach (var categoryPanel in categoryPanels.Values)
                 {
-                    decorationsFlowPanel.RemoveChild(control);
+                    foreach (var control in categoryPanel.Children.ToList())
+                    {
+                        categoryPanel.RemoveChild(control);
+                    }
                 }
 
                 // Filter decorations based on the search term
@@ -308,93 +316,162 @@ namespace Gw2DecorBlishhudModule
                     .Where(decoration => decoration.Name != null && decoration.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
                     .ToList();
 
-                // Populate the decorationsFlowPanel with the filtered results
+                // Populate category panels with filtered decorations
                 foreach (var decoration in filteredDecorations)
                 {
-                    var iconTexture = AsyncTexture2D.FromAssetId(decoration.IconAssetId);
-                    if (iconTexture != null)
+                    // Find the category for the decoration
+                    string categoryName = categories[decoration.Categories.FirstOrDefault() - 1]; // Adjust index as needed
+
+                    // Get the category panel from the dictionary
+                    if (categoryPanels.TryGetValue(categoryName, out var categoryPanel))
                     {
-                        var tooltipText = $"{decoration.Name ?? "Unknown Decoration"}\n{decoration.Description ?? "No description available"}";
-                        var decorationIcon = new Image(iconTexture)
-                        {
-                            BasicTooltipText = tooltipText,
-                            Size = new Point(40),
-                            Parent = decorationsFlowPanel,
-                        };
+                        // Load the decoration icon texture (use a default if not available)
+                        var iconTexture = AsyncTexture2D.FromAssetId(decoration.IconAssetId);
 
-                        // Handle click event to update the label and image controls with decoration's details
-                        decorationIcon.Click += async (s, e) =>
+                        if (iconTexture != null)
                         {
-                            decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-
-                            if (!string.IsNullOrEmpty(decoration.Image))
+                            var tooltipText = $"{decoration.Name ?? "Unknown Decoration"}\n{decoration.Description ?? "No description available"}";
+                            var decorationIcon = new Image(iconTexture)
                             {
-                                using (var httpClientInnerInner = new HttpClient())
-                                {
-                                    try
-                                    {
-                                        httpClientInnerInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
+                                BasicTooltipText = tooltipText,
+                                Size = new Point(40),
+                                Parent = categoryPanel, // Add to the specific category panel
+                            };
 
-                                        var imageResponse = await httpClientInnerInner.GetByteArrayAsync(decoration.Image);
-                                        using (var memoryStream = new MemoryStream(imageResponse))
+                            // Click event to update main display for the selected decoration
+                            decorationIcon.Click += async (s, e) =>
+                            {
+                                decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+
+                                if (!string.IsNullOrEmpty(decoration.Image))
+                                {
+                                    using (var httpClientInnerInner = new HttpClient())
+                                    {
+                                        try
                                         {
-                                            using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                                            httpClientInnerInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
+
+                                            var imageResponse = await httpClientInnerInner.GetByteArrayAsync(decoration.Image);
+                                            using (var memoryStream = new MemoryStream(imageResponse))
                                             {
-                                                var loadedTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-                                                _decorationImage.Texture = loadedTexture;
-                                                // Resize the decoration image based on the loaded texture's size
-                                                _decorationImage.Size = new Point(loadedTexture.Width, loadedTexture.Height);
+                                                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                                                {
+                                                    var loadedTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+                                                    _decorationImage.Texture = loadedTexture;
+                                                    // Resize the decoration image based on the loaded texture's size
+                                                    _decorationImage.Size = new Point(loadedTexture.Width, loadedTexture.Height);
+                                                }
                                             }
                                         }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.Message}");
+                                        catch (Exception ex)
+                                        {
+                                            Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.Message}");
+                                        }
                                     }
                                 }
-                            }
-                            else
-                            {
-                                Logger.Info("Decoration image URL is not available.");
-                            }
-                        };
-                    }
-                    else
-                    {
-                        Logger.Info("Failed to create decoration image. Either the icon texture or the decorations panel is null.");
+                                else
+                                {
+                                    Logger.Info("Decoration image URL is not available.");
+                                }
+                            };
+                        }
+                        else
+                        {
+                            Logger.Info("Failed to create decoration image. Either the icon texture or the decorations panel is null.");
+                        }
                     }
                 }
             }
 
-
             // Attach an event handler to the TextBox to filter decorations on text change
             searchTextBox.TextChanged += (s, e) => UpdateDecorationList(searchTextBox.Text);
 
-            // Initial population of the decorations
-            UpdateDecorationList(string.Empty); // Show all on start
+            // Initial population of decorations
+            UpdateDecorationList(string.Empty); // Show all decorations initially
 
             _gw2DecorWindow.Show();
         }
 
-        // Decoration class for JSON deserialization
-        private class Decoration
+        // Helper method to fetch image for a single decoration
+        private async Task FetchDecorationImage(Decoration decoration, string apiUrl)
         {
-            [JsonProperty("id")]
-            public int Id { get; set; }
+            try
+            {
+                using (var httpClientInner = new HttpClient())
+                {
+                    httpClientInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
 
-            [JsonProperty("name")]
-            public string Name { get; set; }
+                    // First attempt to get the thumbnail from the API
+                    var response = await httpClientInner.GetStringAsync(apiUrl);
+                    var json = JsonConvert.DeserializeObject<JObject>(response);
+                    var pages = json["query"]?["pages"];
+                    string thumbnailPage = null;
 
-            [JsonProperty("description")]
-            public string Description { get; set; }
+                    if (pages != null)
+                    {
+                        foreach (var page in pages.Children())
+                        {
+                            var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
+                            if (!string.IsNullOrEmpty(thumbnail))
+                            {
+                                thumbnailPage = thumbnail; // Set the thumbnail if found
+                            }
+                        }
+                    }
 
-            [JsonProperty("icon")]
-            public string IconUrl { get; set; }
+                    // If no thumbnail is found, attempt with a modified URL
+                    if (string.IsNullOrEmpty(thumbnailPage))
+                    {
+                        // Prepend "Decoration-" to the URL and try again
+                        var decoratedApiUrl = apiUrl.Replace("File:", "File:Decoration- ");
+                        response = await httpClientInner.GetStringAsync(decoratedApiUrl);
+                        json = JsonConvert.DeserializeObject<JObject>(response);
+                        pages = json["query"]?["pages"];
 
-            [JsonProperty("image")]
-            public string Image { get; set; }
+                        if (pages != null)
+                        {
+                            foreach (var page in pages.Children())
+                            {
+                                var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
+                                if (!string.IsNullOrEmpty(thumbnail))
+                                {
+                                    thumbnailPage = thumbnail; // Set the thumbnail if found
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
-            public int IconAssetId => int.Parse(Path.GetFileNameWithoutExtension(new Uri(IconUrl).AbsolutePath));
+                    // If still no thumbnail, replace `.jpg` with ` (decoration).jpg` in the URL
+                    if (string.IsNullOrEmpty(thumbnailPage))
+                    {
+                        var modifiedApiUrl = apiUrl.Replace(".jpg", " (decoration).jpg");
+                        response = await httpClientInner.GetStringAsync(modifiedApiUrl);
+                        json = JsonConvert.DeserializeObject<JObject>(response);
+                        pages = json["query"]?["pages"];
+
+                        if (pages != null)
+                        {
+                            foreach (var page in pages.Children())
+                            {
+                                var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
+                                if (!string.IsNullOrEmpty(thumbnail))
+                                {
+                                    thumbnailPage = thumbnail; // Set the thumbnail if found
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Assign the image to the decoration
+                    decoration.Image = thumbnailPage;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Warn($"Failed to get image for decoration '{decoration.Name}': {e.Message}");
+            }
         }
     }
 }
