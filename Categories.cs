@@ -16,7 +16,7 @@ namespace Gw2DecorBlishhudModule
                 "Trees and Foliage",
                 "Natural Features",
                 "Sculptures",
-                "Flags, Signs, Markers, Etc.",
+                "Flag, Signs, Markers, Etc.",
                 "Weapons and Traps",
                 "Trophies",
                 "Racing",
@@ -32,7 +32,7 @@ namespace Gw2DecorBlishhudModule
                 "Festival of the Four Winds",
                 "Shadow of the Mad King",
                 "Wintersday",
-                "Black Lion Decorations"
+                "Black Lion",
             };
         }
     }

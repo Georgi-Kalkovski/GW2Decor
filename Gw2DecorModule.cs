@@ -1,19 +1,18 @@
-﻿using Blish_HUD;
-using Blish_HUD.Content;
-using Blish_HUD.Controls;
-using Blish_HUD.Modules;
-using Blish_HUD.Modules.Managers;
-using Blish_HUD.Settings;
-using Microsoft.Xna.Framework.Graphics;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Blish_HUD;
+using Blish_HUD.Content;
+using Blish_HUD.Controls;
+using Blish_HUD.Modules;
+using Blish_HUD.Modules.Managers;
+using Blish_HUD.Settings;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -22,8 +21,9 @@ namespace Gw2DecorBlishhudModule
     [Export(typeof(Module))]
     public class Gw2DecorModule : Module
     {
-        // Logger instance for logging messages
         private static readonly Logger Logger = Logger.GetLogger<Gw2DecorModule>();
+
+        private static readonly HttpClient client = new HttpClient();
 
         // Images and other resources
         private Image _decorationIcon;
@@ -44,22 +44,19 @@ namespace Gw2DecorBlishhudModule
 
         internal static Gw2DecorModule Gw2DecorModuleInstance;
 
-        // Dependency managers
         internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
         internal ContentsManager ContentsManager => this.ModuleParameters.ContentsManager;
         internal DirectoriesManager DirectoriesManager => this.ModuleParameters.DirectoriesManager;
         internal Gw2ApiManager Gw2ApiManager => this.ModuleParameters.Gw2ApiManager;
 
         [ImportingConstructor]
-        public Gw2DecorModule([Import("ModuleParameters")] ModuleParameters moduleParameters)
-            : base(moduleParameters)
+        public Gw2DecorModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters)
         {
             Gw2DecorModuleInstance = this;
         }
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            // Define general settings
             settings.DefineSetting(
                 "Gw2DecorSetting",
                 "This is the default value of the setting",
@@ -67,41 +64,42 @@ namespace Gw2DecorBlishhudModule
                 () => "Tooltip text of setting");
 
             _boolGw2DecorSetting = settings.DefineSetting(
-                "bool gw2Decor",
+                "bool gw2decor",
                 true,
                 () => "This is a bool setting (checkbox)",
                 () => "Settings can be many different types");
 
             _stringGw2DecorSetting = settings.DefineSetting(
-                "string gw2Decor",
+                "string gw2decor",
                 "myText",
-                () => "This is a string setting (textbox)",
+                () => "This is an string setting (textbox)",
                 () => "Settings can be many different types");
 
             _valueRangeGw2DecorSetting = settings.DefineSetting(
-                "int gw2Decor",
+                "int gw2decor",
                 20,
                 () => "This is an int setting (slider)",
                 () => "Settings can be many different types");
+
             _valueRangeGw2DecorSetting.SetRange(0, 255);
 
             _enumGw2DecorSetting = settings.DefineSetting(
-                "enum gw2Decor",
+                "enum gw2decor",
                 ColorType.Blue,
                 () => "This is an enum setting (drop down menu)",
                 () => "...");
 
             _boolGw2DecorSetting.Value = false;
 
-            // Hidden settings
+            SettingEntry<string> setting1 = SettingsManager.ModuleSettings["Gw2DecorSetting"] as SettingEntry<string>;
+
             _internalGw2DecorSettingSubCollection = settings.AddSubCollection("internal settings (not visible in UI)");
-            _hiddenIntGw2DecorSetting = _internalGw2DecorSettingSubCollection.DefineSetting("gw2Decor window x position", 50);
-            _hiddenIntGw2DecorSetting2 = _internalGw2DecorSettingSubCollection.DefineSetting("gw2Decor window y position", 50);
+            _hiddenIntGw2DecorSetting = _internalGw2DecorSettingSubCollection.DefineSetting("gw2decor window x position", 50);
+            _hiddenIntGw2DecorSetting2 = _internalGw2DecorSettingSubCollection.DefineSetting("gw2decor window y position", 50);
         }
 
         protected override async Task LoadAsync()
         {
-            // Load all files in registered directories
             foreach (string directoryName in DirectoriesManager.RegisteredDirectories)
             {
                 string fullDirectoryPath = DirectoriesManager.GetFullDirectoryPath(directoryName);
@@ -110,17 +108,16 @@ namespace Gw2DecorBlishhudModule
                 Logger.Info($"'{directoryName}' can be found at '{fullDirectoryPath}' and has {allFiles.Count} total files within it.");
             }
 
-            // Load the mug texture
-            _mugTexture = ContentsManager.GetTexture("test/603447.png");
+            _mugTexture = ContentsManager.GetTexture("test/homestead_icon.png");
+
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
 
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
-            CreateCornerIconWithContextMenu();
+            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_mugTexture, _gw2DecorWindow);
         }
 
         protected override void Unload()
         {
-            // Dispose of created resources
             _cornerIcon?.Dispose();
             _contextMenuStrip?.Dispose();
             _decorationIcon?.Dispose();
@@ -129,94 +126,9 @@ namespace Gw2DecorBlishhudModule
             Gw2DecorModuleInstance = null;
         }
 
-        private void CreateCornerIconWithContextMenu()
-        {
-            // Create the corner icon with a context menu
-            _cornerIcon = new CornerIcon
-            {
-                Icon = _mugTexture,
-                BasicTooltipText = $"My Corner Icon Tooltip for {Name}",
-                Priority = 1645843523,
-                Parent = GameService.Graphics.SpriteScreen
-            };
-
-            _cornerIcon.Click += (s, e) => _gw2DecorWindow.ToggleWindow();
-
-            _contextMenuStrip = new ContextMenuStrip();
-            _cornerIcon.Menu = _contextMenuStrip;
-        }
-
-        List<string> categories = Categories.GetCategories();
-
+        // CREATE GW2 STYLE WINDOW
         private async Task CreateGw2StyleWindowThatDisplaysAllDecorations(AsyncTexture2D windowBackgroundTexture)
         {
-            List<Decoration> decorationsList = new List<Decoration>();
-            try
-            {
-                using (var httpClient = new HttpClient())
-                {
-                    string decorationsUrl = "https://api.guildwars2.com/v2/homestead/decorations";
-
-                    // Step 1: Fetch all decoration IDs
-                    var decorationIdsResponse = await httpClient.GetStringAsync(decorationsUrl);
-                    var ids = JsonConvert.DeserializeObject<List<int>>(decorationIdsResponse);
-
-                    // Step 2: Process the IDs in batches of 200
-                    int batchSize = 200;
-                    for (int i = 0; i < ids.Count; i += batchSize)
-                    {
-                        var batch = ids.Skip(i).Take(batchSize).ToList();
-                        var idsString = string.Join(",", batch);
-                        var batchUrl = $"{decorationsUrl}?ids={idsString}";
-
-                        try
-                        {
-                            // Step 3: Fetch decorations for the batch of IDs
-                            var batchResponse = await httpClient.GetStringAsync(batchUrl);
-                            var batchDecorations = JsonConvert.DeserializeObject<List<Decoration>>(batchResponse);
-
-                            // Fetch all images in parallel for the current batch
-                            var imageTasks = new List<Task>();
-
-                            foreach (var decoration in batchDecorations)
-                            {
-                                // Manipulation of the decoration name to find the correct image from the wiki api
-                                var decorationName = decoration.Name
-                                    .Replace("WvW", "")
-                                    .Replace(":", "-")
-                                    .Replace("Guild Ballista", "Guild Ballistae")
-                                    .Replace("Raven Spirit Statue", "Raven Statue (decoration)")
-                                    .TrimEnd();
-                                decorationName = decorationName.EndsWith("Siege")
-                                    ? decorationName.Substring(0, decorationName.Length - 6)
-                                    : decorationName;
-
-                                var apiUrl = $"https://wiki.guildwars2.com/api.php?action=query&titles=File:{Uri
-                                     .EscapeDataString(decorationName)}.jpg&format=json&prop=pageimages&pithumbsize=500";
-
-                                var imageTask = FetchDecorationImage(decoration, apiUrl);
-                                imageTasks.Add(imageTask);
-                            }
-
-                            // Wait for all image fetch tasks to complete
-                            await Task.WhenAll(imageTasks);
-
-                            // Add the decorated decorations to the list
-                            decorationsList.AddRange(batchDecorations);
-                        }
-                        catch (Exception e)
-                        {
-                            Logger.Warn($"Failed to fetch batch of decorations: {e.Message}");
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Info("Failed to get decoration IDs from API: " + e.Message);
-            }
-
-            // After all the decorations are fetched, create and display the window
             _gw2DecorWindow = new StandardWindow(
                 windowBackgroundTexture,
                 new Rectangle(25, 26, 560, 640),
@@ -224,7 +136,7 @@ namespace Gw2DecorBlishhudModule
                 new Point(1200, 800))
             {
                 Parent = GameService.Graphics.SpriteScreen,
-                Title = "Decorations",
+                Title = "GW2Decor",
                 Emblem = _mugTexture,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
@@ -232,246 +144,234 @@ namespace Gw2DecorBlishhudModule
                 Id = $"{nameof(Gw2DecorModule)}_Decoration_Window"
             };
 
-            // Create a TextBox for searching decorations
             var searchTextBox = new TextBox
             {
                 Parent = _gw2DecorWindow,
                 Location = new Point(10, 0),
                 Width = 200,
-                PlaceholderText = "Search Decorations...",
+                PlaceholderText = "Search Decorations..."
             };
 
-            // Main container FlowPanel with scroll enabled
             var decorationsFlowPanel = new FlowPanel
             {
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 Width = 500,
                 Height = 640,
-                CanScroll = true, // Only main panel should scroll
+                CanScroll = true,
                 Parent = _gw2DecorWindow,
-                Location = new Point(10, searchTextBox.Bottom + 10) // Place below the search box
+                Location = new Point(10, searchTextBox.Bottom + 10)
             };
 
-            // Dictionary to store category-specific FlowPanels, mapped by category name
-            Dictionary<string, FlowPanel> categoryPanels = new Dictionary<string, FlowPanel>();
-
-            // Loop through categories to create and add each category panel
-            foreach (string category in categories)
-            {
-                // Create a FlowPanel for each category
-                var categoryFlowPanel = new FlowPanel
-                {
-                    Title = category,
-                    FlowDirection = ControlFlowDirection.LeftToRight,
-                    Width = decorationsFlowPanel.Width - 20, // Slightly less than main panel width to avoid overflow
-                    Height = decorationsFlowPanel.Height - 480,
-                    CanCollapse = true,
-                    CanScroll = false, // Individual category panels should not scroll
-                    Parent = decorationsFlowPanel // Set parent as the main FlowPanel
-                };
-
-                // Add category FlowPanel to the dictionary for later use
-                categoryPanels[category] = categoryFlowPanel;
-            }
-
-            // Create a label to display the decoration name
-            var decorationNameLabel = new Label
+            var decorationRightText = new Label
             {
                 Text = "Select a decoration",
                 Parent = _gw2DecorWindow,
-                Location = new Point(decorationsFlowPanel.Right + 10, 20), // Position it next to the icons
+                Location = new Point(decorationsFlowPanel.Right + 10, 20),
                 Width = 200,
                 Height = 40,
             };
 
-            // Create an image control to show the selected decoration's icon
             _decorationIcon = new Image
             {
                 Size = new Point(40, 40),
                 Parent = _gw2DecorWindow,
-                Location = new Point(decorationNameLabel.Left, decorationNameLabel.Bottom + 5)
+                Location = new Point(decorationRightText.Left, decorationRightText.Bottom + 5)
             };
 
             _decorationImage = new Image
             {
                 Size = new Point(400, 400),
                 Parent = _gw2DecorWindow,
-                Location = new Point(decorationNameLabel.Left, _decorationIcon.Bottom + 5)
+                Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            // Create a function to update the decorations based on the search input
-            void UpdateDecorationList(string searchTerm)
+            // Fetch categories asynchronously (parallelizing)
+            List<string> categories = Categories.GetCategories();
+            List<Task> categoryTasks = new List<Task>();
+
+            foreach (string category in categories)
             {
-                // Clear all decorations from each category panel before re-populating
-                foreach (var categoryPanel in categoryPanels.Values)
-                {
-                    foreach (var control in categoryPanel.Children.ToList())
-                    {
-                        categoryPanel.RemoveChild(control);
-                    }
-                }
-
-                // Filter decorations based on the search term
-                var filteredDecorations = decorationsList
-                    .Where(decoration => decoration.Name != null && decoration.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-                    .ToList();
-
-                // Populate category panels with filtered decorations
-                foreach (var decoration in filteredDecorations)
-                {
-                    // Find the category for the decoration
-                    string categoryName = categories[decoration.Categories.FirstOrDefault() - 1]; // Adjust index as needed
-
-                    // Get the category panel from the dictionary
-                    if (categoryPanels.TryGetValue(categoryName, out var categoryPanel))
-                    {
-                        // Load the decoration icon texture (use a default if not available)
-                        var iconTexture = AsyncTexture2D.FromAssetId(decoration.IconAssetId);
-
-                        if (iconTexture != null)
-                        {
-                            var tooltipText = $"{decoration.Name ?? "Unknown Decoration"}\n{decoration.Description ?? "No description available"}";
-                            var decorationIcon = new Image(iconTexture)
-                            {
-                                BasicTooltipText = tooltipText,
-                                Size = new Point(40),
-                                Parent = categoryPanel, // Add to the specific category panel
-                            };
-
-                            // Click event to update main display for the selected decoration
-                            decorationIcon.Click += async (s, e) =>
-                            {
-                                decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-
-                                if (!string.IsNullOrEmpty(decoration.Image))
-                                {
-                                    using (var httpClientInnerInner = new HttpClient())
-                                    {
-                                        try
-                                        {
-                                            httpClientInnerInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
-
-                                            var imageResponse = await httpClientInnerInner.GetByteArrayAsync(decoration.Image);
-                                            using (var memoryStream = new MemoryStream(imageResponse))
-                                            {
-                                                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
-                                                {
-                                                    var loadedTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-                                                    _decorationImage.Texture = loadedTexture;
-                                                    // Resize the decoration image based on the loaded texture's size
-                                                    _decorationImage.Size = new Point(loadedTexture.Width, loadedTexture.Height);
-                                                }
-                                            }
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.Message}");
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    Logger.Info("Decoration image URL is not available.");
-                                }
-                            };
-                        }
-                        else
-                        {
-                            Logger.Info("Failed to create decoration image. Either the icon texture or the decorations panel is null.");
-                        }
-                    }
-                }
+                categoryTasks.Add(ProcessCategoryAsync(category, decorationsFlowPanel));
             }
 
-            // Attach an event handler to the TextBox to filter decorations on text change
-            searchTextBox.TextChanged += (s, e) => UpdateDecorationList(searchTextBox.Text);
+            // Wait for all categories to be processed
+            await Task.WhenAll(categoryTasks);
 
-            // Initial population of decorations
-            UpdateDecorationList(string.Empty); // Show all decorations initially
+            // Handle search text box input to filter decorations
+            searchTextBox.TextChanged += (sender, args) =>
+            {
+                string searchText = searchTextBox.Text.ToLower();
+                FilterDecorations(decorationsFlowPanel, searchText);
+            };
 
             _gw2DecorWindow.Show();
         }
 
-        // Helper method to fetch image for a single decoration
-        private async Task FetchDecorationImage(Decoration decoration, string apiUrl)
+        private async Task ProcessCategoryAsync(string category, FlowPanel decorationsFlowPanel)
+        {
+            string formattedCategoryName = category.Replace(" ", "_");
+
+            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead/{formattedCategoryName}&format=json&prop=text";
+            var decorations = await DecorationFetcher.FetchDecorationsAsync(categoryUrl);
+
+            // If there are no decorations, skip creating a panel for this category
+            if (!decorations.Any())
+            {
+                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
+                return;
+            }
+
+            int baseHeight = 45;
+            int heightIncrementPerDecorationSet = 52;
+            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
+            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+            var categoryFlowPanel = new FlowPanel
+            {
+                Title = category,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                Width = decorationsFlowPanel.Width - 20,
+                Height = calculatedHeight,
+                CanCollapse = true,
+                CanScroll = false,
+                Parent = decorationsFlowPanel,
+                ControlPadding = new Vector2(4, 4)
+            };
+
+            // Create decoration icons concurrently
+            var decorationIconTasks = decorations.Where(d => !string.IsNullOrEmpty(d.IconUrl))
+                .Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel))
+                .ToList();
+
+            await Task.WhenAll(decorationIconTasks);
+        }
+
+        private async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)
         {
             try
             {
-                using (var httpClientInner = new HttpClient())
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+                var iconResponse = await client.GetByteArrayAsync(decoration.IconUrl);
+
+                using (var memoryStream = new MemoryStream(iconResponse))
+                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
                 {
-                    httpClientInner.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
+                    var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
-                    // First attempt to get the thumbnail from the API
-                    var response = await httpClientInner.GetStringAsync(apiUrl);
-                    var json = JsonConvert.DeserializeObject<JObject>(response);
-                    var pages = json["query"]?["pages"];
-                    string thumbnailPage = null;
-
-                    if (pages != null)
+                    // Create a border panel to wrap the icon
+                    var borderPanel = new Panel
                     {
-                        foreach (var page in pages.Children())
-                        {
-                            var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
-                            if (!string.IsNullOrEmpty(thumbnail))
-                            {
-                                thumbnailPage = thumbnail; // Set the thumbnail if found
-                            }
-                        }
-                    }
+                        Size = new Point(49, 49),
+                        BackgroundColor = Color.Black,
+                        Parent = categoryFlowPanel
+                    };
 
-                    // If no thumbnail is found, attempt with a modified URL
-                    if (string.IsNullOrEmpty(thumbnailPage))
+                    // Create the decoration icon with padding inside the border panel
+                    var decorationIconImage = new Image(iconTexture)
                     {
-                        // Prepend "Decoration-" to the URL and try again
-                        var decoratedApiUrl = apiUrl.Replace("File:", "File:Decoration- ");
-                        response = await httpClientInner.GetStringAsync(decoratedApiUrl);
-                        json = JsonConvert.DeserializeObject<JObject>(response);
-                        pages = json["query"]?["pages"];
+                        BasicTooltipText = decoration.Name,
+                        Size = new Point(45),
+                        Location = new Point(2, 2),
+                        Parent = borderPanel
+                    };
 
-                        if (pages != null)
-                        {
-                            foreach (var page in pages.Children())
-                            {
-                                var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
-                                if (!string.IsNullOrEmpty(thumbnail))
-                                {
-                                    thumbnailPage = thumbnail; // Set the thumbnail if found
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // If still no thumbnail, replace `.jpg` with ` (decoration).jpg` in the URL
-                    if (string.IsNullOrEmpty(thumbnailPage))
+                    decorationIconImage.Click += async (s, e) =>
                     {
-                        var modifiedApiUrl = apiUrl.Replace(".jpg", " (decoration).jpg");
-                        response = await httpClientInner.GetStringAsync(modifiedApiUrl);
-                        json = JsonConvert.DeserializeObject<JObject>(response);
-                        pages = json["query"]?["pages"];
-
-                        if (pages != null)
-                        {
-                            foreach (var page in pages.Children())
-                            {
-                                var thumbnail = page.First["thumbnail"]?["source"]?.ToString();
-                                if (!string.IsNullOrEmpty(thumbnail))
-                                {
-                                    thumbnailPage = thumbnail; // Set the thumbnail if found
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // Assign the image to the decoration
-                    decoration.Image = thumbnailPage;
+                        await UpdateDecorationImageAsync(decoration);
+                    };
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Logger.Warn($"Failed to get image for decoration '{decoration.Name}': {e.Message}");
+                Logger.Warn($"Failed to load decoration icon for '{decoration.Name}'. Error: {ex.Message}");
             }
         }
+
+
+        private async Task UpdateDecorationImageAsync(Decoration decoration)
+        {
+            var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
+            decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+
+            if (!string.IsNullOrEmpty(decoration.ImageUrl))
+            {
+                try
+                {
+                    var imageResponse = await client.GetByteArrayAsync(decoration.ImageUrl);
+                    using (var memoryStream = new MemoryStream(imageResponse))
+                    using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                    {
+                        var loadedTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+                        _decorationImage.Texture = loadedTexture;
+
+                        // Adjust size while maintaining aspect ratio
+                        AdjustImageSize(loadedTexture);
+
+                        // Center the image in its parent container (e.g., _gw2DecorWindow)
+                        CenterImageInParent(_decorationImage, _gw2DecorWindow);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
+                }
+            }
+        }
+
+        private void CenterImageInParent(Image image, Control parent)
+        {
+            // Get the center position of the parent container
+            int centerX = (parent.Width - image.Size.X) / 2;
+            int centerY = (parent.Height - image.Size.Y) / 2;
+
+            // Set the location of the image to the calculated center
+            image.Location = new Point(centerX  + 230, centerY - 40);
+        }
+
+        private void AdjustImageSize(Texture2D loadedTexture)
+        {
+            int maxDimension = 500;
+            float aspectRatio = (float)loadedTexture.Width / loadedTexture.Height;
+
+            int targetWidth, targetHeight;
+
+            if (loadedTexture.Width > loadedTexture.Height)
+            {
+                targetWidth = maxDimension;
+                targetHeight = (int)(maxDimension / aspectRatio);
+            }
+            else
+            {
+                targetHeight = maxDimension;
+                targetWidth = (int)(maxDimension * aspectRatio);
+            }
+
+            _decorationImage.Size = new Point(targetWidth, targetHeight);
+        }
+
+        private void FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
+        {
+            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
+            {
+                bool hasVisibleDecoration = false;
+
+                foreach (var decorationIcon in categoryFlowPanel.Children.OfType<Image>())
+                {
+                    bool matchesSearch = decorationIcon.BasicTooltipText.ToLower().Contains(searchText);
+                    decorationIcon.Visible = matchesSearch;
+
+                    if (matchesSearch) hasVisibleDecoration = true;
+                }
+
+                categoryFlowPanel.Visible = hasVisibleDecoration;
+                categoryFlowPanel.Invalidate();
+            }
+
+            decorationsFlowPanel.Invalidate();
+
+
+            _gw2DecorWindow.Show();
+        }
+
     }
 }
