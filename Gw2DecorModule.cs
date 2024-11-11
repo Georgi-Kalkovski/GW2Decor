@@ -166,10 +166,13 @@ namespace Gw2DecorBlishhudModule
             {
                 Text = "Select a decoration",
                 Parent = _gw2DecorWindow,
-                Location = new Point(decorationsFlowPanel.Right + 10, 20),
-                Width = 200,
-                Height = 40,
+                Width = 500,
+                Height = 60,
+                Font = GameService.Content.DefaultFont18
             };
+
+            // Center the label within the parent window
+            CenterTextInParent(decorationRightText, _gw2DecorWindow);
 
             _decorationIcon = new Image
             {
@@ -325,7 +328,16 @@ namespace Gw2DecorBlishhudModule
             int centerY = (parent.Height - image.Size.Y) / 2;
 
             // Set the location of the image to the calculated center
-            image.Location = new Point(centerX  + 230, centerY - 40);
+            image.Location = new Point(centerX + 230, centerY - 40);
+        }
+
+        private void CenterTextInParent(Label label, Control parent)
+        {
+            // Calculate the center position of the parent container
+            int centerX = (parent.Width - label.Width) / 2;
+
+            // Set the location of the label to the calculated center
+            label.Location = new Point(centerX + 430, 20);
         }
 
         private void AdjustImageSize(Texture2D loadedTexture)
