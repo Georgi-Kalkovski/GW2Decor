@@ -28,10 +28,10 @@ namespace Gw2DecorBlishhudModule
         // Images and other resources
         private Image _decorationIcon;
         private Image _decorationImage;
-        private Texture2D _mugTexture;
+        private Texture2D _homesteadTexture;
         private CornerIcon _cornerIcon;
-        private ContextMenuStrip _contextMenuStrip;
         private StandardWindow _gw2DecorWindow;
+        private LoadingSpinner _loadingSpinner;
 
         // Settings entries
         private SettingEntry<bool> _boolGw2DecorSetting;
@@ -108,21 +108,20 @@ namespace Gw2DecorBlishhudModule
                 Logger.Info($"'{directoryName}' can be found at '{fullDirectoryPath}' and has {allFiles.Count} total files within it.");
             }
 
-            _mugTexture = ContentsManager.GetTexture("test/homestead_icon.png");
+            _homesteadTexture = ContentsManager.GetTexture("test/homestead_icon.png");
 
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
 
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
-            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_mugTexture, _gw2DecorWindow);
+            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_homesteadTexture, _gw2DecorWindow);
         }
 
         protected override void Unload()
         {
             _cornerIcon?.Dispose();
-            _contextMenuStrip?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
-            _mugTexture?.Dispose();
+            _homesteadTexture?.Dispose();
             Gw2DecorModuleInstance = null;
         }
 
@@ -131,13 +130,13 @@ namespace Gw2DecorBlishhudModule
         {
             _gw2DecorWindow = new StandardWindow(
                 windowBackgroundTexture,
-                new Rectangle(25, 26, 560, 640),
-                new Rectangle(40, 50, 540, 590),
-                new Point(1200, 800))
+                new Rectangle(25, 26, 555, 640),
+                new Rectangle(40, 50, 550, 640),
+                new Point(1100, 800))
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Title = "GW2Decor",
-                Emblem = _mugTexture,
+                Emblem = _homesteadTexture,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
                 SavesPosition = true,
@@ -167,8 +166,8 @@ namespace Gw2DecorBlishhudModule
                 Text = "Select a decoration",
                 Parent = _gw2DecorWindow,
                 Width = 500,
-                Height = 60,
-                Font = GameService.Content.DefaultFont18
+                Height = 120,
+                Font = GameService.Content.DefaultFont32
             };
 
             // Center the label within the parent window
@@ -190,26 +189,22 @@ namespace Gw2DecorBlishhudModule
 
             // Fetch categories asynchronously (parallelizing)
             List<string> categories = Categories.GetCategories();
-            List<Task> categoryTasks = new List<Task>();
-
             foreach (string category in categories)
             {
-                categoryTasks.Add(ProcessCategoryAsync(category, decorationsFlowPanel));
+                await ProcessCategoryAsync(category, decorationsFlowPanel);
             }
 
-            // Wait for all categories to be processed
-            await Task.WhenAll(categoryTasks);
-
             // Handle search text box input to filter decorations
-            searchTextBox.TextChanged += (sender, args) =>
+            searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
-                FilterDecorations(decorationsFlowPanel, searchText);
+                await FilterDecorations(decorationsFlowPanel, searchText);  // Await the method here
             };
 
             _gw2DecorWindow.Show();
         }
 
+        // Left Panel Operations
         private async Task ProcessCategoryAsync(string category, FlowPanel decorationsFlowPanel)
         {
             string formattedCategoryName = category.Replace(" ", "_");
@@ -290,11 +285,64 @@ namespace Gw2DecorBlishhudModule
             }
         }
 
+        private async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
+        {
+            searchText = searchText.ToLower();
 
+            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
+            {
+                bool hasVisibleDecoration = false;
+
+                var visibleDecorations = new List<Panel>();
+
+                foreach (var decorationIconPanel in categoryFlowPanel.Children.OfType<Panel>())
+                {
+                    var decorationIcon = decorationIconPanel.Children.OfType<Image>().FirstOrDefault();
+
+                    if (decorationIcon != null)
+                    {
+                        bool matchesSearch = decorationIcon.BasicTooltipText?.ToLower().Contains(searchText) ?? false;
+
+                        decorationIconPanel.Visible = matchesSearch;
+
+                        if (matchesSearch)
+                        {
+                            visibleDecorations.Add(decorationIconPanel);
+                            hasVisibleDecoration = true;
+                        }
+                    }
+                }
+
+                categoryFlowPanel.Visible = hasVisibleDecoration;
+
+                if (hasVisibleDecoration)
+                {
+                    foreach (var visibleDecoration in visibleDecorations)
+                    {
+                        categoryFlowPanel.Children.Remove(visibleDecoration);
+                    }
+
+                    foreach (var visibleDecoration in visibleDecorations)
+                    {
+                        categoryFlowPanel.Children.Insert(0, visibleDecoration);
+                    }
+
+                    await AdjustCategoryHeightAsync(categoryFlowPanel);
+
+                    categoryFlowPanel.Invalidate();
+                }
+            }
+
+            decorationsFlowPanel.Invalidate();
+        }
+
+        // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
             var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+
+            CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
 
             if (!string.IsNullOrEmpty(decoration.ImageUrl))
             {
@@ -304,13 +352,54 @@ namespace Gw2DecorBlishhudModule
                     using (var memoryStream = new MemoryStream(imageResponse))
                     using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
                     {
-                        var loadedTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-                        _decorationImage.Texture = loadedTexture;
+                        var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
-                        // Adjust size while maintaining aspect ratio
-                        AdjustImageSize(loadedTexture);
+                        int borderWidth = 15;
 
-                        // Center the image in its parent container (e.g., _gw2DecorWindow)
+                        Color innerBorderColor = new Color(86, 76, 55);
+                        Color outerBorderColor = Color.Black;
+
+                        int borderedWidth = originalTexture.Width + 2 * borderWidth;
+                        int borderedHeight = originalTexture.Height + 2 * borderWidth;
+
+                        var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
+
+                        Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
+
+                        for (int y = 0; y < borderedHeight; y++)
+                        {
+                            for (int x = 0; x < borderedWidth; x++)
+                            {
+                                int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
+
+                                if (distanceFromEdge < borderWidth)
+                                {
+                                    float gradientFactor = (float)distanceFromEdge / borderWidth;
+                                    borderedColorData[y * borderedWidth + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
+                                }
+                                else
+                                {
+                                    borderedColorData[y * borderedWidth + x] = Color.Transparent;
+                                }
+                            }
+                        }
+
+                        Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
+                        originalTexture.GetData(originalColorData);
+
+                        for (int y = 0; y < originalTexture.Height; y++)
+                        {
+                            for (int x = 0; x < originalTexture.Width; x++)
+                            {
+                                int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
+                                borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
+                            }
+                        }
+
+                        borderedTexture.SetData(borderedColorData);
+                        _decorationImage.Texture = borderedTexture;
+
+                        AdjustImageSize(borderedTexture);
                         CenterImageInParent(_decorationImage, _gw2DecorWindow);
                     }
                 }
@@ -321,23 +410,48 @@ namespace Gw2DecorBlishhudModule
             }
         }
 
-        private void CenterImageInParent(Image image, Control parent)
+        private Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel)
         {
-            // Get the center position of the parent container
-            int centerX = (parent.Width - image.Size.X) / 2;
-            int centerY = (parent.Height - image.Size.Y) / 2;
+            int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
 
-            // Set the location of the image to the calculated center
-            image.Location = new Point(centerX + 230, centerY - 40);
+            if (visibleDecorationCount == 0)
+            {
+                categoryFlowPanel.Height = 45;
+            }
+            else
+            {
+                int baseHeight = 45;
+                int heightIncrementPerDecorationSet = 52;
+                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / 9.0);
+                int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
+
+                categoryFlowPanel.Height = calculatedHeight;
+
+                categoryFlowPanel.Invalidate();
+            }
+
+            return Task.CompletedTask;
         }
 
         private void CenterTextInParent(Label label, Control parent)
         {
-            // Calculate the center position of the parent container
-            int centerX = (parent.Width - label.Width) / 2;
+            var font = GameService.Content.DefaultFont32;
+            var textSize = font.MeasureString(label.Text);
+            float textWidth = textSize.Width;
 
-            // Set the location of the label to the calculated center
-            label.Location = new Point(centerX + 430, 20);
+            int parentWidth = parent.Width;
+
+            int startX = (450 + parentWidth - (int)textWidth) / 2;
+
+            label.Location = new Point(startX, label.Location.Y);
+        }
+
+        private void CenterImageInParent(Image image, Control parent)
+        {
+            int centerX = (parent.Width - image.Size.X) / 2;
+            int centerY = (parent.Height - image.Size.Y) / 2;
+
+            image.Location = new Point(centerX + 230, centerY - 40);
         }
 
         private void AdjustImageSize(Texture2D loadedTexture)
@@ -360,30 +474,5 @@ namespace Gw2DecorBlishhudModule
 
             _decorationImage.Size = new Point(targetWidth, targetHeight);
         }
-
-        private void FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
-        {
-            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
-            {
-                bool hasVisibleDecoration = false;
-
-                foreach (var decorationIcon in categoryFlowPanel.Children.OfType<Image>())
-                {
-                    bool matchesSearch = decorationIcon.BasicTooltipText.ToLower().Contains(searchText);
-                    decorationIcon.Visible = matchesSearch;
-
-                    if (matchesSearch) hasVisibleDecoration = true;
-                }
-
-                categoryFlowPanel.Visible = hasVisibleDecoration;
-                categoryFlowPanel.Invalidate();
-            }
-
-            decorationsFlowPanel.Invalidate();
-
-
-            _gw2DecorWindow.Show();
-        }
-
     }
 }
