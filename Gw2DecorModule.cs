@@ -57,45 +57,7 @@ namespace Gw2DecorBlishhudModule
 
         protected override void DefineSettings(SettingCollection settings)
         {
-            settings.DefineSetting(
-                "Gw2DecorSetting",
-                "This is the default value of the setting",
-                () => "Display name of setting",
-                () => "Tooltip text of setting");
-
-            _boolGw2DecorSetting = settings.DefineSetting(
-                "bool gw2decor",
-                true,
-                () => "This is a bool setting (checkbox)",
-                () => "Settings can be many different types");
-
-            _stringGw2DecorSetting = settings.DefineSetting(
-                "string gw2decor",
-                "myText",
-                () => "This is an string setting (textbox)",
-                () => "Settings can be many different types");
-
-            _valueRangeGw2DecorSetting = settings.DefineSetting(
-                "int gw2decor",
-                20,
-                () => "This is an int setting (slider)",
-                () => "Settings can be many different types");
-
-            _valueRangeGw2DecorSetting.SetRange(0, 255);
-
-            _enumGw2DecorSetting = settings.DefineSetting(
-                "enum gw2decor",
-                ColorType.Blue,
-                () => "This is an enum setting (drop down menu)",
-                () => "...");
-
-            _boolGw2DecorSetting.Value = false;
-
-            SettingEntry<string> setting1 = SettingsManager.ModuleSettings["Gw2DecorSetting"] as SettingEntry<string>;
-
-            _internalGw2DecorSettingSubCollection = settings.AddSubCollection("internal settings (not visible in UI)");
-            _hiddenIntGw2DecorSetting = _internalGw2DecorSettingSubCollection.DefineSetting("gw2decor window x position", 50);
-            _hiddenIntGw2DecorSetting2 = _internalGw2DecorSettingSubCollection.DefineSetting("gw2decor window y position", 50);
+            Gw2DecorSettings.Define(settings);
         }
 
         protected override async Task LoadAsync()
@@ -110,10 +72,16 @@ namespace Gw2DecorBlishhudModule
 
             _homesteadTexture = ContentsManager.GetTexture("test/homestead_icon.png");
 
+            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_homesteadTexture, _gw2DecorWindow, out _loadingSpinner);
+
+            await Task.Delay(2000);
+
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
 
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
-            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_homesteadTexture, _gw2DecorWindow);
+
+            _loadingSpinner.Visible = false;
+
         }
 
         protected override void Unload()
@@ -121,6 +89,7 @@ namespace Gw2DecorBlishhudModule
             _cornerIcon?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
+            _loadingSpinner?.Dispose();
             _homesteadTexture?.Dispose();
             Gw2DecorModuleInstance = null;
         }
@@ -167,7 +136,7 @@ namespace Gw2DecorBlishhudModule
                 Parent = _gw2DecorWindow,
                 Width = 500,
                 Height = 120,
-                Font = GameService.Content.DefaultFont32
+                Font = GameService.Content.DefaultFont18
             };
 
             // Center the label within the parent window
@@ -339,23 +308,34 @@ namespace Gw2DecorBlishhudModule
         // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
+            // Initially set the label text to "Loading..." and clear any previous image
             var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
-            decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+            decorationNameLabel.Text = "Loading...";
 
+            // Center the label while it displays "Loading..."
             CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
 
+            // Clear the old image
+            _decorationImage.Texture = null;
+            AdjustImageSize(null);
+
+            // Update the decoration image
             if (!string.IsNullOrEmpty(decoration.ImageUrl))
             {
                 try
                 {
+                    // Fetch the image asynchronously
                     var imageResponse = await client.GetByteArrayAsync(decoration.ImageUrl);
+
+                    // Process the image once it's loaded
                     using (var memoryStream = new MemoryStream(imageResponse))
                     using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
                     {
+                        // Load the original image texture
                         var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
+                        // Apply border to the image (if needed)
                         int borderWidth = 15;
-
                         Color innerBorderColor = new Color(86, 76, 55);
                         Color outerBorderColor = Color.Black;
 
@@ -363,15 +343,14 @@ namespace Gw2DecorBlishhudModule
                         int borderedHeight = originalTexture.Height + 2 * borderWidth;
 
                         var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
-
                         Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
 
+                        // Apply gradient border effect
                         for (int y = 0; y < borderedHeight; y++)
                         {
                             for (int x = 0; x < borderedWidth; x++)
                             {
                                 int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
-
                                 if (distanceFromEdge < borderWidth)
                                 {
                                     float gradientFactor = (float)distanceFromEdge / borderWidth;
@@ -384,6 +363,7 @@ namespace Gw2DecorBlishhudModule
                             }
                         }
 
+                        // Add original image data to the bordered texture
                         Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
                         originalTexture.GetData(originalColorData);
 
@@ -396,17 +376,40 @@ namespace Gw2DecorBlishhudModule
                             }
                         }
 
+                        // Set the processed (bordered) texture to the decoration image
                         borderedTexture.SetData(borderedColorData);
                         _decorationImage.Texture = borderedTexture;
 
+                        // Adjust the image size
                         AdjustImageSize(borderedTexture);
                         CenterImageInParent(_decorationImage, _gw2DecorWindow);
+
+                        // Now that the image is fully processed, update the label text
+                        decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+                        CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
+
+                        // Optionally position the text above the image
+                        PositionTextAboveImage(decorationNameLabel, _decorationImage);
                     }
                 }
                 catch (Exception ex)
                 {
                     Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
+
+                    // In case of error, set a default error message
+                    decorationNameLabel.Text = "Error Loading Decoration";
+                    CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
                 }
+            }
+            else
+            {
+                // In case there's no image URL, set a default error message
+                _decorationImage.Texture = null;
+                AdjustImageSize(null);
+
+                // Update the label text if no image is provided
+                decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+                CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
             }
         }
 
@@ -435,15 +438,27 @@ namespace Gw2DecorBlishhudModule
 
         private void CenterTextInParent(Label label, Control parent)
         {
-            var font = GameService.Content.DefaultFont32;
+            var font = GameService.Content.DefaultFont18;
             var textSize = font.MeasureString(label.Text);
             float textWidth = textSize.Width;
 
             int parentWidth = parent.Width;
 
-            int startX = (450 + parentWidth - (int)textWidth) / 2;
+            int startX = (460 + parentWidth - (int)textWidth) / 2;
+            if (label.Text == "Loading...")
+            {
+                label.Location = new Point(startX, label.Location.Y + 300);
+            }
+            else
+            {
+                label.Location = new Point(startX, label.Location.Y);
+            }
+        }
 
-            label.Location = new Point(startX, label.Location.Y);
+        private void PositionTextAboveImage(Label text, Image image)
+        {
+            int textY = image.Location.Y - text.Height + 30; // Place text 10 pixels above the image
+            text.Location = new Point(text.Location.X, textY); // Keep the original X position
         }
 
         private void CenterImageInParent(Image image, Control parent)
@@ -456,6 +471,12 @@ namespace Gw2DecorBlishhudModule
 
         private void AdjustImageSize(Texture2D loadedTexture)
         {
+            if (loadedTexture == null)
+            {
+                // If the texture is null, just return without making any adjustments
+                return;
+            }
+
             int maxDimension = 500;
             float aspectRatio = (float)loadedTexture.Width / loadedTexture.Height;
 
@@ -474,5 +495,6 @@ namespace Gw2DecorBlishhudModule
 
             _decorationImage.Size = new Point(targetWidth, targetHeight);
         }
+
     }
 }
