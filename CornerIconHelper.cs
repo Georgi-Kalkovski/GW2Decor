@@ -24,14 +24,13 @@ namespace Gw2DecorBlishhudModule
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Size = new Point(32, 32),
-                Location = new Point(iconPosition.X + 36, iconPosition.Y), // Adjust spinner position near the icon
+                Location = new Point(iconPosition.X + 36, iconPosition.Y),
                 Visible = true
             };
 
             return loadingIcon;
         }
 
-        // Method to create the final icon without spinner
         public static CornerIcon CreateFinalIcon(Texture2D gw2DecorTexture, StandardWindow gw2DecorWindow)
         {
             var finalIcon = new CornerIcon()
