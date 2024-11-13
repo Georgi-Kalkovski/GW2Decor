@@ -8,37 +8,43 @@ namespace Gw2DecorBlishhudModule
 {
     public static class CornerIconHelper
     {
-        public static CornerIcon CreateCornerIconWithContextMenu(Texture2D mugTexture, StandardWindow gw2DecorWindow, out LoadingSpinner loadingSpinner)
+        public static CornerIcon CreateLoadingIcon(Texture2D gw2DecorTexture, StandardWindow gw2DecorWindow, out LoadingSpinner loadingSpinner)
         {
-            // Create and configure the corner icon
-            var cornerIcon = new CornerIcon()
+            var loadingIcon = new CornerIcon()
             {
-                Icon = mugTexture,
-                BasicTooltipText = $"{gw2DecorWindow?.Title}",
+                Icon = gw2DecorTexture,
+                BasicTooltipText = "Loading GW2 Decor...",
                 Priority = 1645843523,
                 Parent = GameService.Graphics.SpriteScreen
             };
 
-            // Calculate the spinner position to overlay it on the corner icon
-            var cornerIconPosition = cornerIcon.AbsoluteBounds.Location;
+            var iconPosition = loadingIcon.AbsoluteBounds.Location;
 
-            // Initialize the loading spinner on the main screen at the corner icon's position
             loadingSpinner = new LoadingSpinner()
             {
-                Parent = GameService.Graphics.SpriteScreen,  // Attach to the main screen instead
-                Size = new Point(32, 32),                    // Set to 32x32 for matching icon size
-                Location = cornerIconPosition,               // Position to overlay the corner icon
-                Visible = true                               // Initially visible
+                Parent = GameService.Graphics.SpriteScreen,
+                Size = new Point(32, 32),
+                Location = new Point(iconPosition.X + 36, iconPosition.Y), // Adjust spinner position near the icon
+                Visible = true
             };
 
-            // Click action for the corner icon
-            cornerIcon.Click += (s, e) => gw2DecorWindow.ToggleWindow();
+            return loadingIcon;
+        }
 
-            // Add context menu to the corner icon
-            var contextMenuStrip = new ContextMenuStrip();
-            cornerIcon.Menu = contextMenuStrip;
+        // Method to create the final icon without spinner
+        public static CornerIcon CreateFinalIcon(Texture2D gw2DecorTexture, StandardWindow gw2DecorWindow)
+        {
+            var finalIcon = new CornerIcon()
+            {
+                Icon = gw2DecorTexture,
+                BasicTooltipText = $"{gw2DecorWindow?.Title}",
+                Priority = 1645843524,
+                Parent = GameService.Graphics.SpriteScreen
+            };
 
-            return cornerIcon;
+            finalIcon.Click += (s, e) => gw2DecorWindow.ToggleWindow();
+
+            return finalIcon;
         }
     }
 }

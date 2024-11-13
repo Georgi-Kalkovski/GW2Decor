@@ -10,7 +10,6 @@ using Blish_HUD.Content;
 using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
-using Blish_HUD.Settings;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
@@ -33,15 +32,6 @@ namespace Gw2DecorBlishhudModule
         private StandardWindow _gw2DecorWindow;
         private LoadingSpinner _loadingSpinner;
 
-        // Settings entries
-        private SettingEntry<bool> _boolGw2DecorSetting;
-        private SettingEntry<int> _valueRangeGw2DecorSetting;
-        private SettingEntry<int> _hiddenIntGw2DecorSetting;
-        private SettingEntry<int> _hiddenIntGw2DecorSetting2;
-        private SettingEntry<string> _stringGw2DecorSetting;
-        private SettingEntry<ColorType> _enumGw2DecorSetting;
-        private SettingCollection _internalGw2DecorSettingSubCollection;
-
         internal static Gw2DecorModule Gw2DecorModuleInstance;
 
         internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
@@ -55,42 +45,38 @@ namespace Gw2DecorBlishhudModule
             Gw2DecorModuleInstance = this;
         }
 
-        protected override void DefineSettings(SettingCollection settings)
-        {
-            Gw2DecorSettings.Define(settings);
-        }
-
         protected override async Task LoadAsync()
         {
-            foreach (string directoryName in DirectoriesManager.RegisteredDirectories)
-            {
-                string fullDirectoryPath = DirectoriesManager.GetFullDirectoryPath(directoryName);
-                var allFiles = Directory.EnumerateFiles(fullDirectoryPath, "*", SearchOption.AllDirectories).ToList();
-
-                Logger.Info($"'{directoryName}' can be found at '{fullDirectoryPath}' and has {allFiles.Count} total files within it.");
-            }
-
+            // Step 1: Load the texture for the icons
             _homesteadTexture = ContentsManager.GetTexture("test/homestead_icon.png");
 
-            _cornerIcon = CornerIconHelper.CreateCornerIconWithContextMenu(_homesteadTexture, _gw2DecorWindow, out _loadingSpinner);
+            // Step 2: Create the initial loading icon with spinner
+            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadTexture, _gw2DecorWindow, out _loadingSpinner);
 
-            await Task.Delay(2000);
+            // Step 3: Show the spinner and initial icon while other assets are loading
+            _loadingSpinner.Visible = true;
 
+            // Step 4: Load the rest of the assets asynchronously
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
-
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
+            // Step 5: Hide the initial icon and spinner after loading completes
+            _cornerIcon.Visible = false;
             _loadingSpinner.Visible = false;
 
+            // Step 6: Create the final icon without the spinner
+            var finalIcon = CornerIconHelper.CreateFinalIcon(_homesteadTexture, _gw2DecorWindow);
         }
+
 
         protected override void Unload()
         {
+            _loadingSpinner?.Dispose();
+            _homesteadTexture?.Dispose();
+            _gw2DecorWindow?.Dispose();
             _cornerIcon?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
-            _loadingSpinner?.Dispose();
-            _homesteadTexture?.Dispose();
             Gw2DecorModuleInstance = null;
         }
 
@@ -167,7 +153,7 @@ namespace Gw2DecorBlishhudModule
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
-                await FilterDecorations(decorationsFlowPanel, searchText);  // Await the method here
+                await FilterDecorations(decorationsFlowPanel, searchText);
             };
 
             _gw2DecorWindow.Show();
@@ -324,17 +310,13 @@ namespace Gw2DecorBlishhudModule
             {
                 try
                 {
-                    // Fetch the image asynchronously
                     var imageResponse = await client.GetByteArrayAsync(decoration.ImageUrl);
 
-                    // Process the image once it's loaded
                     using (var memoryStream = new MemoryStream(imageResponse))
                     using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
                     {
-                        // Load the original image texture
                         var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
-                        // Apply border to the image (if needed)
                         int borderWidth = 15;
                         Color innerBorderColor = new Color(86, 76, 55);
                         Color outerBorderColor = Color.Black;
@@ -345,7 +327,6 @@ namespace Gw2DecorBlishhudModule
                         var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
                         Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
 
-                        // Apply gradient border effect
                         for (int y = 0; y < borderedHeight; y++)
                         {
                             for (int x = 0; x < borderedWidth; x++)
@@ -363,7 +344,6 @@ namespace Gw2DecorBlishhudModule
                             }
                         }
 
-                        // Add original image data to the bordered texture
                         Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
                         originalTexture.GetData(originalColorData);
 
@@ -376,19 +356,15 @@ namespace Gw2DecorBlishhudModule
                             }
                         }
 
-                        // Set the processed (bordered) texture to the decoration image
                         borderedTexture.SetData(borderedColorData);
                         _decorationImage.Texture = borderedTexture;
 
-                        // Adjust the image size
                         AdjustImageSize(borderedTexture);
                         CenterImageInParent(_decorationImage, _gw2DecorWindow);
 
-                        // Now that the image is fully processed, update the label text
                         decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
                         CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
 
-                        // Optionally position the text above the image
                         PositionTextAboveImage(decorationNameLabel, _decorationImage);
                     }
                 }
@@ -396,14 +372,12 @@ namespace Gw2DecorBlishhudModule
                 {
                     Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
 
-                    // In case of error, set a default error message
                     decorationNameLabel.Text = "Error Loading Decoration";
                     CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
                 }
             }
             else
             {
-                // In case there's no image URL, set a default error message
                 _decorationImage.Texture = null;
                 AdjustImageSize(null);
 
@@ -457,8 +431,8 @@ namespace Gw2DecorBlishhudModule
 
         private void PositionTextAboveImage(Label text, Image image)
         {
-            int textY = image.Location.Y - text.Height + 30; // Place text 10 pixels above the image
-            text.Location = new Point(text.Location.X, textY); // Keep the original X position
+            int textY = image.Location.Y - text.Height + 30;
+            text.Location = new Point(text.Location.X, textY);
         }
 
         private void CenterImageInParent(Image image, Control parent)
