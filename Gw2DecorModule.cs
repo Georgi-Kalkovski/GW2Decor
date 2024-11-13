@@ -310,7 +310,7 @@ namespace Gw2DecorBlishhudModule
         {
             // Initially set the label text to "Loading..." and clear any previous image
             var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
-            decorationNameLabel.Text = "Loading...";
+            decorationNameLabel.Text = "";
 
             // Center the label while it displays "Loading..."
             CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
