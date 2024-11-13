@@ -24,7 +24,6 @@ namespace Gw2DecorBlishhudModule
 
         private static readonly HttpClient client = new HttpClient();
 
-        // Images and other resources
         private Image _decorationIcon;
         private Image _decorationImage;
         private Texture2D _homesteadTexture;
@@ -47,24 +46,18 @@ namespace Gw2DecorBlishhudModule
 
         protected override async Task LoadAsync()
         {
-            // Step 1: Load the texture for the icons
             _homesteadTexture = ContentsManager.GetTexture("test/homestead_icon.png");
 
-            // Step 2: Create the initial loading icon with spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadTexture, _gw2DecorWindow, out _loadingSpinner);
 
-            // Step 3: Show the spinner and initial icon while other assets are loading
             _loadingSpinner.Visible = true;
 
-            // Step 4: Load the rest of the assets asynchronously
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
-            // Step 5: Hide the initial icon and spinner after loading completes
             _cornerIcon.Visible = false;
             _loadingSpinner.Visible = false;
 
-            // Step 6: Create the final icon without the spinner
             var finalIcon = CornerIconHelper.CreateFinalIcon(_homesteadTexture, _gw2DecorWindow);
         }
 
