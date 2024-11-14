@@ -1,8 +1,8 @@
 {
-  "name": "Decor",
+  "name": "Gw2Decor",
   "version": "0.3.0",
-  "namespace": "bh.decor.decormodule",
-  "package": "DecorBlishhudModule.dll",
+  "namespace": "bh.gw2decor.gw2decormodule",
+  "package": "Gw2DecorBlishhudModule.dll",
   "manifest_version": 1,
 
   "description": "Allows players to have a simple decoration previewer for the homestead. The mod use the images from GW2 Wiki.",
@@ -18,6 +18,6 @@
     }
   ],
 
-  "directories": [ "decor-module-data" ],
+  "directories": [ "gw2decor-module-data" ],
   "enabled_without_gw2": false
 }
