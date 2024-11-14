@@ -86,7 +86,7 @@ namespace Gw2DecorBlishhudModule
                 new Point(1100, 800))
             {
                 Parent = GameService.Graphics.SpriteScreen,
-                Title = "GW2Decor",
+                Title = "Decor",
                 Emblem = _homesteadTexture,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
