@@ -30,6 +30,7 @@ namespace Gw2DecorBlishhudModule
         private CornerIcon _cornerIcon;
         private StandardWindow _gw2DecorWindow;
         private LoadingSpinner _loadingSpinner;
+        private SignatureLabelManager _signatureLabelManager;
 
         internal static Gw2DecorModule Gw2DecorModuleInstance;
 
@@ -59,6 +60,8 @@ namespace Gw2DecorBlishhudModule
             _loadingSpinner.Visible = false;
 
             var finalIcon = CornerIconHelper.CreateFinalIcon(_homesteadTexture, _gw2DecorWindow);
+
+            _signatureLabelManager = new SignatureLabelManager(_gw2DecorWindow);
         }
 
 
@@ -111,14 +114,16 @@ namespace Gw2DecorBlishhudModule
 
             var decorationRightText = new Label
             {
-                Text = "Select a decoration",
                 Parent = _gw2DecorWindow,
                 Width = 500,
                 Height = 120,
+                WrapText = true,
+                StrokeText = true,
+                ShowShadow = true,
+                ShadowColor = new Color(0, 0, 0),
                 Font = GameService.Content.DefaultFont18
             };
 
-            // Center the label within the parent window
             CenterTextInParent(decorationRightText, _gw2DecorWindow);
 
             _decorationIcon = new Image
@@ -135,14 +140,12 @@ namespace Gw2DecorBlishhudModule
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            // Fetch categories asynchronously (parallelizing)
             List<string> categories = Categories.GetCategories();
             foreach (string category in categories)
             {
                 await ProcessCategoryAsync(category, decorationsFlowPanel);
             }
 
-            // Handle search text box input to filter decorations
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
@@ -160,7 +163,6 @@ namespace Gw2DecorBlishhudModule
             string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead/{formattedCategoryName}&format=json&prop=text";
             var decorations = await DecorationFetcher.FetchDecorationsAsync(categoryUrl);
 
-            // If there are no decorations, skip creating a panel for this category
             if (!decorations.Any())
             {
                 Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
@@ -178,13 +180,11 @@ namespace Gw2DecorBlishhudModule
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 Width = decorationsFlowPanel.Width - 20,
                 Height = calculatedHeight,
-                CanCollapse = true,
-                CanScroll = false,
+                CanCollapse = false,
                 Parent = decorationsFlowPanel,
                 ControlPadding = new Vector2(4, 4)
             };
 
-            // Create decoration icons concurrently
             var decorationIconTasks = decorations.Where(d => !string.IsNullOrEmpty(d.IconUrl))
                 .Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel))
                 .ToList();
@@ -204,7 +204,6 @@ namespace Gw2DecorBlishhudModule
                 {
                     var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
-                    // Create a border panel to wrap the icon
                     var borderPanel = new Panel
                     {
                         Size = new Point(49, 49),
@@ -212,7 +211,6 @@ namespace Gw2DecorBlishhudModule
                         Parent = categoryFlowPanel
                     };
 
-                    // Create the decoration icon with padding inside the border panel
                     var decorationIconImage = new Image(iconTexture)
                     {
                         BasicTooltipText = decoration.Name,
@@ -287,18 +285,14 @@ namespace Gw2DecorBlishhudModule
         // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
-            // Initially set the label text to "Loading..." and clear any previous image
             var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
-            // Center the label while it displays "Loading..."
             CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
 
-            // Clear the old image
             _decorationImage.Texture = null;
             AdjustImageSize(null);
 
-            // Update the decoration image
             if (!string.IsNullOrEmpty(decoration.ImageUrl))
             {
                 try
@@ -374,7 +368,6 @@ namespace Gw2DecorBlishhudModule
                 _decorationImage.Texture = null;
                 AdjustImageSize(null);
 
-                // Update the label text if no image is provided
                 decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
                 CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
             }
@@ -440,7 +433,6 @@ namespace Gw2DecorBlishhudModule
         {
             if (loadedTexture == null)
             {
-                // If the texture is null, just return without making any adjustments
                 return;
             }
 

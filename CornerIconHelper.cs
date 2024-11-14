@@ -15,7 +15,8 @@ namespace Gw2DecorBlishhudModule
                 Icon = gw2DecorTexture,
                 BasicTooltipText = "Loading GW2 Decor...",
                 Priority = 1645843523,
-                Parent = GameService.Graphics.SpriteScreen
+                Parent = GameService.Graphics.SpriteScreen,
+                Opacity = 0.7f
             };
 
             var iconPosition = loadingIcon.AbsoluteBounds.Location;
