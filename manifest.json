@@ -17,7 +17,5 @@
       "url": "https://github.com/Georgi-Kalkovski"
     }
   ],
-
-  "directories": [ "decor-module-data" ],
   "enabled_without_gw2": false
 }
