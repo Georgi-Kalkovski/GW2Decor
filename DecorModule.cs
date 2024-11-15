@@ -15,24 +15,25 @@ using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
-namespace Gw2DecorBlishhudModule
+namespace DecorBlishhudModule
 {
     [Export(typeof(Module))]
-    public class Gw2DecorModule : Module
+    public class DecorModule : Module
     {
-        private static readonly Logger Logger = Logger.GetLogger<Gw2DecorModule>();
+        private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
         private static readonly HttpClient client = new HttpClient();
 
         private Image _decorationIcon;
         private Image _decorationImage;
-        private Texture2D _homesteadTexture;
+        private Texture2D _homesteadIconTexture;
+        private Texture2D _homesteadBigIconTexture;
         private CornerIcon _cornerIcon;
-        private StandardWindow _gw2DecorWindow;
+        private StandardWindow _decorWindow;
         private LoadingSpinner _loadingSpinner;
         private SignatureLabelManager _signatureLabelManager;
 
-        internal static Gw2DecorModule Gw2DecorModuleInstance;
+        internal static DecorModule DecorModuleInstance;
 
         internal SettingsManager SettingsManager => this.ModuleParameters.SettingsManager;
         internal ContentsManager ContentsManager => this.ModuleParameters.ContentsManager;
@@ -40,46 +41,60 @@ namespace Gw2DecorBlishhudModule
         internal Gw2ApiManager Gw2ApiManager => this.ModuleParameters.Gw2ApiManager;
 
         [ImportingConstructor]
-        public Gw2DecorModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters)
+        public DecorModule([Import("ModuleParameters")] ModuleParameters moduleParameters) : base(moduleParameters)
         {
-            Gw2DecorModuleInstance = this;
+            DecorModuleInstance = this;
         }
 
         protected override async Task LoadAsync()
         {
-            _homesteadTexture = ContentsManager.GetTexture("test/homestead_icon.png");
+            _homesteadIconTexture = ContentsManager.GetTexture("test/homestead_icon.png");
+            _homesteadBigIconTexture = ContentsManager.GetTexture("test/homestead_big_icon.png");
 
-            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadTexture, _gw2DecorWindow, out _loadingSpinner);
+            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
 
             _loadingSpinner.Visible = true;
 
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
-            _cornerIcon.Visible = false;
             _loadingSpinner.Visible = false;
 
-            var finalIcon = CornerIconHelper.CreateFinalIcon(_homesteadTexture, _gw2DecorWindow);
+            _cornerIcon.Click += (s, e) =>
+            {
+                if (_decorWindow != null)
+                {
+                    if (_decorWindow.Visible)
+                    {
+                        _decorWindow.Hide();
+                    }
+                    else
+                    {
+                        _decorWindow.Show();
+                    }
+                }
+            };
 
-            _signatureLabelManager = new SignatureLabelManager(_gw2DecorWindow);
+            _signatureLabelManager = new SignatureLabelManager(_decorWindow);
         }
 
 
         protected override void Unload()
         {
             _loadingSpinner?.Dispose();
-            _homesteadTexture?.Dispose();
-            _gw2DecorWindow?.Dispose();
+            _homesteadIconTexture?.Dispose();
+            _homesteadBigIconTexture?.Dispose();
             _cornerIcon?.Dispose();
+            _decorWindow?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
-            Gw2DecorModuleInstance = null;
+            DecorModuleInstance = null;
         }
 
         // CREATE GW2 STYLE WINDOW
         private async Task CreateGw2StyleWindowThatDisplaysAllDecorations(AsyncTexture2D windowBackgroundTexture)
         {
-            _gw2DecorWindow = new StandardWindow(
+            _decorWindow = new StandardWindow(
                 windowBackgroundTexture,
                 new Rectangle(25, 26, 555, 640),
                 new Rectangle(40, 50, 550, 640),
@@ -87,16 +102,16 @@ namespace Gw2DecorBlishhudModule
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Title = "Decor",
-                Emblem = _homesteadTexture,
+                Emblem = _homesteadIconTexture,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
                 SavesPosition = true,
-                Id = $"{nameof(Gw2DecorModule)}_Decoration_Window"
+                Id = $"{nameof(DecorModule)}_Decoration_Window"
             };
 
             var searchTextBox = new TextBox
             {
-                Parent = _gw2DecorWindow,
+                Parent = _decorWindow,
                 Location = new Point(10, 0),
                 Width = 200,
                 PlaceholderText = "Search Decorations..."
@@ -108,13 +123,13 @@ namespace Gw2DecorBlishhudModule
                 Width = 500,
                 Height = 640,
                 CanScroll = true,
-                Parent = _gw2DecorWindow,
+                Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10)
             };
 
             var decorationRightText = new Label
             {
-                Parent = _gw2DecorWindow,
+                Parent = _decorWindow,
                 Width = 500,
                 Height = 120,
                 WrapText = true,
@@ -124,19 +139,19 @@ namespace Gw2DecorBlishhudModule
                 Font = GameService.Content.DefaultFont18
             };
 
-            CenterTextInParent(decorationRightText, _gw2DecorWindow);
+            CenterTextInParent(decorationRightText, _decorWindow);
 
             _decorationIcon = new Image
             {
                 Size = new Point(40, 40),
-                Parent = _gw2DecorWindow,
+                Parent = _decorWindow,
                 Location = new Point(decorationRightText.Left, decorationRightText.Bottom + 5)
             };
 
             _decorationImage = new Image
             {
                 Size = new Point(400, 400),
-                Parent = _gw2DecorWindow,
+                Parent = _decorWindow,
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
@@ -152,7 +167,7 @@ namespace Gw2DecorBlishhudModule
                 await FilterDecorations(decorationsFlowPanel, searchText);
             };
 
-            _gw2DecorWindow.Show();
+            _decorWindow.Show();
         }
 
         // Left Panel Operations
@@ -285,10 +300,10 @@ namespace Gw2DecorBlishhudModule
         // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
-            var decorationNameLabel = _gw2DecorWindow.Children.OfType<Label>().FirstOrDefault();
+            var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
-            CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
+            CenterTextInParent(decorationNameLabel, _decorWindow);
 
             _decorationImage.Texture = null;
             AdjustImageSize(null);
@@ -347,10 +362,10 @@ namespace Gw2DecorBlishhudModule
                         _decorationImage.Texture = borderedTexture;
 
                         AdjustImageSize(borderedTexture);
-                        CenterImageInParent(_decorationImage, _gw2DecorWindow);
+                        CenterImageInParent(_decorationImage, _decorWindow);
 
                         decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-                        CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
+                        CenterTextInParent(decorationNameLabel, _decorWindow);
 
                         PositionTextAboveImage(decorationNameLabel, _decorationImage);
                     }
@@ -360,7 +375,7 @@ namespace Gw2DecorBlishhudModule
                     Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
 
                     decorationNameLabel.Text = "Error Loading Decoration";
-                    CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
+                    CenterTextInParent(decorationNameLabel, _decorWindow);
                 }
             }
             else
@@ -369,7 +384,7 @@ namespace Gw2DecorBlishhudModule
                 AdjustImageSize(null);
 
                 decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-                CenterTextInParent(decorationNameLabel, _gw2DecorWindow);
+                CenterTextInParent(decorationNameLabel, _decorWindow);
             }
         }
 

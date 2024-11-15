@@ -2,7 +2,7 @@
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 
-namespace Gw2DecorBlishhudModule
+namespace DecorBlishhudModule
 {
     public class SignatureLabelManager
     {

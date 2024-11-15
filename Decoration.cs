@@ -1,9 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-
-namespace Gw2DecorBlishhudModule
+﻿namespace DecorBlishhudModule
 {
     // Decoration class for JSON deserialization
     public class Decoration

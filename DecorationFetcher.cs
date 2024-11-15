@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Gw2DecorBlishhudModule
+namespace DecorBlishhudModule
 {
     public class DecorationFetcher
     {

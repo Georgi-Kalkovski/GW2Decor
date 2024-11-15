@@ -4,22 +4,22 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Gw2DecorBlishhudModule
+namespace DecorBlishhudModule
 {
     public static class CornerIconHelper
     {
-        public static CornerIcon CreateLoadingIcon(Texture2D gw2DecorTexture, StandardWindow gw2DecorWindow, out LoadingSpinner loadingSpinner)
+        public static CornerIcon CreateLoadingIcon(Texture2D _homesteadIconTexture, Texture2D _homesteadBigIconTexture, StandardWindow decorWindow, out LoadingSpinner loadingSpinner)
         {
-            var loadingIcon = new CornerIcon()
+            var icon = new CornerIcon()
             {
-                Icon = gw2DecorTexture,
-                BasicTooltipText = "Loading GW2 Decor...",
+                Icon = _homesteadIconTexture,
+                BasicTooltipText = "Decor",
                 Priority = 1645843523,
                 Parent = GameService.Graphics.SpriteScreen,
-                Opacity = 0.7f
+                HoverIcon = _homesteadBigIconTexture,
             };
 
-            var iconPosition = loadingIcon.AbsoluteBounds.Location;
+            var iconPosition = icon.AbsoluteBounds.Location;
 
             loadingSpinner = new LoadingSpinner()
             {
@@ -29,22 +29,7 @@ namespace Gw2DecorBlishhudModule
                 Visible = true
             };
 
-            return loadingIcon;
-        }
-
-        public static CornerIcon CreateFinalIcon(Texture2D gw2DecorTexture, StandardWindow gw2DecorWindow)
-        {
-            var finalIcon = new CornerIcon()
-            {
-                Icon = gw2DecorTexture,
-                BasicTooltipText = $"{gw2DecorWindow?.Title}",
-                Priority = 1645843524,
-                Parent = GameService.Graphics.SpriteScreen
-            };
-
-            finalIcon.Click += (s, e) => gw2DecorWindow.ToggleWindow();
-
-            return finalIcon;
+            return icon;
         }
     }
 }

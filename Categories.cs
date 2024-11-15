@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Gw2DecorBlishhudModule
+namespace DecorBlishhudModule
 {
     public static class Categories
     {
