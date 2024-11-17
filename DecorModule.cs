@@ -32,6 +32,7 @@ namespace DecorBlishhudModule
         private StandardWindow _decorWindow;
         private LoadingSpinner _loadingSpinner;
         private SignatureLabelManager _signatureLabelManager;
+        private WikiLicenseLabelManager _wikiLicenseManager;
 
         internal static DecorModule DecorModuleInstance;
 
@@ -76,6 +77,7 @@ namespace DecorBlishhudModule
             };
 
             _signatureLabelManager = new SignatureLabelManager(_decorWindow);
+            _wikiLicenseManager = new WikiLicenseLabelManager(_decorWindow);
         }
 
 
@@ -121,7 +123,7 @@ namespace DecorBlishhudModule
             {
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 Width = 500,
-                Height = 640,
+                Height = 660,
                 CanScroll = true,
                 Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10)
@@ -166,8 +168,6 @@ namespace DecorBlishhudModule
                 string searchText = searchTextBox.Text.ToLower();
                 await FilterDecorations(decorationsFlowPanel, searchText);
             };
-
-            _decorWindow.Show();
         }
 
         // Left Panel Operations
