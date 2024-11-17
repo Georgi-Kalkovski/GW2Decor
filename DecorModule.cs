@@ -122,6 +122,7 @@ namespace DecorBlishhudModule
             var decorationsFlowPanel = new FlowPanel
             {
                 FlowDirection = ControlFlowDirection.LeftToRight,
+                ShowBorder = true,
                 Width = 500,
                 Height = 660,
                 CanScroll = true,
