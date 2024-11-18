@@ -297,6 +297,29 @@ namespace DecorBlishhudModule
             decorationsFlowPanel.Invalidate();
         }
 
+        private Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel)
+        {
+            int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
+
+            if (visibleDecorationCount == 0)
+            {
+                categoryFlowPanel.Height = 45;
+            }
+            else
+            {
+                int baseHeight = 45;
+                int heightIncrementPerDecorationSet = 52;
+                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / 9.0);
+                int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
+
+                categoryFlowPanel.Height = calculatedHeight;
+
+                categoryFlowPanel.Invalidate();
+            }
+
+            return Task.CompletedTask;
+        }
+
         // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
@@ -388,29 +411,6 @@ namespace DecorBlishhudModule
             }
         }
 
-        private Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel)
-        {
-            int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
-
-            if (visibleDecorationCount == 0)
-            {
-                categoryFlowPanel.Height = 45;
-            }
-            else
-            {
-                int baseHeight = 45;
-                int heightIncrementPerDecorationSet = 52;
-                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / 9.0);
-                int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
-
-                categoryFlowPanel.Height = calculatedHeight;
-
-                categoryFlowPanel.Invalidate();
-            }
-
-            return Task.CompletedTask;
-        }
-
         private void CenterTextInParent(Label label, Control parent)
         {
             var font = GameService.Content.DefaultFont18;
@@ -469,6 +469,5 @@ namespace DecorBlishhudModule
 
             _decorationImage.Size = new Point(targetWidth, targetHeight);
         }
-
     }
 }
