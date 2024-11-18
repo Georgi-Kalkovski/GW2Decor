@@ -59,6 +59,16 @@ namespace DecorBlishhudModule
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
+            // Adding default Image loaded
+            var homesteadImagePlaceholder = new Decoration
+            {
+                Name = "Welcome to Decor. Enjoy your stay!",
+                IconUrl = null,
+                ImageUrl = "https://i.imgur.com/VBAy1WA.jpeg"
+            };
+
+            await UpdateDecorationImageAsync(homesteadImagePlaceholder);
+
             _loadingSpinner.Visible = false;
 
             _cornerIcon.Click += (s, e) =>
@@ -142,7 +152,7 @@ namespace DecorBlishhudModule
                 Font = GameService.Content.DefaultFont18
             };
 
-            CenterTextInParent(decorationRightText, _decorWindow);
+            RightSideMethods.CenterTextInParent(decorationRightText, _decorWindow);
 
             _decorationIcon = new Image
             {
@@ -167,7 +177,7 @@ namespace DecorBlishhudModule
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
-                await FilterDecorations(decorationsFlowPanel, searchText);
+                await LeftSideMethods.FilterDecorations(decorationsFlowPanel, searchText);
             };
         }
 
@@ -247,67 +257,16 @@ namespace DecorBlishhudModule
             }
         }
 
-        private async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
-        {
-            searchText = searchText.ToLower();
-
-            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
-            {
-                bool hasVisibleDecoration = false;
-
-                var visibleDecorations = new List<Panel>();
-
-                foreach (var decorationIconPanel in categoryFlowPanel.Children.OfType<Panel>())
-                {
-                    var decorationIcon = decorationIconPanel.Children.OfType<Image>().FirstOrDefault();
-
-                    if (decorationIcon != null)
-                    {
-                        bool matchesSearch = decorationIcon.BasicTooltipText?.ToLower().Contains(searchText) ?? false;
-
-                        decorationIconPanel.Visible = matchesSearch;
-
-                        if (matchesSearch)
-                        {
-                            visibleDecorations.Add(decorationIconPanel);
-                            hasVisibleDecoration = true;
-                        }
-                    }
-                }
-
-                categoryFlowPanel.Visible = hasVisibleDecoration;
-
-                if (hasVisibleDecoration)
-                {
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Remove(visibleDecoration);
-                    }
-
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Insert(0, visibleDecoration);
-                    }
-
-                    await AdjustCategoryHeightAsync(categoryFlowPanel);
-
-                    categoryFlowPanel.Invalidate();
-                }
-            }
-
-            decorationsFlowPanel.Invalidate();
-        }
-
         // Right Panel Operations
         private async Task UpdateDecorationImageAsync(Decoration decoration)
         {
             var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
-            CenterTextInParent(decorationNameLabel, _decorWindow);
+            RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
 
             _decorationImage.Texture = null;
-            AdjustImageSize(null);
+            RightSideMethods.AdjustImageSize(null,null);
 
             if (!string.IsNullOrEmpty(decoration.ImageUrl))
             {
@@ -362,13 +321,13 @@ namespace DecorBlishhudModule
                         borderedTexture.SetData(borderedColorData);
                         _decorationImage.Texture = borderedTexture;
 
-                        AdjustImageSize(borderedTexture);
-                        CenterImageInParent(_decorationImage, _decorWindow);
+                        RightSideMethods.AdjustImageSize(borderedTexture , _decorationImage);
+                        RightSideMethods.CenterImageInParent(_decorationImage, _decorWindow);
 
-                        decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-                        CenterTextInParent(decorationNameLabel, _decorWindow);
+                        decorationNameLabel.Text = decoration.Name.Replace(" ", " 🚪 ") ?? "Unknown Decoration";
+                        RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
 
-                        PositionTextAboveImage(decorationNameLabel, _decorationImage);
+                        RightSideMethods.PositionTextAboveImage(decorationNameLabel, _decorationImage);
                     }
                 }
                 catch (Exception ex)
@@ -376,100 +335,17 @@ namespace DecorBlishhudModule
                     Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
 
                     decorationNameLabel.Text = "Error Loading Decoration";
-                    CenterTextInParent(decorationNameLabel, _decorWindow);
+                    RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
                 }
             }
             else
             {
                 _decorationImage.Texture = null;
-                AdjustImageSize(null);
+                RightSideMethods.AdjustImageSize(null, null);
 
                 decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-                CenterTextInParent(decorationNameLabel, _decorWindow);
+                RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
             }
         }
-
-        private Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel)
-        {
-            int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
-
-            if (visibleDecorationCount == 0)
-            {
-                categoryFlowPanel.Height = 45;
-            }
-            else
-            {
-                int baseHeight = 45;
-                int heightIncrementPerDecorationSet = 52;
-                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / 9.0);
-                int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
-
-                categoryFlowPanel.Height = calculatedHeight;
-
-                categoryFlowPanel.Invalidate();
-            }
-
-            return Task.CompletedTask;
-        }
-
-        private void CenterTextInParent(Label label, Control parent)
-        {
-            var font = GameService.Content.DefaultFont18;
-            var textSize = font.MeasureString(label.Text);
-            float textWidth = textSize.Width;
-
-            int parentWidth = parent.Width;
-
-            int startX = (460 + parentWidth - (int)textWidth) / 2;
-            if (label.Text == "Loading...")
-            {
-                label.Location = new Point(startX, label.Location.Y + 300);
-            }
-            else
-            {
-                label.Location = new Point(startX, label.Location.Y);
-            }
-        }
-
-        private void PositionTextAboveImage(Label text, Image image)
-        {
-            int textY = image.Location.Y - text.Height + 30;
-            text.Location = new Point(text.Location.X, textY);
-        }
-
-        private void CenterImageInParent(Image image, Control parent)
-        {
-            int centerX = (parent.Width - image.Size.X) / 2;
-            int centerY = (parent.Height - image.Size.Y) / 2;
-
-            image.Location = new Point(centerX + 230, centerY - 40);
-        }
-
-        private void AdjustImageSize(Texture2D loadedTexture)
-        {
-            if (loadedTexture == null)
-            {
-                return;
-            }
-
-            int maxDimension = 500;
-            float aspectRatio = (float)loadedTexture.Width / loadedTexture.Height;
-
-            int targetWidth, targetHeight;
-
-            if (loadedTexture.Width > loadedTexture.Height)
-            {
-                targetWidth = maxDimension;
-                targetHeight = (int)(maxDimension / aspectRatio);
-            }
-            else
-            {
-                targetHeight = maxDimension;
-                targetWidth = (int)(maxDimension * aspectRatio);
-            }
-
-            _decorationImage.Size = new Point(targetWidth, targetHeight);
-        }
-
     }
 }
