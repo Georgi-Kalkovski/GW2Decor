@@ -60,14 +60,14 @@ namespace DecorBlishhudModule
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
             // Adding default Image loaded
-            //var kodanPainting = new Decoration
-            //{
-            //    Name = "Kodan Painting",
-            //    IconUrl = "https://wiki.guildwars2.com/images/0/0b/Kodan_Painting.png",
-            //    ImageUrl = "https://wiki.guildwars2.com/images/5/55/Kodan_Painting.jpg"
-            //};
-            //
-            //await UpdateDecorationImageAsync(kodanPainting);
+            var homesteadImagePlaceholder = new Decoration
+            {
+                Name = "Welcome to Decor. Enjoy your stay!",
+                IconUrl = null,
+                ImageUrl = "https://i.imgur.com/VBAy1WA.jpeg"
+            };
+
+            await UpdateDecorationImageAsync(homesteadImagePlaceholder);
 
             _loadingSpinner.Visible = false;
 
@@ -324,7 +324,7 @@ namespace DecorBlishhudModule
                         RightSideMethods.AdjustImageSize(borderedTexture , _decorationImage);
                         RightSideMethods.CenterImageInParent(_decorationImage, _decorWindow);
 
-                        decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
+                        decorationNameLabel.Text = decoration.Name.Replace(" ", " 🚪 ") ?? "Unknown Decoration";
                         RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
 
                         RightSideMethods.PositionTextAboveImage(decorationNameLabel, _decorationImage);
