@@ -6,17 +6,21 @@ using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Blish_HUD;
+using System.IO;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DecorBlishhudModule
 {
     public class DecorationFetcher
     {
         private static readonly HttpClient client = new HttpClient();
+        private static readonly Dictionary<string, Texture2D> IconCache = new();  // Cache for icons
 
         public static async Task<List<Decoration>> FetchDecorationsAsync(string url)
         {
             var decorations = new List<Decoration>();
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Linux; Android 5.0.1; GT-I9505 Build/LRX22C) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.98 Mobile Safari/537.36");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
 
             // Fetch JSON data
             var json = await client.GetStringAsync(url);
@@ -43,7 +47,6 @@ namespace DecorBlishhudModule
                     var nameNode = item.InnerText;
                     if (nameNode != null)
                     {
-                        // Directly access the InnerText of the <a> element to get the name
                         decoration.Name = nameNode.Trim().Replace("\u00A0", " ").Replace("&nbsp;", "").Trim();
                     }
 
@@ -87,12 +90,27 @@ namespace DecorBlishhudModule
                     }
                 }
             }
-            else
-            {
-                Console.WriteLine("Gallery section not found!");
-            }
 
             return decorations;
+        }
+
+        // Fetch icon and use cache
+        public static async Task<Texture2D> GetIconTextureAsync(string iconUrl)
+        {
+            if (IconCache.ContainsKey(iconUrl))
+            {
+                return IconCache[iconUrl];
+            }
+
+            var iconResponse = await client.GetByteArrayAsync(iconUrl);
+            using var memoryStream = new MemoryStream(iconResponse);
+            using var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext();
+            var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+
+            // Cache the texture for future use
+            IconCache[iconUrl] = iconTexture;
+
+            return iconTexture;
         }
     }
 }

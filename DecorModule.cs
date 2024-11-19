@@ -21,16 +21,15 @@ namespace DecorBlishhudModule
     public class DecorModule : Module
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
-
         private static readonly HttpClient client = new HttpClient();
 
-        private Image _decorationIcon;
-        private Image _decorationImage;
+        private CornerIcon _cornerIcon;
         private Texture2D _homesteadIconTexture;
         private Texture2D _homesteadBigIconTexture;
-        private CornerIcon _cornerIcon;
-        private StandardWindow _decorWindow;
         private LoadingSpinner _loadingSpinner;
+        private StandardWindow _decorWindow;
+        private Image _decorationIcon;
+        private Image _decorationImage;
         private SignatureLabelManager _signatureLabelManager;
         private WikiLicenseLabelManager _wikiLicenseManager;
 
@@ -49,17 +48,19 @@ namespace DecorBlishhudModule
 
         protected override async Task LoadAsync()
         {
+            // Load assets
             _homesteadIconTexture = ContentsManager.GetTexture("test/homestead_icon.png");
             _homesteadBigIconTexture = ContentsManager.GetTexture("test/homestead_big_icon.png");
 
+            // Create corner icon and show loading spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
-
             _loadingSpinner.Visible = true;
 
+            // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
-            // Adding default Image loaded
+            // Homestead placeholder decoration
             var homesteadImagePlaceholder = new Decoration
             {
                 Name = "Welcome to Decor. Enjoy your stay!",
@@ -67,10 +68,13 @@ namespace DecorBlishhudModule
                 ImageUrl = "https://i.imgur.com/VBAy1WA.jpeg"
             };
 
+            // Update the placeholder image
             await UpdateDecorationImageAsync(homesteadImagePlaceholder);
 
+            // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
 
+            // Toggle window visibility when corner icon is clicked
             _cornerIcon.Click += (s, e) =>
             {
                 if (_decorWindow != null)
@@ -86,6 +90,7 @@ namespace DecorBlishhudModule
                 }
             };
 
+            // Set up signature and license labels
             _signatureLabelManager = new SignatureLabelManager(_decorWindow);
             _wikiLicenseManager = new WikiLicenseLabelManager(_decorWindow);
         }
@@ -93,17 +98,17 @@ namespace DecorBlishhudModule
 
         protected override void Unload()
         {
-            _loadingSpinner?.Dispose();
+            _cornerIcon?.Dispose();
             _homesteadIconTexture?.Dispose();
             _homesteadBigIconTexture?.Dispose();
-            _cornerIcon?.Dispose();
+            _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
         }
 
-        // CREATE GW2 STYLE WINDOW
+        // Style Window
         private async Task CreateGw2StyleWindowThatDisplaysAllDecorations(AsyncTexture2D windowBackgroundTexture)
         {
             _decorWindow = new StandardWindow(
