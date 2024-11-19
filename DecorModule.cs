@@ -216,11 +216,19 @@ namespace DecorBlishhudModule
                 ControlPadding = new Vector2(4, 4)
             };
 
-            var decorationIconTasks = decorations.Where(d => !string.IsNullOrEmpty(d.IconUrl))
-                .Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel))
-                .ToList();
+            decorations = decorations.OrderBy(d => d.Name).ToList();
 
-            await Task.WhenAll(decorationIconTasks);
+            ReorderIconsInFlowPanel(decorations, categoryFlowPanel);
+        }
+
+        private async void ReorderIconsInFlowPanel(List<Decoration> decorations, FlowPanel categoryFlowPanel)
+        {
+            categoryFlowPanel.Children.Clear();
+
+            foreach (var decoration in decorations.Where(d => !string.IsNullOrEmpty(d.IconUrl)))
+            {
+                await CreateDecorationIconAsync(decoration, categoryFlowPanel);
+            }
         }
 
         private async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)

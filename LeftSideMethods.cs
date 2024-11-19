@@ -41,14 +41,22 @@ namespace DecorBlishhudModule
 
                 if (hasVisibleDecoration)
                 {
+                    // Sort visible decorations by name (BasicTooltipText)
+                    visibleDecorations.Sort((a, b) =>
+                        string.Compare(((Image)a.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
+                                       ((Image)b.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
+                                       StringComparison.OrdinalIgnoreCase));
+
+                    // Remove all visible decorations from the category panel first
                     foreach (var visibleDecoration in visibleDecorations)
                     {
                         categoryFlowPanel.Children.Remove(visibleDecoration);
                     }
 
+                    // Reinsert them in the sorted order by appending at the end
                     foreach (var visibleDecoration in visibleDecorations)
                     {
-                        categoryFlowPanel.Children.Insert(0, visibleDecoration);
+                        categoryFlowPanel.Children.Add(visibleDecoration);
                     }
 
                     await AdjustCategoryHeightAsync(categoryFlowPanel);
