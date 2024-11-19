@@ -174,6 +174,7 @@ namespace DecorBlishhudModule
             };
 
             List<string> categories = Categories.GetCategories();
+
             foreach (string category in categories)
             {
                 await ProcessCategoryAsync(category, decorationsFlowPanel);
@@ -223,9 +224,9 @@ namespace DecorBlishhudModule
 
         private async void ReorderIconsInFlowPanel(List<Decoration> decorations, FlowPanel categoryFlowPanel)
         {
-            categoryFlowPanel.Children.Clear();
+            // categoryFlowPanel.Children.Clear();
 
-            foreach (var decoration in decorations.Where(d => !string.IsNullOrEmpty(d.IconUrl)))
+            foreach (var decoration in decorations)
             {
                 await CreateDecorationIconAsync(decoration, categoryFlowPanel);
             }
