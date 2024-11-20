@@ -56,7 +56,16 @@ namespace DecorBlishhudModule
                     {
                         decoration.IconUrl = "https://wiki.guildwars2.com" + iconNode.GetAttributeValue("src", "").Trim();
                     }
-
+                    else
+                    {
+                        // Use default icon URL if iconNode is null
+                        decoration.IconUrl = "https://wiki.guildwars2.com/images/7/74/Skill.png";
+                        var nameParts = nameNode?.Split(new[] { ".png" }, StringSplitOptions.None);
+                        if (nameParts != null && nameParts.Length > 1)
+                        {
+                            decoration.Name = nameParts[1].Trim();
+                        }
+                    }
                     // Add to list
                     decorations.Add(decoration);
                 }
