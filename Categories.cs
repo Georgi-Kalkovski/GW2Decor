@@ -13,7 +13,7 @@ namespace DecorBlishhudModule
                 "Decor",
                 "Lighting",
                 "Planters and Topiaries",
-                "Trees and Foliage",
+                "Trees and Foliages",
                 "Natural Features",
                 "Sculptures",
                 "Flag, Signs, Markers, Etc.",

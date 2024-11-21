@@ -71,6 +71,8 @@ namespace DecorBlishhudModule
             // Update the placeholder image
             await UpdateDecorationImageAsync(homesteadImagePlaceholder);
 
+            await Task.Delay(8000);
+
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
 
@@ -173,11 +175,22 @@ namespace DecorBlishhudModule
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            List<string> categories = Categories.GetCategories();
+            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
+            var decorationsByCategory = await DecorationFetcher.FetchDecorationsAsync(url);
 
-            foreach (string category in categories)
+            List<string> predefinedCategories = Categories.GetCategories();
+
+            var caseInsensitiveCategories = decorationsByCategory
+                .ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+
+            foreach (var category in predefinedCategories)
             {
-                await ProcessCategoryAsync(category, decorationsFlowPanel);
+                string categoryLower = category.ToLower();
+
+                if (caseInsensitiveCategories.ContainsKey(categoryLower))
+                {
+                    ReorderIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                }
             }
 
             searchTextBox.TextChanged += async (sender, args) =>
@@ -188,19 +201,8 @@ namespace DecorBlishhudModule
         }
 
         // Left Panel Operations
-        private async Task ProcessCategoryAsync(string category, FlowPanel decorationsFlowPanel)
+        private async void ReorderIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
         {
-            string formattedCategoryName = category.Replace(" ", "_");
-
-            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead/{formattedCategoryName}&format=json&prop=text";
-            var decorations = await DecorationFetcher.FetchDecorationsAsync(categoryUrl);
-
-            if (!decorations.Any())
-            {
-                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
-                return;
-            }
-
             int baseHeight = 45;
             int heightIncrementPerDecorationSet = 52;
             int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
@@ -216,15 +218,6 @@ namespace DecorBlishhudModule
                 Parent = decorationsFlowPanel,
                 ControlPadding = new Vector2(4, 4)
             };
-
-            decorations = decorations.OrderBy(d => d.Name).ToList();
-
-            ReorderIconsInFlowPanel(decorations, categoryFlowPanel);
-        }
-
-        private async void ReorderIconsInFlowPanel(List<Decoration> decorations, FlowPanel categoryFlowPanel)
-        {
-            // categoryFlowPanel.Children.Clear();
 
             foreach (var decoration in decorations)
             {
@@ -280,7 +273,7 @@ namespace DecorBlishhudModule
             RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
 
             _decorationImage.Texture = null;
-            RightSideMethods.AdjustImageSize(null,null);
+            RightSideMethods.AdjustImageSize(null, null);
 
             if (!string.IsNullOrEmpty(decoration.ImageUrl))
             {
@@ -335,7 +328,7 @@ namespace DecorBlishhudModule
                         borderedTexture.SetData(borderedColorData);
                         _decorationImage.Texture = borderedTexture;
 
-                        RightSideMethods.AdjustImageSize(borderedTexture , _decorationImage);
+                        RightSideMethods.AdjustImageSize(borderedTexture, _decorationImage);
                         RightSideMethods.CenterImageInParent(_decorationImage, _decorWindow);
 
                         decorationNameLabel.Text = decoration.Name.Replace(" ", " 🚪 ") ?? "Unknown Decoration";
