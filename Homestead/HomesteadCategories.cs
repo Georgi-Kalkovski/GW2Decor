@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace DecorBlishhudModule
+namespace DecorBlishhudModule.Homestead
 {
-    public static class Categories
+    public static class HomesteadCategories
     {
         public static List<string> GetCategories()
         {

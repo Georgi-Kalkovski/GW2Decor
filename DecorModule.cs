@@ -10,6 +10,7 @@ using Blish_HUD.Content;
 using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
+using DecorBlishhudModule.Homestead;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
@@ -32,6 +33,9 @@ namespace DecorBlishhudModule
         private Image _decorationImage;
         private SignatureLabelManager _signatureLabelManager;
         private WikiLicenseLabelManager _wikiLicenseManager;
+
+        // Switch to turn Homestead preview to Guild Hall preview
+        private bool _isHomestead = true;
 
         internal static DecorModule DecorModuleInstance;
 
@@ -175,21 +179,33 @@ namespace DecorBlishhudModule
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
-            var decorationsByCategory = await DecorationFetcher.FetchDecorationsAsync(url);
-
-            List<string> predefinedCategories = Categories.GetCategories();
-
-            var caseInsensitiveCategories = decorationsByCategory
-                .ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
-
-            foreach (var category in predefinedCategories)
+            if (_isHomestead)
             {
-                string categoryLower = category.ToLower();
+                string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
+                var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(url);
 
-                if (caseInsensitiveCategories.ContainsKey(categoryLower))
+                List<string> predefinedCategories = HomesteadCategories.GetCategories();
+
+                var caseInsensitiveCategories = decorationsByCategory
+                    .ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+
+                foreach (var category in predefinedCategories)
                 {
-                    ReorderIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                    string categoryLower = category.ToLower();
+
+                    if (caseInsensitiveCategories.ContainsKey(categoryLower))
+                    {
+                        ReorderIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                    }
+                }
+            }
+            else
+            {
+                List<string> categories = GuildHallCategories.GetCategories();
+
+                foreach (string category in categories)
+                {
+                    await ProcessCategoryAsync(category, decorationsFlowPanel);
                 }
             }
 
@@ -201,6 +217,8 @@ namespace DecorBlishhudModule
         }
 
         // Left Panel Operations
+
+        //Homestead Logic
         private async void ReorderIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
         {
             int baseHeight = 45;
@@ -223,6 +241,39 @@ namespace DecorBlishhudModule
             {
                 await CreateDecorationIconAsync(decoration, categoryFlowPanel);
             }
+        }
+
+        //Guild Hall Logic
+        private async Task ProcessCategoryAsync(string category, FlowPanel decorationsFlowPanel)
+        {
+            string formattedCategoryName = category.Replace(" ", "_");
+            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
+            var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
+
+            if (!decorations.Any())
+            {
+                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
+                return;
+            }
+
+            int baseHeight = 45;
+            int heightIncrementPerDecorationSet = 52;
+            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
+            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+            var categoryFlowPanel = new FlowPanel
+            {
+                Title = category,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                Width = decorationsFlowPanel.Width - 20,
+                Height = calculatedHeight,
+                CanCollapse = false,
+                Parent = decorationsFlowPanel,
+                ControlPadding = new Vector2(4, 4)
+            };
+
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+            await Task.WhenAll(tasks);
         }
 
         private async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)

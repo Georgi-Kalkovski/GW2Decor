@@ -12,7 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DecorBlishhudModule
 {
-    public class DecorationFetcher
+    public class HomesteadDecorationFetcher
     {
         private static readonly HttpClient client = new HttpClient();
         private static readonly Dictionary<string, Texture2D> IconCache = new();  // Cache for icons
