@@ -19,8 +19,8 @@ namespace DecorBlishhudModule
 
         public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(string url)
         {
-            var decorationsByCategory = new Dictionary<string, List<Decoration>>();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+            var decorationsByCategory = new Dictionary<string, List<Decoration>>();
 
             // Fetch JSON data
             var json = await client.GetStringAsync(url);

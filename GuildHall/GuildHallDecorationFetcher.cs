@@ -19,6 +19,7 @@ namespace DecorBlishhudModule
 
         public static async Task<List<Decoration>> FetchDecorationsAsync(string baseUrl)
         {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             var decorations = new List<Decoration>();
 
             // Combine sections 1 and 2
@@ -29,7 +30,6 @@ namespace DecorBlishhudModule
             {
                 // Fetch JSON data for each section
                 var url = $"{baseUrl}&section={section}";
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
                 var json = await client.GetStringAsync(url);
                 var parsedJson = JObject.Parse(json);
 

@@ -75,7 +75,10 @@ namespace DecorBlishhudModule
             // Update the placeholder image
             await UpdateDecorationImageAsync(homesteadImagePlaceholder);
 
-            await Task.Delay(8000);
+            if (_isHomestead == true)
+            {
+                await Task.Delay(4000);
+            }
 
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
@@ -195,7 +198,7 @@ namespace DecorBlishhudModule
 
                     if (caseInsensitiveCategories.ContainsKey(categoryLower))
                     {
-                        ReorderIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                        HomesteadIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
                     }
                 }
             }
@@ -205,7 +208,7 @@ namespace DecorBlishhudModule
 
                 foreach (string category in categories)
                 {
-                    await ProcessCategoryAsync(category, decorationsFlowPanel);
+                    await GuildHallIconsInFlowPanel(category, decorationsFlowPanel);
                 }
             }
 
@@ -219,8 +222,9 @@ namespace DecorBlishhudModule
         // Left Panel Operations
 
         //Homestead Logic
-        private async void ReorderIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
+        private async void HomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
         {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             int baseHeight = 45;
             int heightIncrementPerDecorationSet = 52;
             int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
@@ -237,15 +241,16 @@ namespace DecorBlishhudModule
                 ControlPadding = new Vector2(4, 4)
             };
 
-            foreach (var decoration in decorations)
-            {
-                await CreateDecorationIconAsync(decoration, categoryFlowPanel);
-            }
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
+            await Task.WhenAll(tasks);
+
+            await LeftSideMethods.OrderDecorations(decorationsFlowPanel);
         }
 
         //Guild Hall Logic
-        private async Task ProcessCategoryAsync(string category, FlowPanel decorationsFlowPanel)
+        private async Task GuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
         {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             string formattedCategoryName = category.Replace(" ", "_");
             string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
             var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
@@ -272,15 +277,16 @@ namespace DecorBlishhudModule
                 ControlPadding = new Vector2(4, 4)
             };
 
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
             await Task.WhenAll(tasks);
+
+            await LeftSideMethods.OrderDecorations(decorationsFlowPanel);
         }
 
         private async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)
         {
             try
             {
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
                 var iconResponse = await client.GetByteArrayAsync(decoration.IconUrl);
 
                 using (var memoryStream = new MemoryStream(iconResponse))

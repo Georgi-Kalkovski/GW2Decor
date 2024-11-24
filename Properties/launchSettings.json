@@ -2,12 +2,12 @@
   "profiles": {
     "gw2": {
       "commandName": "Executable",
-      "executablePath": "D:\\Program Files (x86)\\Guild Wars 2\\Blish.HUD.1.2.0\\Blish HUD.exe",
+      "executablePath": "C:\\Guild Wars 2\\Blish Hud\\Blish HUD.exe",
       "commandLineArgs": "--debug --module \"$(ProjectDir)\\$(BaseOutputPath)\\$(Configuration)/$(TargetFramework)\\$(TargetName).bhm\" --settings \"..\\Settings_$(TargetName)\""
     },
     "powershell": {
       "commandName": "Executable",
-      "executablePath": "D:\\Program Files (x86)\\Guild Wars 2\\Blish.HUD.1.2.0\\Blish HUD.exe",
+      "executablePath": "C:\\Guild Wars 2\\Blish Hud\\Blish HUD.exe",
       "commandLineArgs": "--debug --process WindowsTerminal --window CASCADIA_HOSTING_WINDOW_CLASS --module \"$(ProjectDir)\\$(BaseOutputPath)\\$(Configuration)/$(TargetFramework)\\$(TargetName).bhm\" --settings \"..\\Settings_$(TargetName)\""
     }
   }
