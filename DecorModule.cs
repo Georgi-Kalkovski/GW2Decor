@@ -25,6 +25,8 @@ namespace DecorBlishhudModule
         private CornerIcon _cornerIcon;
         private Texture2D _homesteadIconTexture;
         private Texture2D _homesteadBigIconTexture;
+        private Texture2D _switchIcon;
+        private Texture2D _switchBackground;
         private LoadingSpinner _loadingSpinner;
         private StandardWindow _decorWindow;
         private Image _decorationIcon;
@@ -57,6 +59,8 @@ namespace DecorBlishhudModule
             // Load assets
             _homesteadIconTexture = ContentsManager.GetTexture("test/homestead_icon.png");
             _homesteadBigIconTexture = ContentsManager.GetTexture("test/homestead_big_icon.png");
+            _switchIcon = ContentsManager.GetTexture("test/switch.png");
+            _switchBackground = ContentsManager.GetTexture("test/switch_background.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
@@ -77,10 +81,10 @@ namespace DecorBlishhudModule
             // Update the placeholder image
             await RightSideMethods.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
 
-            if (_isHomestead == true)
-            {
-                await Task.Delay(4000);
-            }
+            //if (_isHomestead == true)
+            //{
+            //    await Task.Delay(4000);
+            //}
 
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
@@ -114,6 +118,8 @@ namespace DecorBlishhudModule
             _homesteadBigIconTexture?.Dispose();
             _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
+            _switchIcon?.Dispose();
+            _switchBackground.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -126,7 +132,7 @@ namespace DecorBlishhudModule
                 windowBackgroundTexture,
                 new Rectangle(25, 26, 555, 640),
                 new Rectangle(40, 50, 550, 640),
-                new Point(1100, 800))
+                new Point(1050, 800))
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Title = "Decor",
@@ -140,17 +146,9 @@ namespace DecorBlishhudModule
             var searchTextBox = new TextBox
             {
                 Parent = _decorWindow,
-                Location = new Point(10, 0),
-                Width = 200,
+                Location = new Point(30, 0),
+                Width = 240,
                 PlaceholderText = "Search Decorations..."
-            };
-
-            var toggleButton = new StandardButton
-            {
-                Parent = _decorWindow,
-                Location = new Point(searchTextBox.Right + 10, 0),
-                Text = "Guild Hall Decorations",
-                Width = 150
             };
 
             var homesteadDecorationsFlowPanel = new FlowPanel
@@ -187,6 +185,52 @@ namespace DecorBlishhudModule
                 ShowShadow = true,
                 ShadowColor = new Color(0, 0, 0),
                 Font = GameService.Content.DefaultFont18
+            };
+
+            var homesteadSwitchText = new Label
+            {
+                Parent = _decorWindow,
+                Text = "Homestead",
+                Location = new Point(searchTextBox.Right + 20, 3),
+                Width = 80,
+                Height = 20,
+                ShowShadow = true,
+                WrapText = true,
+                StrokeText = true,
+                TextColor = new Color(254, 219, 114),
+                ShadowColor = new Color(165, 123, 0),
+                Font = GameService.Content.DefaultFont16,
+            };
+
+            var toggleSwitch = new Panel
+            {
+                Parent = _decorWindow,
+                Location = new Point(homesteadSwitchText.Right + 5, 2),
+                Size = new Point(50, 25),
+                BackgroundTexture = _switchBackground,
+            };
+
+            var toggleCircle = new Panel
+            {
+                Parent = toggleSwitch,
+                Size = new Point(20, 20),
+                BackgroundTexture = _switchIcon,
+                Location = new Point(5, 3),
+            };
+
+            var guildhallSwitchText = new Label
+            {
+                Parent = _decorWindow,
+                Text = "Guild Hall",
+                Location = new Point(toggleSwitch.Right + 5, 3),
+                Width = 70,
+                Height = 20,
+                ShowShadow = true,
+                WrapText = true,
+                StrokeText = true,
+                TextColor = Color.LightGray,
+                ShadowColor = new Color(0, 0, 0),
+                Font = GameService.Content.DefaultFont16,
             };
 
             RightSideMethods.CenterTextInParent(decorationRightText, _decorWindow);
@@ -239,22 +283,39 @@ namespace DecorBlishhudModule
             await LeftSideMethods.PopulateDecorations(homesteadDecorationsFlowPanel, _isHomestead);
             await LeftSideMethods.PopulateDecorations(guildHallDecorationsFlowPanel, !_isHomestead);
 
-            // Toggle button click event
-            toggleButton.Click += (s, e) =>
+            // Add click event for the toggle switch
+            toggleSwitch.Click += (s, e) =>
             {
                 _isHomestead = !_isHomestead;
-                toggleButton.Text = _isHomestead ? "Guild Hall Decorations" : "Homestead Decorations";
-                _decorWindow.Subtitle = _isHomestead ? "Homestead Decorations" : "Guild Hall Decorations";
 
-                // Update the button width based on the new text
-                if (toggleButton.Text == "Guild Hall Decorations") { toggleButton.Width = 150; }
-                else if (toggleButton.Text == "Homestead Decorations") { toggleButton.Width = 170; }
+                // Update the position of the circle and background color
+                if (_isHomestead)
+                {
+                    toggleCircle.Location = new Point(5, 3);
+                    _decorWindow.Subtitle = "Homestead Decorations";
 
-                // Hide the current panel and show the other
-                homesteadDecorationsFlowPanel.Visible = _isHomestead;
-                guildHallDecorationsFlowPanel.Visible = !_isHomestead;
+                    homesteadSwitchText.TextColor = new Color(254, 219, 114);
+                    homesteadSwitchText.ShadowColor = new Color(165, 123, 0);
+                    guildhallSwitchText.TextColor = Color.LightGray;
+                    guildhallSwitchText.ShadowColor = Color.Black;
+                    homesteadDecorationsFlowPanel.Visible = true;
+                    guildHallDecorationsFlowPanel.Visible = false;
+                }
+                else
+                {
+
+                    toggleCircle.Location = new Point(toggleSwitch.Width - toggleCircle.Width - 2, 3);
+
+                    _decorWindow.Subtitle = "Guild Hall Decorations";
+
+                    guildhallSwitchText.TextColor = new Color(254, 219, 114);
+                    guildhallSwitchText.ShadowColor = new Color(165, 123, 0);
+                    homesteadSwitchText.TextColor = Color.LightGray;
+                    homesteadSwitchText.ShadowColor = Color.Black;
+                    guildHallDecorationsFlowPanel.Visible = true;
+                    homesteadDecorationsFlowPanel.Visible = false;
+                }
             };
-
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();

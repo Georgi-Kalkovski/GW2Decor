@@ -137,7 +137,7 @@ namespace DecorBlishhudModule
             int centerX = (parent.Width - image.Size.X) / 2;
             int centerY = (parent.Height - image.Size.Y) / 2;
 
-            image.Location = new Point(centerX + 230, centerY - 40);
+            image.Location = new Point(centerX + 240, centerY - 40);
         }
 
         public static void AdjustImageSize(Texture2D loadedTexture, Image decorationImage)

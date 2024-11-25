@@ -29,7 +29,7 @@ namespace DecorBlishhudModule
                 // TextColor = new Color(137, 239, 255),
                 ShadowColor = new Color(0, 0, 0),
                 Height = 195,
-                Width = 560,
+                Width = 500,
             };
 
             _parentWindow.Resized += (sender, args) => PositionLicenseLabel();
