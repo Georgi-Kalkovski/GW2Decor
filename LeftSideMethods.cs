@@ -1,13 +1,157 @@
-﻿using Blish_HUD.Controls;
+﻿using Blish_HUD;
+using Blish_HUD.Controls;
+using DecorBlishhudModule.Homestead;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Point = Microsoft.Xna.Framework.Point;
+using System.Net.Http;
 
 namespace DecorBlishhudModule
 {
     public class LeftSideMethods
     {
+        private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
+        private static readonly HttpClient client = new HttpClient();
+
+        public static async Task PopulateDecorations(FlowPanel decorationsFlowPanel, bool _isHomestead)
+        {
+            decorationsFlowPanel.Children.Clear();
+
+            if (_isHomestead)
+            {
+                string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
+                var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(url);
+
+                List<string> predefinedCategories = HomesteadCategories.GetCategories();
+                var caseInsensitiveCategories = decorationsByCategory
+                    .ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
+
+                foreach (var category in predefinedCategories)
+                {
+                    string categoryLower = category.ToLower();
+
+                    if (caseInsensitiveCategories.ContainsKey(categoryLower))
+                    {
+                        HomesteadIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                    }
+                }
+            }
+            else
+            {
+                List<string> categories = GuildHallCategories.GetCategories();
+
+                foreach (string category in categories)
+                {
+                    await GuildHallIconsInFlowPanel(category, decorationsFlowPanel);
+                }
+            }
+        }
+
+        //Homestead Logic
+        public static async void HomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
+        {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+            int baseHeight = 45;
+            int heightIncrementPerDecorationSet = 52;
+            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
+            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+            var categoryFlowPanel = new FlowPanel
+            {
+                Title = category,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                Width = decorationsFlowPanel.Width - 20,
+                Height = calculatedHeight,
+                CanCollapse = false,
+                Parent = decorationsFlowPanel,
+                ControlPadding = new Vector2(4, 4)
+            };
+
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
+            await Task.WhenAll(tasks);
+
+            await OrderDecorations(decorationsFlowPanel);
+        }
+
+        //Guild Hall Logic
+        public static async Task GuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
+        {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+            string formattedCategoryName = category.Replace(" ", "_");
+            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
+            var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
+
+            if (!decorations.Any())
+            {
+                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
+                return;
+            }
+
+            int baseHeight = 45;
+            int heightIncrementPerDecorationSet = 52;
+            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
+            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+            var categoryFlowPanel = new FlowPanel
+            {
+                Title = category,
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                Width = decorationsFlowPanel.Width - 20,
+                Height = calculatedHeight,
+                CanCollapse = false,
+                Parent = decorationsFlowPanel,
+                ControlPadding = new Vector2(4, 4)
+            };
+
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
+            await Task.WhenAll(tasks);
+
+            await OrderDecorations(decorationsFlowPanel);
+        }
+
+        public static async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)
+        {
+            try
+            {
+                var iconResponse = await client.GetByteArrayAsync(decoration.IconUrl);
+
+                using (var memoryStream = new MemoryStream(iconResponse))
+                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                {
+                    var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+
+                    var borderPanel = new Panel
+                    {
+                        Size = new Point(49, 49),
+                        BackgroundColor = Color.Black,
+                        Parent = categoryFlowPanel
+                    };
+
+                    var decorationIconImage = new Image(iconTexture)
+                    {
+                        BasicTooltipText = decoration.Name,
+                        Size = new Point(45),
+                        Location = new Point(2, 2),
+                        Parent = borderPanel
+                    };
+
+                    decorationIconImage.Click += async (s, e) =>
+                    {
+                        var decorModule = DecorModule.DecorModuleInstance;
+                        await RightSideMethods.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to load decoration icon for '{decoration.Name}'. Error: {ex.Message}");
+            }
+        }
 
         public static async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
         {
@@ -43,8 +187,8 @@ namespace DecorBlishhudModule
                 {
                     // Sort visible decorations by name (BasicTooltipText)
                     visibleDecorations.Sort((a, b) =>
-                        string.Compare(((Image)a.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
-                                       ((Image)b.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
+                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
+                                       b.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
                                        StringComparison.OrdinalIgnoreCase));
 
                     // Remove all visible decorations from the category panel first
@@ -118,8 +262,8 @@ namespace DecorBlishhudModule
                 {
                     // Sort visible decorations by name (BasicTooltipText)
                     visibleDecorations.Sort((a, b) =>
-                        string.Compare(((Image)a.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
-                                       ((Image)b.Children.OfType<Image>().FirstOrDefault()).BasicTooltipText,
+                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
+                                       b.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
                                        StringComparison.OrdinalIgnoreCase));
 
                     // Remove all visible decorations from the category panel first

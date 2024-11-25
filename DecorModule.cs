@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -33,6 +31,10 @@ namespace DecorBlishhudModule
         private Image _decorationImage;
         private SignatureLabelManager _signatureLabelManager;
         private WikiLicenseLabelManager _wikiLicenseManager;
+
+        public StandardWindow DecorWindow => _decorWindow;
+        public Image DecorationImage => _decorationImage;
+
 
         // Switch to turn Homestead preview to Guild Hall preview
         private bool _isHomestead = true;
@@ -73,7 +75,7 @@ namespace DecorBlishhudModule
             };
 
             // Update the placeholder image
-            await UpdateDecorationImageAsync(homesteadImagePlaceholder);
+            await RightSideMethods.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
 
             if (_isHomestead == true)
             {
@@ -143,7 +145,15 @@ namespace DecorBlishhudModule
                 PlaceholderText = "Search Decorations..."
             };
 
-            var decorationsFlowPanel = new FlowPanel
+            var toggleButton = new StandardButton
+            {
+                Parent = _decorWindow,
+                Location = new Point(searchTextBox.Right + 10, 0),
+                Text = "Guild Hall Decorations",
+                Width = 150
+            };
+
+            var homesteadDecorationsFlowPanel = new FlowPanel
             {
                 FlowDirection = ControlFlowDirection.LeftToRight,
                 ShowBorder = true,
@@ -151,7 +161,20 @@ namespace DecorBlishhudModule
                 Height = 660,
                 CanScroll = true,
                 Parent = _decorWindow,
-                Location = new Point(10, searchTextBox.Bottom + 10)
+                Location = new Point(10, searchTextBox.Bottom + 10),
+                Visible = true // Initially visible
+            };
+
+            var guildHallDecorationsFlowPanel = new FlowPanel
+            {
+                FlowDirection = ControlFlowDirection.LeftToRight,
+                ShowBorder = true,
+                Width = 500,
+                Height = 660,
+                CanScroll = true,
+                Parent = _decorWindow,
+                Location = new Point(10, searchTextBox.Bottom + 10),
+                Visible = false // Initially hidden
             };
 
             var decorationRightText = new Label
@@ -198,7 +221,7 @@ namespace DecorBlishhudModule
 
                     if (caseInsensitiveCategories.ContainsKey(categoryLower))
                     {
-                        HomesteadIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
+                        LeftSideMethods.HomesteadIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], homesteadDecorationsFlowPanel);
                     }
                 }
             }
@@ -208,208 +231,36 @@ namespace DecorBlishhudModule
 
                 foreach (string category in categories)
                 {
-                    await GuildHallIconsInFlowPanel(category, decorationsFlowPanel);
+                    await LeftSideMethods.GuildHallIconsInFlowPanel(category, guildHallDecorationsFlowPanel);
                 }
             }
+
+            // Populate initially based on default (_isHomestead = true)
+            await LeftSideMethods.PopulateDecorations(homesteadDecorationsFlowPanel, _isHomestead);
+            await LeftSideMethods.PopulateDecorations(guildHallDecorationsFlowPanel, !_isHomestead);
+
+            // Toggle button click event
+            toggleButton.Click += (s, e) =>
+            {
+                _isHomestead = !_isHomestead;
+                toggleButton.Text = _isHomestead ? "Guild Hall Decorations" : "Homestead Decorations";
+                _decorWindow.Subtitle = _isHomestead ? "Homestead Decorations" : "Guild Hall Decorations";
+
+                // Update the button width based on the new text
+                if (toggleButton.Text == "Guild Hall Decorations") { toggleButton.Width = 150; }
+                else if (toggleButton.Text == "Homestead Decorations") { toggleButton.Width = 170; }
+
+                // Hide the current panel and show the other
+                homesteadDecorationsFlowPanel.Visible = _isHomestead;
+                guildHallDecorationsFlowPanel.Visible = !_isHomestead;
+            };
 
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
-                await LeftSideMethods.FilterDecorations(decorationsFlowPanel, searchText);
+                await LeftSideMethods.FilterDecorations(homesteadDecorationsFlowPanel, searchText);
+                await LeftSideMethods.FilterDecorations(guildHallDecorationsFlowPanel, searchText);
             };
-        }
-
-        // Left Panel Operations
-
-        //Homestead Logic
-        private async void HomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
-        {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-            int baseHeight = 45;
-            int heightIncrementPerDecorationSet = 52;
-            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
-            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
-
-            var categoryFlowPanel = new FlowPanel
-            {
-                Title = category,
-                FlowDirection = ControlFlowDirection.LeftToRight,
-                Width = decorationsFlowPanel.Width - 20,
-                Height = calculatedHeight,
-                CanCollapse = false,
-                Parent = decorationsFlowPanel,
-                ControlPadding = new Vector2(4, 4)
-            };
-
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
-            await Task.WhenAll(tasks);
-
-            await LeftSideMethods.OrderDecorations(decorationsFlowPanel);
-        }
-
-        //Guild Hall Logic
-        private async Task GuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
-        {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-            string formattedCategoryName = category.Replace(" ", "_");
-            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
-            var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
-
-            if (!decorations.Any())
-            {
-                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
-                return;
-            }
-
-            int baseHeight = 45;
-            int heightIncrementPerDecorationSet = 52;
-            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
-            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
-
-            var categoryFlowPanel = new FlowPanel
-            {
-                Title = category,
-                FlowDirection = ControlFlowDirection.LeftToRight,
-                Width = decorationsFlowPanel.Width - 20,
-                Height = calculatedHeight,
-                CanCollapse = false,
-                Parent = decorationsFlowPanel,
-                ControlPadding = new Vector2(4, 4)
-            };
-
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
-            await Task.WhenAll(tasks);
-
-            await LeftSideMethods.OrderDecorations(decorationsFlowPanel);
-        }
-
-        private async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)
-        {
-            try
-            {
-                var iconResponse = await client.GetByteArrayAsync(decoration.IconUrl);
-
-                using (var memoryStream = new MemoryStream(iconResponse))
-                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
-                {
-                    var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-
-                    var borderPanel = new Panel
-                    {
-                        Size = new Point(49, 49),
-                        BackgroundColor = Color.Black,
-                        Parent = categoryFlowPanel
-                    };
-
-                    var decorationIconImage = new Image(iconTexture)
-                    {
-                        BasicTooltipText = decoration.Name,
-                        Size = new Point(45),
-                        Location = new Point(2, 2),
-                        Parent = borderPanel
-                    };
-
-                    decorationIconImage.Click += async (s, e) =>
-                    {
-                        await UpdateDecorationImageAsync(decoration);
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Warn($"Failed to load decoration icon for '{decoration.Name}'. Error: {ex.Message}");
-            }
-        }
-
-        // Right Panel Operations
-        private async Task UpdateDecorationImageAsync(Decoration decoration)
-        {
-            var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
-            decorationNameLabel.Text = "";
-
-            RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
-
-            _decorationImage.Texture = null;
-            RightSideMethods.AdjustImageSize(null, null);
-
-            if (!string.IsNullOrEmpty(decoration.ImageUrl))
-            {
-                try
-                {
-                    var imageResponse = await client.GetByteArrayAsync(decoration.ImageUrl);
-
-                    using (var memoryStream = new MemoryStream(imageResponse))
-                    using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
-                    {
-                        var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-
-                        int borderWidth = 15;
-                        Color innerBorderColor = new Color(86, 76, 55);
-                        Color outerBorderColor = Color.Black;
-
-                        int borderedWidth = originalTexture.Width + 2 * borderWidth;
-                        int borderedHeight = originalTexture.Height + 2 * borderWidth;
-
-                        var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
-                        Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
-
-                        for (int y = 0; y < borderedHeight; y++)
-                        {
-                            for (int x = 0; x < borderedWidth; x++)
-                            {
-                                int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
-                                if (distanceFromEdge < borderWidth)
-                                {
-                                    float gradientFactor = (float)distanceFromEdge / borderWidth;
-                                    borderedColorData[y * borderedWidth + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
-                                }
-                                else
-                                {
-                                    borderedColorData[y * borderedWidth + x] = Color.Transparent;
-                                }
-                            }
-                        }
-
-                        Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
-                        originalTexture.GetData(originalColorData);
-
-                        for (int y = 0; y < originalTexture.Height; y++)
-                        {
-                            for (int x = 0; x < originalTexture.Width; x++)
-                            {
-                                int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
-                                borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
-                            }
-                        }
-
-                        borderedTexture.SetData(borderedColorData);
-                        _decorationImage.Texture = borderedTexture;
-
-                        RightSideMethods.AdjustImageSize(borderedTexture, _decorationImage);
-                        RightSideMethods.CenterImageInParent(_decorationImage, _decorWindow);
-
-                        decorationNameLabel.Text = decoration.Name.Replace(" ", " 🚪 ") ?? "Unknown Decoration";
-                        RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
-
-                        RightSideMethods.PositionTextAboveImage(decorationNameLabel, _decorationImage);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
-
-                    decorationNameLabel.Text = "Error Loading Decoration";
-                    RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
-                }
-            }
-            else
-            {
-                _decorationImage.Texture = null;
-                RightSideMethods.AdjustImageSize(null, null);
-
-                decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
-                RightSideMethods.CenterTextInParent(decorationNameLabel, _decorWindow);
-            }
         }
     }
 }
