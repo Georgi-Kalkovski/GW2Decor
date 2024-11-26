@@ -22,8 +22,8 @@ namespace DecorBlishhudModule
         private CornerIcon _cornerIcon;
         private Texture2D _homesteadIconTexture;
         private Texture2D _homesteadBigIconTexture;
-        private Texture2D _switchIcon;
-        private Texture2D _switchIcon2;
+        private Texture2D _homesteadSwitch;
+        private Texture2D _scribeSwitch;
         private Texture2D _switchBackground;
         private LoadingSpinner _loadingSpinner;
         private StandardWindow _decorWindow;
@@ -57,8 +57,8 @@ namespace DecorBlishhudModule
             // Load assets
             _homesteadIconTexture = ContentsManager.GetTexture("test/homestead_icon.png");
             _homesteadBigIconTexture = ContentsManager.GetTexture("test/homestead_big_icon.png");
-            _switchIcon = ContentsManager.GetTexture("test/switch.png");
-            _switchIcon2 = ContentsManager.GetTexture("test/scribe.png");
+            _homesteadSwitch = ContentsManager.GetTexture("test/homestead_switch.png");
+            _scribeSwitch = ContentsManager.GetTexture("test/scribe_switch.png");
             _switchBackground = ContentsManager.GetTexture("test/switch_background.png");
 
             // Create corner icon and show loading spinner
@@ -112,8 +112,8 @@ namespace DecorBlishhudModule
             _homesteadBigIconTexture?.Dispose();
             _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
-            _switchIcon?.Dispose();
-            _switchIcon2?.Dispose();
+            _homesteadSwitch?.Dispose();
+            _scribeSwitch?.Dispose();
             _switchBackground.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
@@ -209,7 +209,7 @@ namespace DecorBlishhudModule
             {
                 Parent = toggleSwitch,
                 Size = new Point(20, 20),
-                BackgroundTexture = _switchIcon,
+                BackgroundTexture = _homesteadSwitch,
                 Location = new Point(5, 3),
             };
 
@@ -256,7 +256,7 @@ namespace DecorBlishhudModule
                 {
                     _decorWindow.Subtitle = "Homestead Decorations";
 
-                    toggleIcon.BackgroundTexture = _switchIcon;
+                    toggleIcon.BackgroundTexture = _homesteadSwitch;
                     toggleIcon.Location = new Point(5, 3);
                     toggleIcon.Size = new Point(20, 20);
                     homesteadSwitchText.TextColor = new Color(254, 219, 114);
@@ -270,7 +270,7 @@ namespace DecorBlishhudModule
                 {
                     _decorWindow.Subtitle = "Guild Hall Decorations";
 
-                    toggleIcon.BackgroundTexture = _switchIcon2;
+                    toggleIcon.BackgroundTexture = _scribeSwitch;
                     toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 3, 5);
                     toggleIcon.Size = new Point(17, 17);
                     guildhallSwitchText.TextColor = new Color(168, 178, 230);
@@ -292,7 +292,7 @@ namespace DecorBlishhudModule
                 _isHomestead = true;
 
                 _decorWindow.Subtitle = "Homestead Decorations";
-                toggleIcon.BackgroundTexture = _switchIcon;
+                toggleIcon.BackgroundTexture = _homesteadSwitch;
                 toggleIcon.Location = new Point(5, 3);
                 toggleIcon.Size = new Point(20, 20);
 
@@ -312,7 +312,7 @@ namespace DecorBlishhudModule
                 _isHomestead = false;
 
                 _decorWindow.Subtitle = "Guild Hall Decorations";
-                toggleIcon.BackgroundTexture = _switchIcon2;
+                toggleIcon.BackgroundTexture = _scribeSwitch;
                 toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 3, 5);
                 toggleIcon.Size = new Point(17, 17);
 
