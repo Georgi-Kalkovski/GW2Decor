@@ -81,11 +81,6 @@ namespace DecorBlishhudModule
             // Update the placeholder image
             await RightSideMethods.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
 
-            //if (_isHomestead == true)
-            //{
-            //    await Task.Delay(4000);
-            //}
-
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
 
