@@ -7,18 +7,15 @@ using System;
 using Point = Microsoft.Xna.Framework.Point;
 using System.Linq;
 using Microsoft.Xna.Framework;
-using System.Net.Http;
 
 namespace DecorBlishhudModule
 {
     public class RightSideMethods
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
-        private static readonly HttpClient client = new HttpClient();
 
         public static async Task UpdateDecorationImageAsync(Decoration decoration, StandardWindow _decorWindow, Image _decorationImage)
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
@@ -31,7 +28,7 @@ namespace DecorBlishhudModule
             {
                 try
                 {
-                    var imageResponse = await client.GetByteArrayAsync(decoration.ImageUrl);
+                    var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
 
                     using (var memoryStream = new MemoryStream(imageResponse))
                     using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())

@@ -9,53 +9,44 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
-using System.Net.Http;
 
 namespace DecorBlishhudModule
 {
     public class LeftSideMethods
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
-        private static readonly HttpClient client = new HttpClient();
 
-        public static async Task PopulateDecorations(FlowPanel decorationsFlowPanel, bool _isHomestead)
+        public static async Task PopulateDecorations(FlowPanel homesteadDecorationsFlowPanel, FlowPanel guildHallDecorationsFlowPanel)
         {
-            decorationsFlowPanel.Children.Clear();
+            homesteadDecorationsFlowPanel.Children.Clear();
+            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(url);
 
-            if (_isHomestead)
+            // Normalize category keys for case-insensitive lookups
+            var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in decorationsByCategory)
             {
-                string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
-                var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(url);
-
-                List<string> predefinedCategories = HomesteadCategories.GetCategories();
-                var caseInsensitiveCategories = decorationsByCategory
-                    .ToDictionary(kvp => kvp.Key.ToLower(), kvp => kvp.Value);
-
-                foreach (var category in predefinedCategories)
-                {
-                    string categoryLower = category.ToLower();
-
-                    if (caseInsensitiveCategories.ContainsKey(categoryLower))
-                    {
-                        HomesteadIconsInFlowPanel(category, caseInsensitiveCategories[categoryLower], decorationsFlowPanel);
-                    }
-                }
+                caseInsensitiveCategories[kvp.Key] = kvp.Value;
             }
-            else
-            {
-                List<string> categories = GuildHallCategories.GetCategories();
 
-                foreach (string category in categories)
-                {
-                    await GuildHallIconsInFlowPanel(category, decorationsFlowPanel);
-                }
+            // Get predefined categories and filter the ones that exist
+            List<string> predefinedCategories = HomesteadCategories.GetCategories();
+            foreach (var category in predefinedCategories.Where(category => caseInsensitiveCategories.ContainsKey(category)))
+            {
+                 PopulateHomesteadIconsInFlowPanel(category, caseInsensitiveCategories[category], homesteadDecorationsFlowPanel);
+            }
+
+            List<string> categories = GuildHallCategories.GetCategories();
+
+            foreach (string category in categories)
+            {
+                await PopulateGuildHallIconsInFlowPanel(category, guildHallDecorationsFlowPanel);
             }
         }
 
         //Homestead Logic
-        public static async void HomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
+        public static async void PopulateHomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             int baseHeight = 45;
             int heightIncrementPerDecorationSet = 52;
             int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
@@ -72,16 +63,15 @@ namespace DecorBlishhudModule
                 ControlPadding = new Vector2(4, 4)
             };
 
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
+            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToList();
             await Task.WhenAll(tasks);
 
             await OrderDecorations(decorationsFlowPanel);
         }
 
         //Guild Hall Logic
-        public static async Task GuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
+        public static async Task PopulateGuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             string formattedCategoryName = category.Replace(" ", "_");
             string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
             var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
@@ -118,7 +108,7 @@ namespace DecorBlishhudModule
         {
             try
             {
-                var iconResponse = await client.GetByteArrayAsync(decoration.IconUrl);
+                var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
 
                 using (var memoryStream = new MemoryStream(iconResponse))
                 using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
@@ -231,7 +221,6 @@ namespace DecorBlishhudModule
 
                 categoryFlowPanel.Invalidate();
             }
-
             return Task.CompletedTask;
         }
 
@@ -279,13 +268,8 @@ namespace DecorBlishhudModule
                     }
 
                     await AdjustCategoryHeightAsync(categoryFlowPanel);
-
-                    categoryFlowPanel.Invalidate();
                 }
             }
-
-            decorationsFlowPanel.Invalidate();
         }
-
     }
 }

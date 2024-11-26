@@ -1,29 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Blish_HUD;
-using System.IO;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace DecorBlishhudModule
 {
     public class HomesteadDecorationFetcher
     {
-        private static readonly HttpClient client = new HttpClient();
-        private static readonly Dictionary<string, Texture2D> IconCache = new();  // Cache for icons
-
         public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(string url)
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+            DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
 
             // Fetch JSON data
-            var json = await client.GetStringAsync(url);
+            var json = await DecorModule.DecorModuleInstance.Client.GetStringAsync(url);
             var parsedJson = JObject.Parse(json);
 
             // Extract HTML content
@@ -104,27 +97,7 @@ namespace DecorBlishhudModule
                     }
                 }
             }
-
             return decorationsByCategory;
-        }
-
-        // Fetch icon and use cache
-        public static async Task<Texture2D> GetIconTextureAsync(string iconUrl)
-        {
-            if (IconCache.ContainsKey(iconUrl))
-            {
-                return IconCache[iconUrl];
-            }
-
-            var iconResponse = await client.GetByteArrayAsync(iconUrl);
-            using var memoryStream = new MemoryStream(iconResponse);
-            using var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext();
-            var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-
-            // Cache the texture for future use
-            IconCache[iconUrl] = iconTexture;
-
-            return iconTexture;
         }
     }
 }
