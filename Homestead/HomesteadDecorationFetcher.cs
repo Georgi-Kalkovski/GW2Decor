@@ -10,12 +10,13 @@ namespace DecorBlishhudModule
 {
     public class HomesteadDecorationFetcher
     {
-        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(string url)
+        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync()
         {
             DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
 
             // Fetch JSON data
+            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
             var json = await DecorModule.DecorModuleInstance.Client.GetStringAsync(url);
             var parsedJson = JObject.Parse(json);
 

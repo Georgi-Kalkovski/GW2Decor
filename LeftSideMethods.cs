@@ -18,88 +18,86 @@ namespace DecorBlishhudModule
 
         public static async Task PopulateDecorations(FlowPanel homesteadDecorationsFlowPanel, FlowPanel guildHallDecorationsFlowPanel)
         {
-            homesteadDecorationsFlowPanel.Children.Clear();
-            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(url);
+            await PopulateHomesteadIconsInFlowPanel(homesteadDecorationsFlowPanel);
+            await PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel);
+        }
 
-            // Normalize category keys for case-insensitive lookups
+        //Homestead Logic
+        public static async Task PopulateHomesteadIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel)
+        {
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
+
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
             {
                 caseInsensitiveCategories[kvp.Key] = kvp.Value;
             }
 
-            // Get predefined categories and filter the ones that exist
             List<string> predefinedCategories = HomesteadCategories.GetCategories();
-            foreach (var category in predefinedCategories.Where(category => caseInsensitiveCategories.ContainsKey(category)))
-            {
-                 PopulateHomesteadIconsInFlowPanel(category, caseInsensitiveCategories[category], homesteadDecorationsFlowPanel);
-            }
 
-            List<string> categories = GuildHallCategories.GetCategories();
+            var categoryTasks = predefinedCategories
+                .Where(category => caseInsensitiveCategories.ContainsKey(category))
+                .Select(async category =>
+                {
+                    int baseHeight = 45;
+                    int heightIncrementPerDecorationSet = 52;
+                    var decorations = caseInsensitiveCategories[category];
+                    int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
+                    int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
 
-            foreach (string category in categories)
-            {
-                await PopulateGuildHallIconsInFlowPanel(category, guildHallDecorationsFlowPanel);
-            }
-        }
+                    var categoryFlowPanel = new FlowPanel
+                    {
+                        Title = category,
+                        FlowDirection = ControlFlowDirection.LeftToRight,
+                        Width = homesteadDecorationsFlowPanel.Width - 20,
+                        Height = calculatedHeight,
+                        CanCollapse = true,
+                        Parent = homesteadDecorationsFlowPanel,
+                        ControlPadding = new Vector2(4, 4)
+                    };
 
-        //Homestead Logic
-        public static async void PopulateHomesteadIconsInFlowPanel(string category, List<Decoration> decorations, FlowPanel decorationsFlowPanel)
-        {
-            int baseHeight = 45;
-            int heightIncrementPerDecorationSet = 52;
-            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
-            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+                    await Task.WhenAll(tasks);
+                });
 
-            var categoryFlowPanel = new FlowPanel
-            {
-                Title = category,
-                FlowDirection = ControlFlowDirection.LeftToRight,
-                Width = decorationsFlowPanel.Width - 20,
-                Height = calculatedHeight,
-                CanCollapse = false,
-                Parent = decorationsFlowPanel,
-                ControlPadding = new Vector2(4, 4)
-            };
+            await Task.WhenAll(categoryTasks);
 
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToList();
-            await Task.WhenAll(tasks);
-
-            await OrderDecorations(decorationsFlowPanel);
+            await OrderDecorations(homesteadDecorationsFlowPanel);
         }
 
         //Guild Hall Logic
-        public static async Task PopulateGuildHallIconsInFlowPanel(string category, FlowPanel decorationsFlowPanel)
+        public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel)
         {
-            string formattedCategoryName = category.Replace(" ", "_");
-            string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
-            var decorations = await GuildHallDecorationFetcher.FetchDecorationsAsync(categoryUrl);
+            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
 
-            if (!decorations.Any())
-            {
-                Logger.Info($"Category '{category}' has no decorations and will not be displayed.");
-                return;
-            }
+            var flowPanelTasks = decorationsByCategory
+                .Where(entry => entry.Value != null && entry.Value.Count > 0)
+                .Select(async entry =>
+                {
+                    string category = entry.Key;
+                    var categoryDecorations = entry.Value;
 
-            int baseHeight = 45;
-            int heightIncrementPerDecorationSet = 52;
-            int numDecorationSets = (int)Math.Ceiling(decorations.Count / 9.0);
-            int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+                    int baseHeight = 45;
+                    int heightIncrementPerDecorationSet = 52;
+                    int numDecorationSets = (int)Math.Ceiling(categoryDecorations.Count / 9.0);
+                    int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
 
-            var categoryFlowPanel = new FlowPanel
-            {
-                Title = category,
-                FlowDirection = ControlFlowDirection.LeftToRight,
-                Width = decorationsFlowPanel.Width - 20,
-                Height = calculatedHeight,
-                CanCollapse = false,
-                Parent = decorationsFlowPanel,
-                ControlPadding = new Vector2(4, 4)
-            };
+                    var categoryFlowPanel = new FlowPanel
+                    {
+                        Title = category,
+                        FlowDirection = ControlFlowDirection.LeftToRight,
+                        Width = decorationsFlowPanel.Width - 20,
+                        Height = calculatedHeight,
+                        CanCollapse = true,
+                        Parent = decorationsFlowPanel,
+                        ControlPadding = new Vector2(4, 4)
+                    };
 
-            var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel)).ToArray();
-            await Task.WhenAll(tasks);
+                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+                    await Task.WhenAll(iconTasks);
+                }).ToList();
+
+            await Task.WhenAll(flowPanelTasks);
 
             await OrderDecorations(decorationsFlowPanel);
         }

@@ -148,7 +148,7 @@ namespace DecorBlishhudModule
 
             var homesteadDecorationsFlowPanel = new FlowPanel
             {
-                FlowDirection = ControlFlowDirection.LeftToRight,
+                FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
                 Width = 500,
                 Height = 660,
@@ -160,7 +160,7 @@ namespace DecorBlishhudModule
 
             var guildHallDecorationsFlowPanel = new FlowPanel
             {
-                FlowDirection = ControlFlowDirection.LeftToRight,
+                FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
                 Width = 500,
                 Height = 660,
@@ -275,10 +275,6 @@ namespace DecorBlishhudModule
                     toggleIcon.Size = new Point(17, 17);
                     guildhallSwitchText.TextColor = new Color(168, 178, 230);
                     guildhallSwitchText.ShadowColor = new Color(40, 47, 85);
-                    // Old icon and text if above isn't okay
-                    //toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 2, 3);
-                    //guildhallSwitchText.TextColor = new Color(254, 219, 114);
-                    //guildhallSwitchText.ShadowColor = new Color(165, 123, 0);
                     homesteadSwitchText.TextColor = Color.LightGray;
                     homesteadSwitchText.ShadowColor = Color.Black;
                     guildHallDecorationsFlowPanel.Visible = true;

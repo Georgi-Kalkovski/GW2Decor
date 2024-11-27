@@ -26,7 +26,6 @@ namespace DecorBlishhudModule
                 WrapText = true,
                 StrokeText = true,
                 ShowShadow = true,
-                //TextColor = new Color(255, 239, 137),
                 ShadowColor = new Color(0, 0, 0),
                 Height = 185,     
                 Width = 190,     
