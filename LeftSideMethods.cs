@@ -51,7 +51,7 @@ namespace DecorBlishhudModule
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
-                        CanCollapse = true,
+                        CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
                         Parent = homesteadDecorationsFlowPanel,
                         ControlPadding = new Vector2(4, 4)
                     };
@@ -88,7 +88,7 @@ namespace DecorBlishhudModule
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
-                        CanCollapse = true,
+                        CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
                         Parent = decorationsFlowPanel,
                         ControlPadding = new Vector2(4, 4)
                     };

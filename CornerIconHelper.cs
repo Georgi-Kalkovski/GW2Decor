@@ -1,5 +1,4 @@
-﻿// CornerIconHelper.cs
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -21,11 +20,14 @@ namespace DecorBlishhudModule
 
             var iconPosition = icon.AbsoluteBounds.Location;
 
+            var spinnerOffset = new Point(35, 0);
+
             loadingSpinner = new LoadingSpinner()
             {
                 Parent = GameService.Graphics.SpriteScreen,
+                BasicTooltipText = "Decor is fetching data...",
                 Size = new Point(32, 32),
-                Location = new Point(iconPosition.X + 36, iconPosition.Y),
+                Location = iconPosition + spinnerOffset,
                 Visible = true
             };
 

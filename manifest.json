@@ -5,7 +5,7 @@
   "package": "DecorBlishhudModule.dll",
   "manifest_version": 1,
 
-  "description": "Allows players to have a simple decoration previewer for the homestead. The mod use the images from GW2 Wiki.",
+  "description": "Allows players to have a simple decoration previewer for homestead and guild hall. The mod uses the images from GW2 Wiki.",
   "dependencies": {
     "bh.blishhud": ">=1.0.0"
   },
