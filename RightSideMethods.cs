@@ -22,7 +22,7 @@ namespace DecorBlishhudModule
             var savedPanel = new Panel
             {
                 Parent = _decorWindow,
-                Location = new Point(730,550),
+                Location = new Point(730, 550),
                 Title = "Saved !",
                 Width = 70,
                 Height = 45,
@@ -59,30 +59,42 @@ namespace DecorBlishhudModule
                         var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
 
                         float borderScaleFactor = 0.03f;
-                        int borderWidth = (int)(Math.Min(originalTexture.Width, originalTexture.Height) * borderScaleFactor);
+                        int borderWidth = 15;
                         Color innerBorderColor = new Color(86, 76, 55);
                         Color outerBorderColor = Color.Black;
 
-                        var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, originalTexture.Width, originalTexture.Height);
-                        Color[] borderedColorData = new Color[originalTexture.Width * originalTexture.Height];
-                        Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
+                        int borderedWidth = originalTexture.Width + 2 * borderWidth;
+                        int borderedHeight = originalTexture.Height + 2 * borderWidth;
 
+                        var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
+                        Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
+
+                        for (int y = 0; y < borderedHeight; y++)
+                        {
+                            for (int x = 0; x < borderedWidth; x++)
+                            {
+                                int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
+                                if (distanceFromEdge < borderWidth)
+                                {
+                                    float gradientFactor = (float)distanceFromEdge / borderWidth;
+                                    borderedColorData[y * borderedWidth + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
+                                }
+                                else
+                                {
+                                    borderedColorData[y * borderedWidth + x] = Color.Transparent;
+                                }
+                            }
+                        }
+
+                        Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
                         originalTexture.GetData(originalColorData);
 
                         for (int y = 0; y < originalTexture.Height; y++)
                         {
                             for (int x = 0; x < originalTexture.Width; x++)
                             {
-                                int distanceFromEdge = Math.Min(Math.Min(x, originalTexture.Width - x - 1), Math.Min(y, originalTexture.Height - y - 1));
-                                if (distanceFromEdge < borderWidth)
-                                {
-                                    float gradientFactor = (float)distanceFromEdge / borderWidth;
-                                    borderedColorData[y * originalTexture.Width + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
-                                }
-                                else
-                                {
-                                    borderedColorData[y * originalTexture.Width + x] = originalColorData[y * originalTexture.Width + x];
-                                }
+                                int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
+                                borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
                             }
                         }
 
