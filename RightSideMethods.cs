@@ -19,8 +19,28 @@ namespace DecorBlishhudModule
             var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
-            decorationNameLabel.Click += (s, e) => CopyTextToClipboard(decoration.Name);
-            _decorationImage.Click += (s, e) => CopyTextToClipboard(decoration.Name);
+            var savedPanel = new Panel
+            {
+                Parent = _decorWindow,
+                Location = new Point(730,550),
+                Title = "Saved !",
+                Width = 70,
+                Height = 45,
+                ShowBorder = true,
+                Opacity = 0f,
+            };
+
+            decorationNameLabel.Click += (s, e) =>
+            {
+                CopyTextToClipboard(decoration.Name);
+                ShowSavedPanel(savedPanel);
+            };
+
+            _decorationImage.Click += (s, e) =>
+            {
+                CopyTextToClipboard(decoration.Name);
+                ShowSavedPanel(savedPanel);
+            };
 
             CenterTextInParent(decorationNameLabel, _decorWindow);
 
@@ -169,6 +189,33 @@ namespace DecorBlishhudModule
                     Logger.Warn($"Failed to copy text to clipboard. Error: {ex.ToString()}");
                 }
             }
+        }
+
+        public static async void ShowSavedPanel(Panel savedPanel)
+        {
+            savedPanel.Visible = true;
+            await FadePanel(savedPanel, 0f, 1f, 200);
+
+            await Task.Delay(500);
+
+            await FadePanel(savedPanel, 1f, 0f, 200);
+
+            savedPanel.Visible = false;
+        }
+
+        public static async Task FadePanel(Panel panel, float startOpacity, float endOpacity, int duration)
+        {
+            int steps = 30;
+            float stepDuration = duration / steps;
+            float opacityStep = (endOpacity - startOpacity) / steps;
+
+            for (int i = 0; i < steps; i++)
+            {
+                panel.Opacity = startOpacity + opacityStep * i;
+                await Task.Delay((int)stepDuration);
+            }
+
+            panel.Opacity = endOpacity;
         }
     }
 }

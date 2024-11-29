@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.Composition;
+﻿using System;
+using System.ComponentModel.Composition;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Blish_HUD;
@@ -26,6 +27,7 @@ namespace DecorBlishhudModule
         private Texture2D _scribeSwitch;
         private Texture2D _switchBackground;
         private Texture2D _info;
+        private Texture2D _x;
         private LoadingSpinner _loadingSpinner;
         private StandardWindow _decorWindow;
         private Image _decorationIcon;
@@ -62,6 +64,7 @@ namespace DecorBlishhudModule
             _scribeSwitch = ContentsManager.GetTexture("test/scribe_switch.png");
             _switchBackground = ContentsManager.GetTexture("test/switch_background.png");
             _info = ContentsManager.GetTexture("test/info.png");
+            _x = ContentsManager.GetTexture("test/x.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
@@ -102,6 +105,7 @@ namespace DecorBlishhudModule
             _scribeSwitch?.Dispose();
             _switchBackground.Dispose();
             _info.Dispose();
+            _x.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -133,14 +137,13 @@ namespace DecorBlishhudModule
                 PlaceholderText = "Search Decorations..."
             };
 
-            var clearButton = new StandardButton
+            var clearButton = new Panel
             {
                 Parent = _decorWindow,
-                Location = new Point(searchTextBox.Right - 29, searchTextBox.Top),
-                Size = new Point(29, 26),
-                Text = "X",
-                BackgroundColor = Color.Transparent,
+                Location = new Point(searchTextBox.Right - 22, searchTextBox.Top+ 5),
+                Size = new Point(16, 16),
                 Visible = false,
+                BackgroundTexture = _x,
             };
 
             var homesteadDecorationsFlowPanel = new FlowPanel
@@ -228,7 +231,7 @@ namespace DecorBlishhudModule
             var infoIconPanel = new Panel
             {
                 Parent = _decorWindow,
-                Size = new Point(50, 50),
+                Size = new Point(25, 25),
                 BackgroundTexture = _info,
                 Location = new Point(_decorWindow.Width - 90, 5),
             };
@@ -236,8 +239,8 @@ namespace DecorBlishhudModule
             var infoIcon = new Image
             {
                 Parent = infoIconPanel,
-                Width = 50,
-                Height = 50
+                Width = 25,
+                Height = 25
             };
 
             var infoTextPanel = new Panel
@@ -246,7 +249,8 @@ namespace DecorBlishhudModule
                 Size = new Point(180, 70),
                 Location = new Point(_decorWindow.Width - 270, -5),
                 ShowBorder = true,
-                Visible = false
+                Visible = false,
+                Opacity = 0,
             };
 
             var infoText = new Label
@@ -284,12 +288,12 @@ namespace DecorBlishhudModule
 
             infoIconPanel.MouseEntered += (sender, args) =>
             {
-                infoTextPanel.Visible = true;
+                AnimatePanel(infoTextPanel, true);
             };
 
             infoIconPanel.MouseLeft += (sender, args) =>
             {
-                infoTextPanel.Visible = false;
+                AnimatePanel(infoTextPanel, false);
             };
 
             // Add click event for the toggle switch
@@ -404,7 +408,39 @@ namespace DecorBlishhudModule
                 string searchText = searchTextBox.Text.ToLower();
                 await LeftSideMethods.FilterDecorations(homesteadDecorationsFlowPanel, searchText);
                 await LeftSideMethods.FilterDecorations(guildHallDecorationsFlowPanel, searchText);
+
+                clearButton.Visible = !string.IsNullOrEmpty(searchText);
             };
+        }
+        private void AnimatePanel(Panel panel, bool fadeIn)
+        {
+            var targetOpacity = fadeIn ? 1.0f : 0.0f;
+
+            if (fadeIn)
+            {
+                panel.Visible = true;
+            }
+
+            var timer = new System.Windows.Forms.Timer { Interval = 1 };
+            timer.Tick += (s, e) =>
+            {
+                panel.Opacity += fadeIn ? 0.05f : -0.05f;
+                panel.Opacity = MathHelper.Clamp(panel.Opacity, 0.0f, 1.0f);
+
+                if (Math.Abs(panel.Opacity - targetOpacity) < 0.05)
+                {
+                    panel.Opacity = targetOpacity;
+
+                    if (!fadeIn)
+                    {
+                        panel.Visible = false;
+                    }
+
+                    timer.Stop();
+                }
+            };
+
+            timer.Start();
         }
     }
 }
