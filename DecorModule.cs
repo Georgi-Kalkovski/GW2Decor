@@ -200,17 +200,17 @@ namespace DecorBlishhudModule
             var toggleSwitch = new Panel
             {
                 Parent = _decorWindow,
-                Location = new Point(homesteadSwitchText.Right + 5, 2),
-                Size = new Point(50, 25),
+                Location = new Point(homesteadSwitchText.Right + 5, -2),
+                Size = new Point(60, 30),
                 BackgroundTexture = _switchBackground,
             };
 
             var toggleIcon = new Panel
             {
                 Parent = toggleSwitch,
-                Size = new Point(20, 20),
+                Size = new Point(25, 25),
                 BackgroundTexture = _homesteadSwitch,
-                Location = new Point(5, 3),
+                Location = new Point(6, 3),
             };
 
             var guildhallSwitchText = new Label
@@ -257,8 +257,8 @@ namespace DecorBlishhudModule
                     _decorWindow.Subtitle = "Homestead Decorations";
 
                     toggleIcon.BackgroundTexture = _homesteadSwitch;
-                    toggleIcon.Location = new Point(5, 3);
-                    toggleIcon.Size = new Point(20, 20);
+                    toggleIcon.Location = new Point(6, 3);
+                    toggleIcon.Size = new Point(25, 25);
                     homesteadSwitchText.TextColor = new Color(254, 219, 114);
                     homesteadSwitchText.ShadowColor = new Color(165, 123, 0);
                     guildhallSwitchText.TextColor = Color.LightGray;
@@ -271,8 +271,8 @@ namespace DecorBlishhudModule
                     _decorWindow.Subtitle = "Guild Hall Decorations";
 
                     toggleIcon.BackgroundTexture = _scribeSwitch;
-                    toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 3, 5);
-                    toggleIcon.Size = new Point(17, 17);
+                    toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 4, 5);
+                    toggleIcon.Size = new Point(22, 22);
                     guildhallSwitchText.TextColor = new Color(168, 178, 230);
                     guildhallSwitchText.ShadowColor = new Color(40, 47, 85);
                     homesteadSwitchText.TextColor = Color.LightGray;
@@ -289,8 +289,8 @@ namespace DecorBlishhudModule
 
                 _decorWindow.Subtitle = "Homestead Decorations";
                 toggleIcon.BackgroundTexture = _homesteadSwitch;
-                toggleIcon.Location = new Point(5, 3);
-                toggleIcon.Size = new Point(20, 20);
+                toggleIcon.Location = new Point(6, 3);
+                toggleIcon.Size = new Point(25, 25);
 
                 homesteadSwitchText.TextColor = new Color(254, 219, 114);
                 homesteadSwitchText.ShadowColor = new Color(165, 123, 0);
@@ -309,8 +309,8 @@ namespace DecorBlishhudModule
 
                 _decorWindow.Subtitle = "Guild Hall Decorations";
                 toggleIcon.BackgroundTexture = _scribeSwitch;
-                toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 3, 5);
-                toggleIcon.Size = new Point(17, 17);
+                toggleIcon.Location = new Point(toggleSwitch.Width - toggleIcon.Width - 4, 5);
+                toggleIcon.Size = new Point(22, 22);
 
                 guildhallSwitchText.TextColor = new Color(168, 178, 230);
                 guildhallSwitchText.ShadowColor = new Color(40, 47, 85);
