@@ -133,8 +133,8 @@ namespace DecorBlishhudModule
             var clearButton = new StandardButton
             {
                 Parent = _decorWindow,
-                Location = new Point(searchTextBox.Right - 28, searchTextBox.Top - 1),
-                Size = new Point(29, 28),
+                Location = new Point(searchTextBox.Right - 29, searchTextBox.Top),
+                Size = new Point(29, 26),
                 Text = "X",
                 BackgroundColor = Color.Transparent,
                 Visible = false,
@@ -149,7 +149,7 @@ namespace DecorBlishhudModule
                 CanScroll = true,
                 Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10),
-                Visible = true // Initially visible
+                Visible = true
             };
 
             var guildHallDecorationsFlowPanel = new FlowPanel
@@ -161,7 +161,7 @@ namespace DecorBlishhudModule
                 CanScroll = true,
                 Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10),
-                Visible = false // Initially hidden
+                Visible = false
             };
 
             var decorationRightText = new Label
@@ -204,7 +204,7 @@ namespace DecorBlishhudModule
                 Parent = toggleSwitch,
                 Size = new Point(25, 25),
                 BackgroundTexture = _homesteadSwitch,
-                Location = new Point(6, 3),
+                Location = new Point(6, 2),
             };
 
             var guildhallSwitchText = new Label
