@@ -130,36 +130,34 @@ namespace DecorBlishhudModule
                         Parent = borderPanel
                     };
 
-                    bool isClicked = false;
-
                     borderPanel.MouseEntered += (sender, e) =>
                     {
-                        if (!isClicked)
+                        if (lastClickedIconPanel != borderPanel)
                         {
                             borderPanel.BackgroundColor = Color.LightGray;
+                            decorationIconImage.Opacity = 0.75f;
                         }
                     };
 
                     borderPanel.MouseLeft += (sender, e) =>
                     {
-                        if (!isClicked)
+                        if (lastClickedIconPanel != borderPanel)
                         {
                             borderPanel.BackgroundColor = Color.Black;
+                            decorationIconImage.Opacity = 1f;
                         }
                     };
 
                     decorationIconImage.Click += async (s, e) =>
                     {
-                        isClicked = true;
-
-                        if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == Color.White)
+                        if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == new Color(254, 254, 176))
                         {
                             lastClickedIconPanel.BackgroundColor = Color.Black;
                             decorationIconImage.Opacity = 1f;
                         }
 
-                        borderPanel.BackgroundColor = Color.White;
-                        decorationIconImage.Opacity = 0.75f;
+                        borderPanel.BackgroundColor = new Color(254, 254, 176);
+                        decorationIconImage.Opacity = 1f;
 
                         lastClickedIconPanel = borderPanel;
                         var decorModule = DecorModule.DecorModuleInstance;
