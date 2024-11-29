@@ -25,6 +25,7 @@ namespace DecorBlishhudModule
         private Texture2D _homesteadSwitch;
         private Texture2D _scribeSwitch;
         private Texture2D _switchBackground;
+        private Texture2D _info;
         private LoadingSpinner _loadingSpinner;
         private StandardWindow _decorWindow;
         private Image _decorationIcon;
@@ -60,6 +61,7 @@ namespace DecorBlishhudModule
             _homesteadSwitch = ContentsManager.GetTexture("test/homestead_switch.png");
             _scribeSwitch = ContentsManager.GetTexture("test/scribe_switch.png");
             _switchBackground = ContentsManager.GetTexture("test/switch_background.png");
+            _info = ContentsManager.GetTexture("test/info.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
@@ -99,6 +101,7 @@ namespace DecorBlishhudModule
             _homesteadSwitch?.Dispose();
             _scribeSwitch?.Dispose();
             _switchBackground.Dispose();
+            _info.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -222,23 +225,72 @@ namespace DecorBlishhudModule
                 Font = GameService.Content.DefaultFont16,
             };
 
+            var infoIconPanel = new Panel
+            {
+                Parent = _decorWindow,
+                Size = new Point(50, 50),
+                BackgroundTexture = _info,
+                Location = new Point(_decorWindow.Width - 90, 5),
+            };
+
+            var infoIcon = new Image
+            {
+                Parent = infoIconPanel,
+                Width = 50,
+                Height = 50
+            };
+
+            var infoTextPanel = new Panel
+            {
+                Parent = _decorWindow,
+                Size = new Point(180, 70),
+                Location = new Point(_decorWindow.Width - 270, -5),
+                ShowBorder = true,
+                Visible = false
+            };
+
+            var infoText = new Label
+            {
+                Parent = infoTextPanel,
+                Text = "Click the name or the image of the decoration to copy its name.",
+                Location = new Point(5, 0),
+                Width = 170,
+                Height = 60,
+                ShowShadow = true,
+                WrapText = true,
+                StrokeText = true,
+                TextColor = Color.LightGray,
+                ShadowColor = new Color(0, 0, 0),
+                Font = GameService.Content.DefaultFont14,
+            };
+
             RightSideMethods.CenterTextInParent(decorationRightText, _decorWindow);
 
             _decorationIcon = new Image
             {
-                Size = new Point(40, 40),
                 Parent = _decorWindow,
+                Size = new Point(40, 40),
                 Location = new Point(decorationRightText.Left, decorationRightText.Bottom + 5)
             };
 
             _decorationImage = new Image
             {
-                Size = new Point(400, 400),
                 Parent = _decorWindow,
+                Size = new Point(400, 400),
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
             await LeftSideMethods.PopulateDecorations(homesteadDecorationsFlowPanel, guildHallDecorationsFlowPanel);
+
+            infoIconPanel.MouseEntered += (sender, args) =>
+            {
+                infoTextPanel.Visible = true;
+            };
+
+            infoIconPanel.MouseLeft += (sender, args) =>
+            {
+                infoTextPanel.Visible = false;
+            };
 
             // Add click event for the toggle switch
             toggleSwitch.Click += (s, e) =>

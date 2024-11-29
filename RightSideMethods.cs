@@ -19,6 +19,9 @@ namespace DecorBlishhudModule
             var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";
 
+            decorationNameLabel.Click += (s, e) => CopyTextToClipboard(decoration.Name);
+            _decorationImage.Click += (s, e) => CopyTextToClipboard(decoration.Name);
+
             CenterTextInParent(decorationNameLabel, _decorWindow);
 
             _decorationImage.Texture = null;
@@ -150,6 +153,22 @@ namespace DecorBlishhudModule
             }
 
             decorationImage.Size = new Point(targetWidth, targetHeight);
+        }
+
+        private static void CopyTextToClipboard(string text)
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                try
+                {
+                    System.Windows.Forms.Clipboard.SetText(text);
+                    Logger.Info($"Copied '{text}' to clipboard.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Failed to copy text to clipboard. Error: {ex.ToString()}");
+                }
+            }
         }
     }
 }
