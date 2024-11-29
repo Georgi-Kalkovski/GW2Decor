@@ -16,6 +16,8 @@ namespace DecorBlishhudModule
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
+        private static Panel lastClickedIconPanel = null;
+
         public static async Task PopulateDecorations(FlowPanel homesteadDecorationsFlowPanel, FlowPanel guildHallDecorationsFlowPanel)
         {
             await PopulateHomesteadIconsInFlowPanel(homesteadDecorationsFlowPanel);
@@ -128,8 +130,38 @@ namespace DecorBlishhudModule
                         Parent = borderPanel
                     };
 
+                    bool isClicked = false;
+
+                    borderPanel.MouseEntered += (sender, e) =>
+                    {
+                        if (!isClicked)
+                        {
+                            borderPanel.BackgroundColor = Color.LightGray;
+                        }
+                    };
+
+                    borderPanel.MouseLeft += (sender, e) =>
+                    {
+                        if (!isClicked)
+                        {
+                            borderPanel.BackgroundColor = Color.Black;
+                        }
+                    };
+
                     decorationIconImage.Click += async (s, e) =>
                     {
+                        isClicked = true;
+
+                        if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == Color.White)
+                        {
+                            lastClickedIconPanel.BackgroundColor = Color.Black;
+                            decorationIconImage.Opacity = 1f;
+                        }
+
+                        borderPanel.BackgroundColor = Color.White;
+                        decorationIconImage.Opacity = 0.75f;
+
+                        lastClickedIconPanel = borderPanel;
                         var decorModule = DecorModule.DecorModuleInstance;
                         await RightSideMethods.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
                     };

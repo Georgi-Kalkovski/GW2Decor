@@ -83,22 +83,6 @@ namespace DecorBlishhudModule
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
 
-            // Toggle window visibility when corner icon is clicked
-            _cornerIcon.Click += (s, e) =>
-            {
-                if (_decorWindow != null)
-                {
-                    if (_decorWindow.Visible)
-                    {
-                        _decorWindow.Hide();
-                    }
-                    else
-                    {
-                        _decorWindow.Show();
-                    }
-                }
-            };
-
             // Set up signature and license labels
             _signatureLabelManager = new SignatureLabelManager(_decorWindow);
             _wikiLicenseManager = new WikiLicenseLabelManager(_decorWindow);
@@ -144,6 +128,16 @@ namespace DecorBlishhudModule
                 Location = new Point(20, 0),
                 Width = 240,
                 PlaceholderText = "Search Decorations..."
+            };
+
+            var clearButton = new StandardButton
+            {
+                Parent = _decorWindow,
+                Location = new Point(searchTextBox.Right - 28, searchTextBox.Top - 1),
+                Size = new Point(29, 28),
+                Text = "X",
+                BackgroundColor = Color.Transparent,
+                Visible = false,
             };
 
             var homesteadDecorationsFlowPanel = new FlowPanel
@@ -257,7 +251,7 @@ namespace DecorBlishhudModule
                     _decorWindow.Subtitle = "Homestead Decorations";
 
                     toggleIcon.BackgroundTexture = _homesteadSwitch;
-                    toggleIcon.Location = new Point(6, 3);
+                    toggleIcon.Location = new Point(6, 2);
                     toggleIcon.Size = new Point(25, 25);
                     homesteadSwitchText.TextColor = new Color(254, 219, 114);
                     homesteadSwitchText.ShadowColor = new Color(165, 123, 0);
@@ -282,6 +276,46 @@ namespace DecorBlishhudModule
                 }
             };
 
+            // Toggle window visibility when corner icon is clicked
+            _cornerIcon.Click += (s, e) =>
+            {
+                if (_decorWindow != null)
+                {
+                    if (_decorWindow.Visible)
+                    {
+                        _decorWindow.Hide();
+                    }
+                    else
+                    {
+                        _decorWindow.Show();
+                        //searchTextBox.Focused = true;
+                    }
+                }
+            };
+
+            //_decorWindow.Click += (s, e) =>
+            //{
+            //    if (_decorWindow.Visible)
+            //    {
+            //        searchTextBox.Focused = true;
+            //    }
+            //};
+
+            // Search functionality
+            searchTextBox.TextChanged += async (sender, args) =>
+            {
+                string searchText = searchTextBox.Text.ToLower();
+                await LeftSideMethods.FilterDecorations(homesteadDecorationsFlowPanel, searchText);
+                await LeftSideMethods.FilterDecorations(guildHallDecorationsFlowPanel, searchText);
+
+                clearButton.Visible = !string.IsNullOrEmpty(searchText);
+            };
+
+            clearButton.Click += (s, e) =>
+            {
+                searchTextBox.Text = string.Empty;
+            };
+
             // Add click event to homesteadSwitchText
             homesteadSwitchText.Click += (s, e) =>
             {
@@ -289,7 +323,7 @@ namespace DecorBlishhudModule
 
                 _decorWindow.Subtitle = "Homestead Decorations";
                 toggleIcon.BackgroundTexture = _homesteadSwitch;
-                toggleIcon.Location = new Point(6, 3);
+                toggleIcon.Location = new Point(6, 2);
                 toggleIcon.Size = new Point(25, 25);
 
                 homesteadSwitchText.TextColor = new Color(254, 219, 114);
