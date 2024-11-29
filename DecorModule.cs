@@ -145,24 +145,24 @@ namespace DecorBlishhudModule
 
             var homesteadDecorationsFlowPanel = new FlowPanel
             {
+                Parent = _decorWindow,
                 FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
                 Width = 500,
                 Height = 660,
                 CanScroll = true,
-                Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10),
                 Visible = true
             };
 
             var guildHallDecorationsFlowPanel = new FlowPanel
             {
+                Parent = _decorWindow,
                 FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
                 Width = 500,
                 Height = 660,
                 CanScroll = true,
-                Parent = _decorWindow,
                 Location = new Point(10, searchTextBox.Bottom + 10),
                 Visible = false
             };
@@ -340,18 +340,9 @@ namespace DecorBlishhudModule
                     else
                     {
                         _decorWindow.Show();
-                        //searchTextBox.Focused = true;
                     }
                 }
             };
-
-            //_decorWindow.Click += (s, e) =>
-            //{
-            //    if (_decorWindow.Visible)
-            //    {
-            //        searchTextBox.Focused = true;
-            //    }
-            //};
 
             // Search functionality
             searchTextBox.TextChanged += async (sender, args) =>
