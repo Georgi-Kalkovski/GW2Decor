@@ -53,52 +53,10 @@ namespace DecorBlishhudModule
                 {
                     var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
 
-                    using (var memoryStream = new MemoryStream(imageResponse))
-                    using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                    var borderedTexture = CreateBorderedTexture(imageResponse);
+
+                    if (borderedTexture != null)
                     {
-                        var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
-
-                        float borderScaleFactor = 0.03f;
-                        int borderWidth = 15;
-                        Color innerBorderColor = new Color(86, 76, 55);
-                        Color outerBorderColor = Color.Black;
-
-                        int borderedWidth = originalTexture.Width + 2 * borderWidth;
-                        int borderedHeight = originalTexture.Height + 2 * borderWidth;
-
-                        var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
-                        Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
-
-                        for (int y = 0; y < borderedHeight; y++)
-                        {
-                            for (int x = 0; x < borderedWidth; x++)
-                            {
-                                int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
-                                if (distanceFromEdge < borderWidth)
-                                {
-                                    float gradientFactor = (float)distanceFromEdge / borderWidth;
-                                    borderedColorData[y * borderedWidth + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
-                                }
-                                else
-                                {
-                                    borderedColorData[y * borderedWidth + x] = Color.Transparent;
-                                }
-                            }
-                        }
-
-                        Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
-                        originalTexture.GetData(originalColorData);
-
-                        for (int y = 0; y < originalTexture.Height; y++)
-                        {
-                            for (int x = 0; x < originalTexture.Width; x++)
-                            {
-                                int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
-                                borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
-                            }
-                        }
-
-                        borderedTexture.SetData(borderedColorData);
                         _decorationImage.Texture = borderedTexture;
 
                         AdjustImageSize(borderedTexture, _decorationImage);
@@ -125,6 +83,65 @@ namespace DecorBlishhudModule
 
                 decorationNameLabel.Text = decoration.Name ?? "Unknown Decoration";
                 CenterTextInParent(decorationNameLabel, _decorWindow);
+            }
+        }
+
+        private static Texture2D CreateBorderedTexture(byte[] imageResponse)
+        {
+            try
+            {
+                using (var memoryStream = new MemoryStream(imageResponse))
+                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                {
+                    var originalTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+
+                    int borderWidth = 15;
+                    Color innerBorderColor = new Color(86, 76, 55);
+                    Color outerBorderColor = Color.Black;
+
+                    int borderedWidth = originalTexture.Width + 2 * borderWidth;
+                    int borderedHeight = originalTexture.Height + 2 * borderWidth;
+
+                    var borderedTexture = new Texture2D(graphicsContext.GraphicsDevice, borderedWidth, borderedHeight);
+                    Color[] borderedColorData = new Color[borderedWidth * borderedHeight];
+
+                    for (int y = 0; y < borderedHeight; y++)
+                    {
+                        for (int x = 0; x < borderedWidth; x++)
+                        {
+                            int distanceFromEdge = Math.Min(Math.Min(x, borderedWidth - x - 1), Math.Min(y, borderedHeight - y - 1));
+                            if (distanceFromEdge < borderWidth)
+                            {
+                                float gradientFactor = (float)distanceFromEdge / borderWidth;
+                                borderedColorData[y * borderedWidth + x] = Color.Lerp(outerBorderColor, innerBorderColor, gradientFactor);
+                            }
+                            else
+                            {
+                                borderedColorData[y * borderedWidth + x] = Color.Transparent;
+                            }
+                        }
+                    }
+
+                    Color[] originalColorData = new Color[originalTexture.Width * originalTexture.Height];
+                    originalTexture.GetData(originalColorData);
+
+                    for (int y = 0; y < originalTexture.Height; y++)
+                    {
+                        for (int x = 0; x < originalTexture.Width; x++)
+                        {
+                            int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
+                            borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
+                        }
+                    }
+
+                    borderedTexture.SetData(borderedColorData);
+                    return borderedTexture;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to create bordered texture. Error: {ex.ToString()}");
+                return null;
             }
         }
 

@@ -110,11 +110,10 @@ namespace DecorBlishhudModule
             {
                 var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
 
-                using (var memoryStream = new MemoryStream(iconResponse))
-                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
-                {
-                    var iconTexture = Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+                var iconTexture = CreateIconTexture(iconResponse);
 
+                if (iconTexture != null)
+                {
                     var borderPanel = new Panel
                     {
                         Size = new Point(49, 49),
@@ -168,6 +167,23 @@ namespace DecorBlishhudModule
             catch (Exception ex)
             {
                 Logger.Warn($"Failed to load decoration icon for '{decoration.Name}'. Error: {ex.Message}");
+            }
+        }
+
+        private static Texture2D CreateIconTexture(byte[] iconResponse)
+        {
+            try
+            {
+                using (var memoryStream = new MemoryStream(iconResponse))
+                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                {
+                    return Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to create icon texture. Error: {ex.Message}");
+                return null;
             }
         }
 
