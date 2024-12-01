@@ -21,8 +21,9 @@ namespace DecorBlishhudModule
         private static readonly HttpClient client = new HttpClient();
 
         private CornerIcon _cornerIcon;
-        private Texture2D _homesteadIconTexture;
-        private Texture2D _homesteadBigIconTexture;
+        private Texture2D _homesteadIconMenu;
+        private Texture2D _homesteadIconHover;
+        private Texture2D _homesteadIconUnactive;
         private Texture2D _homesteadSwitch;
         private Texture2D _scribeSwitch;
         private Texture2D _switchBackground;
@@ -58,8 +59,9 @@ namespace DecorBlishhudModule
         protected override async Task LoadAsync()
         {
             // Load assets
-            _homesteadIconTexture = ContentsManager.GetTexture("test/homestead_icon.png");
-            _homesteadBigIconTexture = ContentsManager.GetTexture("test/homestead_big_icon.png");
+            _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
+            _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");
+            _homesteadIconMenu = ContentsManager.GetTexture("test/homesteadIconMenu.png");
             _homesteadSwitch = ContentsManager.GetTexture("test/homestead_switch.png");
             _scribeSwitch = ContentsManager.GetTexture("test/scribe_switch.png");
             _switchBackground = ContentsManager.GetTexture("test/switch_background.png");
@@ -67,7 +69,7 @@ namespace DecorBlishhudModule
             _x = ContentsManager.GetTexture("test/x.png");
 
             // Create corner icon and show loading spinner
-            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconTexture, _homesteadBigIconTexture, _decorWindow, out _loadingSpinner);
+            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconUnactive, _homesteadIconHover, _decorWindow, out _loadingSpinner);
             _loadingSpinner.Visible = true;
 
             // Window background
@@ -97,8 +99,9 @@ namespace DecorBlishhudModule
         protected override void Unload()
         {
             _cornerIcon?.Dispose();
-            _homesteadIconTexture?.Dispose();
-            _homesteadBigIconTexture?.Dispose();
+            _homesteadIconMenu?.Dispose();
+            _homesteadIconHover?.Dispose();
+            _homesteadIconUnactive?.Dispose();
             _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
             _homesteadSwitch?.Dispose();
@@ -122,7 +125,7 @@ namespace DecorBlishhudModule
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Title = "Decor",
-                Emblem = _homesteadIconTexture,
+                Emblem = _homesteadIconMenu,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
                 SavesPosition = true,

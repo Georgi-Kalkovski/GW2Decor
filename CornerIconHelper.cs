@@ -7,15 +7,15 @@ namespace DecorBlishhudModule
 {
     public static class CornerIconHelper
     {
-        public static CornerIcon CreateLoadingIcon(Texture2D _homesteadIconTexture, Texture2D _homesteadBigIconTexture, StandardWindow decorWindow, out LoadingSpinner loadingSpinner)
+        public static CornerIcon CreateLoadingIcon(Texture2D _homesteadIconUnactive, Texture2D homesteadIconHover, StandardWindow decorWindow, out LoadingSpinner loadingSpinner)
         {
             var icon = new CornerIcon()
             {
-                Icon = _homesteadIconTexture,
+                Icon = _homesteadIconUnactive,
                 BasicTooltipText = "Decor",
                 Priority = 1645843523,
                 Parent = GameService.Graphics.SpriteScreen,
-                HoverIcon = _homesteadBigIconTexture,
+                HoverIcon = homesteadIconHover,
             };
 
             var iconPosition = icon.AbsoluteBounds.Location;
