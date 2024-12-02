@@ -220,7 +220,7 @@ namespace DecorBlishhudModule
                 Location = new Point(decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            //await LeftSideMethods.PopulateDecorations(homesteadDecorationsFlowPanel, guildHallDecorationsFlowPanel);
+            await LeftSideSection.PopulateDecorations(homesteadDecorationsFlowPanel, guildHallDecorationsFlowPanel);
 
             // Search functionality
             searchTextBox.TextChanged += async (sender, args) =>
