@@ -7,10 +7,11 @@ using System;
 using Point = Microsoft.Xna.Framework.Point;
 using System.Linq;
 using Microsoft.Xna.Framework;
+using DecorBlishhudModule.Model;
 
 namespace DecorBlishhudModule
 {
-    public class RightSideMethods
+    public class RightSideSection
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 

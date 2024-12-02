@@ -4,12 +4,12 @@ using Microsoft.Xna.Framework;
 
 namespace DecorBlishhudModule
 {
-    public class WikiLicenseLabelManager
+    public class WikiLicenseSection
     {
         private readonly Container _parentWindow;
         private Label _licenseLabel;
 
-        public WikiLicenseLabelManager(Container parentWindow)
+        public WikiLicenseSection(Container parentWindow)
         {
             _parentWindow = parentWindow;
             AddLicenseLabel();

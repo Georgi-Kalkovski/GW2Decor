@@ -4,12 +4,12 @@ using Microsoft.Xna.Framework;
 
 namespace DecorBlishhudModule
 {
-    public class SignatureLabelManager
+    public class SignatureSection
     {
         private readonly Container _parentWindow;
         private Label _signatureLabel;
 
-        public SignatureLabelManager(Container parentWindow)
+        public SignatureSection(Container parentWindow)
         {
             _parentWindow = parentWindow;
             AddSignatureLabel();

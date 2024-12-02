@@ -9,10 +9,11 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
+using DecorBlishhudModule.Model;
 
 namespace DecorBlishhudModule
 {
-    public class LeftSideMethods
+    public class LeftSideSection
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
@@ -160,7 +161,7 @@ namespace DecorBlishhudModule
 
                         lastClickedIconPanel = borderPanel;
                         var decorModule = DecorModule.DecorModuleInstance;
-                        await RightSideMethods.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+                        await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
                     };
                 }
             }

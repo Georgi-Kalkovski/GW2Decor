@@ -5,6 +5,7 @@ using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Text.RegularExpressions;
+using DecorBlishhudModule.Model;
 
 namespace DecorBlishhudModule
 {

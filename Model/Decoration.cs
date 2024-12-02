@@ -1,4 +1,4 @@
-﻿namespace DecorBlishhudModule
+﻿namespace DecorBlishhudModule.Model
 {
     // Decoration class for JSON deserialization
     public class Decoration
