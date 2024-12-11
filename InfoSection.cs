@@ -1,15 +1,16 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
+using DecorBlishhudModule.CustomTabLogic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
 
 public class InfoSection
 {
-    private readonly StandardWindow _decorWindow;
+    private readonly CustomTabbedWindow2 _decorWindow;
     private readonly Texture2D _info;
 
-    public InfoSection(StandardWindow decorWindow, Texture2D info)
+    public InfoSection(CustomTabbedWindow2 decorWindow, Texture2D info)
     {
         _decorWindow = decorWindow;
         _info = info;
@@ -23,7 +24,7 @@ public class InfoSection
         var infoIcon = new Image
         {
             Parent = _decorWindow,
-            Location = new Point(_decorWindow.Width - 90, 5),
+            Location = new Point(_decorWindow.Width - 120, 5),
             Width = 35,
             Height = 35,
             Texture = _info,
@@ -33,7 +34,7 @@ public class InfoSection
         {
             Parent = _decorWindow,
             Size = new Point(210, 60),
-            Location = new Point(_decorWindow.Width - 320, -5),
+            Location = new Point(_decorWindow.Width - 350, -5),
             ShowBorder = true,
             Visible = false,
             Opacity = 0,

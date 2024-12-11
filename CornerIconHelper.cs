@@ -1,5 +1,6 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
+using DecorBlishhudModule.CustomTabLogic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -7,7 +8,7 @@ namespace DecorBlishhudModule
 {
     public static class CornerIconHelper
     {
-        public static CornerIcon CreateLoadingIcon(Texture2D _homesteadIconUnactive, Texture2D homesteadIconHover, StandardWindow decorWindow, out LoadingSpinner loadingSpinner)
+        public static CornerIcon CreateLoadingIcon(Texture2D _homesteadIconUnactive, Texture2D homesteadIconHover, CustomTabbedWindow2 decorWindow, out LoadingSpinner loadingSpinner)
         {
             var icon = new CornerIcon()
             {

@@ -15,7 +15,7 @@ namespace DecorBlishhudModule
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
-        public static async Task UpdateDecorationImageAsync(Decoration decoration, StandardWindow _decorWindow, Image _decorationImage)
+        public static async Task UpdateDecorationImageAsync(Decoration decoration, Container _decorWindow, Image _decorationImage)
         {
             var decorationNameLabel = _decorWindow.Children.OfType<Label>().FirstOrDefault();
             decorationNameLabel.Text = "";

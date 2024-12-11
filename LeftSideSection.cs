@@ -19,16 +19,11 @@ namespace DecorBlishhudModule
 
         private static Panel lastClickedIconPanel = null;
 
-        public static async Task PopulateDecorations(FlowPanel homesteadDecorationsFlowPanel, FlowPanel guildHallDecorationsFlowPanel)
-        {
-            await PopulateHomesteadIconsInFlowPanel(homesteadDecorationsFlowPanel);
-            await PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel);
-        }
-
         //Homestead Logic
-        public static async Task PopulateHomesteadIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel)
+        public static async Task PopulateHomesteadIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
+
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(_isIconView);
 
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
@@ -50,28 +45,28 @@ namespace DecorBlishhudModule
 
                     var categoryFlowPanel = new FlowPanel
                     {
+                        Parent = homesteadDecorationsFlowPanel,
                         Title = category,
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
-                        Parent = homesteadDecorationsFlowPanel,
                         ControlPadding = new Vector2(4, 4)
                     };
 
-                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(tasks);
                 });
 
             await Task.WhenAll(categoryTasks);
 
-            await OrderDecorations(homesteadDecorationsFlowPanel);
+            await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
         }
 
         //Guild Hall Logic
-        public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel)
+        public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
+            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync(_isIconView);
 
             var flowPanelTasks = decorationsByCategory
                 .Where(entry => entry.Value != null && entry.Value.Count > 0)
@@ -87,82 +82,259 @@ namespace DecorBlishhudModule
 
                     var categoryFlowPanel = new FlowPanel
                     {
+                        Parent = decorationsFlowPanel,
                         Title = category,
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
-                        Parent = decorationsFlowPanel,
                         ControlPadding = new Vector2(4, 4)
                     };
 
-                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel));
+                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(iconTasks);
                 }).ToList();
 
             await Task.WhenAll(flowPanelTasks);
 
-            await OrderDecorations(decorationsFlowPanel);
+            await OrderDecorations(decorationsFlowPanel, _isIconView);
         }
 
-        public static async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel)
+        //Homestead Big Logic
+        public static async Task PopulateHomesteadBigIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
+        {
+
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(_isIconView);
+
+            var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in decorationsByCategory)
+            {
+                caseInsensitiveCategories[kvp.Key] = kvp.Value;
+            }
+
+            List<string> predefinedCategories = HomesteadCategories.GetCategories();
+
+            var categoryTasks = predefinedCategories
+                .Where(category => caseInsensitiveCategories.ContainsKey(category))
+                .Select(async category =>
+                {
+                    int baseHeight = 45;
+                    int heightIncrementPerDecorationSet = 312;
+                    var decorations = caseInsensitiveCategories[category];
+                    int numDecorationSets = (int)Math.Ceiling(decorations.Count / 4.0);
+                    int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+                    var categoryFlowPanel = new FlowPanel
+                    {
+                        Parent = homesteadDecorationsFlowPanel,
+                        Title = category,
+                        FlowDirection = ControlFlowDirection.LeftToRight,
+                        Width = homesteadDecorationsFlowPanel.Width - 20,
+                        Height = calculatedHeight,
+                        CanCollapse = true,
+                        ControlPadding = new Vector2(4, 10)
+                    };
+
+                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    await Task.WhenAll(tasks);
+                });
+
+            await Task.WhenAll(categoryTasks);
+
+            await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
+        }
+
+        //Guild Hall Big Logic
+        public static async Task PopulateGuildHallBigIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
+        {
+            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync(_isIconView);
+
+            var flowPanelTasks = decorationsByCategory
+                .Where(entry => entry.Value != null && entry.Value.Count > 0)
+                .Select(async entry =>
+                {
+                    string category = entry.Key;
+                    var categoryDecorations = entry.Value;
+
+                    int baseHeight = 45;
+                    int heightIncrementPerDecorationSet = 312;
+                    int numDecorationSets = (int)Math.Ceiling(categoryDecorations.Count / 4.0);
+                    int calculatedHeight = baseHeight + (numDecorationSets * heightIncrementPerDecorationSet);
+
+                    var categoryFlowPanel = new FlowPanel
+                    {
+                        Parent = decorationsFlowPanel,
+                        Title = category,
+                        FlowDirection = ControlFlowDirection.LeftToRight,
+                        Width = decorationsFlowPanel.Width - 20,
+                        Height = calculatedHeight,
+                        CanCollapse = true,
+                        ControlPadding = new Vector2(4, 10)
+                    };
+
+                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    await Task.WhenAll(iconTasks);
+                }).ToList();
+
+            await Task.WhenAll(flowPanelTasks);
+
+            await OrderDecorations(decorationsFlowPanel, _isIconView);
+        }
+
+        public static async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView)
         {
             try
             {
                 var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
-
                 var iconTexture = CreateIconTexture(iconResponse);
-
-                if (iconTexture != null)
+                if (_isIconView == true)
                 {
-                    var borderPanel = new Panel
+                    if (iconTexture != null)
                     {
-                        Size = new Point(49, 49),
-                        BackgroundColor = Color.Black,
-                        Parent = categoryFlowPanel
-                    };
-
-                    var decorationIconImage = new Image(iconTexture)
-                    {
-                        BasicTooltipText = decoration.Name,
-                        Size = new Point(45),
-                        Location = new Point(2, 2),
-                        Parent = borderPanel
-                    };
-
-                    borderPanel.MouseEntered += (sender, e) =>
-                    {
-                        if (lastClickedIconPanel != borderPanel)
+                        var borderPanel = new Panel
                         {
-                            borderPanel.BackgroundColor = Color.LightGray;
-                            decorationIconImage.Opacity = 0.75f;
-                        }
-                    };
+                            Parent = categoryFlowPanel,
+                            Size = new Point(49, 49),
+                            BackgroundColor = Color.Black,
+                        };
 
-                    borderPanel.MouseLeft += (sender, e) =>
-                    {
-                        if (lastClickedIconPanel != borderPanel)
+                        var decorationIconImage = new Image(iconTexture)
                         {
-                            borderPanel.BackgroundColor = Color.Black;
+                            Parent = borderPanel,
+                            Size = new Point(45),
+                            Location = new Point(2, 2),
+                            BasicTooltipText = decoration.Name,
+                        };
+
+                        borderPanel.MouseEntered += (sender, e) =>
+                        {
+                            if (lastClickedIconPanel != borderPanel)
+                            {
+                                borderPanel.BackgroundColor = Color.LightGray;
+                                decorationIconImage.Opacity = 0.75f;
+                            }
+                        };
+
+                        borderPanel.MouseLeft += (sender, e) =>
+                        {
+                            if (lastClickedIconPanel != borderPanel)
+                            {
+                                borderPanel.BackgroundColor = Color.Black;
+                                decorationIconImage.Opacity = 1f;
+                            }
+                        };
+
+                        decorationIconImage.Click += async (s, e) =>
+                        {
+                            if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == new Color(254, 254, 176))
+                            {
+                                lastClickedIconPanel.BackgroundColor = Color.Black;
+                                decorationIconImage.Opacity = 1f;
+                            }
+
+                            borderPanel.BackgroundColor = new Color(254, 254, 176);
                             decorationIconImage.Opacity = 1f;
-                        }
-                    };
 
-                    decorationIconImage.Click += async (s, e) =>
+                            lastClickedIconPanel = borderPanel;
+                            var decorModule = DecorModule.DecorModuleInstance;
+                            await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+                        };
+                    }
+                }
+                else
+                {
+                    var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                    var imageTexture = CreateIconTexture(imageResponse);
+                    if (imageTexture != null && iconTexture != null)
                     {
-                        if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == new Color(254, 254, 176))
+                        // Main container for the decoration
+                        var mainContainer = new BorderPanel
                         {
-                            lastClickedIconPanel.BackgroundColor = Color.Black;
-                            decorationIconImage.Opacity = 1f;
+                            Parent = categoryFlowPanel,
+                            Size = new Point(254, 300),
+                            BackgroundColor = new Color(0, 0, 0, 36),
+                            BasicTooltipText = decoration.Name,
+
+                        };
+
+                        // Icon and text container (horizontal layout)
+                        var iconTextContainer = new Panel
+                        {
+                            Parent = mainContainer,
+                            Location = new Point(0, 0),
+                            Size = new Point(254, 50),
+                            BackgroundColor = Color.Black,
+                            BasicTooltipText = decoration.Name,
+                        };
+
+                        // Icon
+                        var iconImage = new Image(iconTexture)
+                        {
+                            Parent = iconTextContainer,
+                            Location = new Point(3,3),
+                            Size = new Point(44, 44),
+                            BasicTooltipText = decoration.Name,
+                        };
+
+                        // Decoration Name Label
+                        var nameLabel = new Label
+                        {
+                            Parent = iconTextContainer,
+                            Size = new Point(190, 40),
+                            Location = new Point(iconImage.Location.X + iconImage.Size.X + 8, 5),
+                            Text = decoration.Name,
+                            Font = decoration.Name.ToString().Length > 30 ? GameService.Content.DefaultFont12 : GameService.Content.DefaultFont14,
+                            HorizontalAlignment = HorizontalAlignment.Left,
+                            VerticalAlignment = VerticalAlignment.Middle,
+                            BasicTooltipText = decoration.Name,
+                        };
+
+                        // Image Panel
+                        int imageWidth = imageTexture.Width;
+                        int imageHeight = imageTexture.Height;
+                        float aspectRatio = (float)imageWidth / imageHeight;
+
+                        int width = 245;
+                        int height = (int)(245 / aspectRatio);
+
+                        if (height > 245)
+                        {
+                            height = 245;
+                            width = (int)(245 * aspectRatio);
                         }
 
-                        borderPanel.BackgroundColor = new Color(254, 254, 176);
-                        decorationIconImage.Opacity = 1f;
+                        int xOffset = (mainContainer.Size.X - width) / 2;
+                        int yOffset = iconTextContainer.Location.Y + iconTextContainer.Size.Y;
 
-                        lastClickedIconPanel = borderPanel;
-                        var decorModule = DecorModule.DecorModuleInstance;
-                        await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
-                    };
+                        int remainingHeight = mainContainer.Size.Y - iconTextContainer.Size.Y;
+                        int centeredYOffset = (remainingHeight - height) / 2 + yOffset;
+
+                        var decorationImage = new Image(imageTexture)
+                        {
+                            Parent = mainContainer,
+                            Location = new Point(xOffset, centeredYOffset),
+                            Size = new Point(width - 3, height),
+                            BasicTooltipText = decoration.Name,
+                        };
+
+                        //mainContainer.MouseEntered += (sender, e) =>
+                        //{
+                        //    if (lastClickedIconPanel != mainContainer)
+                        //    {
+                        //        mainContainer.BackgroundColor = Color.Gray;
+                        //        decorationImage.Opacity = 0.75f;
+                        //    }
+                        //};
+
+                        //mainContainer.MouseLeft += (sender, e) =>
+                        //{
+                        //    if (lastClickedIconPanel != mainContainer)
+                        //    {
+                        //        mainContainer.BackgroundColor = Color.Transparent;
+                        //        decorationImage.Opacity = 1f;
+                        //    }
+                        //};
+                    }
                 }
             }
             catch (Exception ex)
@@ -188,7 +360,7 @@ namespace DecorBlishhudModule
             }
         }
 
-        public static async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText)
+        public static async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText, bool _isIconView)
         {
             searchText = searchText.ToLower();
 
@@ -238,7 +410,7 @@ namespace DecorBlishhudModule
                         categoryFlowPanel.Children.Add(visibleDecoration);
                     }
 
-                    await AdjustCategoryHeightAsync(categoryFlowPanel);
+                    await AdjustCategoryHeightAsync(categoryFlowPanel, _isIconView);
 
                     categoryFlowPanel.Invalidate();
                 }
@@ -247,7 +419,7 @@ namespace DecorBlishhudModule
             decorationsFlowPanel.Invalidate();
         }
 
-        public static Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel)
+        public static Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel, bool _isIconView)
         {
             int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
 
@@ -258,8 +430,8 @@ namespace DecorBlishhudModule
             else
             {
                 int baseHeight = 45;
-                int heightIncrementPerDecorationSet = 52;
-                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / 9.0);
+                int heightIncrementPerDecorationSet = _isIconView ? 52 : 312;
+                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / (_isIconView ? 9.0 : 4.0));
                 int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
 
                 categoryFlowPanel.Height = calculatedHeight;
@@ -269,7 +441,7 @@ namespace DecorBlishhudModule
             return Task.CompletedTask;
         }
 
-        public static async Task OrderDecorations(FlowPanel decorationsFlowPanel)
+        public static async Task OrderDecorations(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
             foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
             {
@@ -312,7 +484,7 @@ namespace DecorBlishhudModule
                         categoryFlowPanel.Children.Add(visibleDecoration);
                     }
 
-                    await AdjustCategoryHeightAsync(categoryFlowPanel);
+                    await AdjustCategoryHeightAsync(categoryFlowPanel, _isIconView);
                 }
             }
         }

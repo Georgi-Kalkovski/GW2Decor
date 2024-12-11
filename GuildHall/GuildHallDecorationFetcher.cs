@@ -12,7 +12,7 @@ namespace DecorBlishhudModule
 {
     public class GuildHallDecorationFetcher
     {
-        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync()
+        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(bool _isIconView)
         {
             // Dictionary to store decorations by category
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
@@ -27,7 +27,7 @@ namespace DecorBlishhudModule
                 string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
 
                 // Fetch decorations for this category
-                var decorations = await FetchDecorationsForCategoryAsync(categoryUrl);
+                var decorations = await FetchDecorationsForCategoryAsync(categoryUrl, _isIconView);
                 return new KeyValuePair<string, List<Decoration>>(category, decorations);
             }).ToList();
 
@@ -43,7 +43,7 @@ namespace DecorBlishhudModule
             return decorationsByCategory;
         }
 
-        private static async Task<List<Decoration>> FetchDecorationsForCategoryAsync(string baseUrl)
+        private static async Task<List<Decoration>> FetchDecorationsForCategoryAsync(string baseUrl, bool _isIconView)
         {
             var decorations = new List<Decoration>();
 
@@ -119,7 +119,6 @@ namespace DecorBlishhudModule
                     var imgNode = galleryItem.SelectSingleNode(".//img");
                     string imageUrl = imgNode != null ? "https://wiki.guildwars2.com" + imgNode.GetAttributeValue("src", "").Trim() : null;
 
-                    // Modify image URL to use 200px version
                     if (imageUrl != null)
                     {
                         imageUrl = imageUrl.Replace("/images/thumb/", "/images/");
@@ -128,7 +127,7 @@ namespace DecorBlishhudModule
 
                     // Match with existing decoration based on name
                     var matchedDecoration = decorations.FirstOrDefault(d =>
-                        d.Name.Trim().Equals(galleryName?.Trim(), StringComparison.OrdinalIgnoreCase));
+                            d.Name.Trim().Equals(galleryName?.Trim(), StringComparison.OrdinalIgnoreCase));
                     if (matchedDecoration != null && imageUrl != null)
                     {
                         matchedDecoration.ImageUrl = imageUrl;

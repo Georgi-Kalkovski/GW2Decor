@@ -1,6 +1,7 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
+using System;
 
 namespace DecorBlishhudModule
 {
@@ -26,10 +27,9 @@ namespace DecorBlishhudModule
                 WrapText = true,
                 StrokeText = true,
                 ShowShadow = true,
-                // TextColor = new Color(137, 239, 255),
                 ShadowColor = new Color(0, 0, 0),
                 Height = 195,
-                Width = 500,
+                Width = 600,
             };
 
             _parentWindow.Resized += (sender, args) => PositionLicenseLabel();
@@ -45,6 +45,12 @@ namespace DecorBlishhudModule
             );
 
             _licenseLabel.Invalidate();
+        }
+
+        public void UpdateWidthBasedOnFlowPanel(bool isBigView)
+        {
+            _licenseLabel.Width = isBigView ? 1110 : 600; // Adjust width based on the view type
+            PositionLicenseLabel(); // Reposition the label after width adjustment
         }
     }
 }
