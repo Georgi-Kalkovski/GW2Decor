@@ -8,7 +8,11 @@
     "powershell": {
       "commandName": "Executable",
       "executablePath": "C:\\Guild Wars 2\\Blish Hud\\Blish HUD.exe",
-      "commandLineArgs": "--debug --process powershell --window ConsoleWindowClass CASCADIA_HOSTING_WINDOW_CLASS --module \"$(ProjectDir)\\$(BaseOutputPath)\\$(Configuration)/$(TargetFramework)\\$(TargetName).bhm\" --settings \"..\\Settings_$(TargetName)\""
+      "commandLineArgs": "--debug --process WindowsTerminal --window CASCADIA_HOSTING_WINDOW_CLASS --module \"$(ProjectDir)\\$(BaseOutputPath)\\$(Configuration)/$(TargetFramework)\\$(TargetName).bhm\" --settings \"..\\Settings_$(TargetName)\"\r\n",
+      "remoteDebugEnabled": false,
+      "nativeDebugging": false,
+      "sqlDebugging": false,
+      "jsWebView2Debugging": false
     }
   }
 }
