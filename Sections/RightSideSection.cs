@@ -23,24 +23,31 @@ namespace DecorBlishhudModule.Sections
             var savedPanel = new Panel
             {
                 Parent = _decorWindow,
-                Location = new Point(730, 550),
+                Location = new Point(770, 550),
                 Title = "Saved !",
                 Width = 70,
                 Height = 45,
                 ShowBorder = true,
                 Opacity = 0f,
+                Visible = false,
             };
 
             decorationNameLabel.Click += (s, e) =>
             {
-                CopyTextToClipboard(decoration.Name);
-                ShowSavedPanel(savedPanel);
+                if (savedPanel.Visible == false)
+                {
+                    CopyTextToClipboard(decoration.Name);
+                    ShowSavedPanel(savedPanel);
+                }
             };
 
             _decorationImage.Click += (s, e) =>
             {
-                CopyTextToClipboard(decoration.Name);
-                ShowSavedPanel(savedPanel);
+                if (savedPanel.Visible == false)
+                {
+                    CopyTextToClipboard(decoration.Name);
+                    ShowSavedPanel(savedPanel);
+                }
             };
 
             CenterTextInParent(decorationNameLabel, _decorWindow);
@@ -176,7 +183,7 @@ namespace DecorBlishhudModule.Sections
             int centerX = (parent.Width - image.Size.X) / 2;
             int centerY = (parent.Height - image.Size.Y) / 2;
 
-            image.Location = new Point(centerX + 240, centerY - 40);
+            image.Location = new Point(centerX + 230, centerY - 40);
         }
 
         public static void AdjustImageSize(Texture2D loadedTexture, Image decorationImage)
