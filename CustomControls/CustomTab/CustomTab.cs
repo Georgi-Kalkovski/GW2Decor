@@ -4,7 +4,7 @@ using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace DecorBlishhudModule.CustomTabLogic
+namespace DecorBlishhudModule.CustomControls.CustomTab
 {
     public class CustomTab
     {

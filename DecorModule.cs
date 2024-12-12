@@ -1,16 +1,17 @@
-﻿using System.ComponentModel.Composition;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Blish_HUD;
+﻿using Blish_HUD;
 using Blish_HUD.Content;
 using Blish_HUD.Controls;
 using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
-using DecorBlishhudModule.CustomTabLogic;
+using DecorBlishhudModule.CustomControls.CustomTab;
 using DecorBlishhudModule.Model;
+using DecorBlishhudModule.Sections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.ComponentModel.Composition;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -26,10 +27,10 @@ namespace DecorBlishhudModule
         private Texture2D _homesteadIconMenu;
         private Texture2D _homesteadIconHover;
         private Texture2D _homesteadIconUnactive;
-        private Texture2D _homesteadSwitch;
-        private Texture2D _scribeSwitch;
-        private Texture2D _iconSwitch;
-        private Texture2D _imageSwitch;
+        private Texture2D _handiworkTab;
+        private Texture2D _scribeTab;
+        private Texture2D _iconsTab;
+        private Texture2D _imagesTab;
         private Texture2D _info;
         private Texture2D _x;
         private LoadingSpinner _loadingSpinner;
@@ -66,10 +67,10 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
             _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");
             _homesteadIconMenu = ContentsManager.GetTexture("test/homesteadIconMenu.png");
-            _homesteadSwitch = ContentsManager.GetTexture("test/homestead_switch.png");
-            _scribeSwitch = ContentsManager.GetTexture("test/scribe_switch.png");
-            _iconSwitch = ContentsManager.GetTexture("test/icons.png");
-            _imageSwitch = ContentsManager.GetTexture("test/images.png");
+            _handiworkTab = ContentsManager.GetTexture("test/handiwork.png");
+            _scribeTab = ContentsManager.GetTexture("test/scribe.png");
+            _iconsTab = ContentsManager.GetTexture("test/icons.png");
+            _imagesTab = ContentsManager.GetTexture("test/images.png");
             _info = ContentsManager.GetTexture("test/info.png");
             _x = ContentsManager.GetTexture("test/x.png");
 
@@ -115,10 +116,10 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive?.Dispose();
             _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
-            _homesteadSwitch?.Dispose();
-            _scribeSwitch?.Dispose();
-            _iconSwitch?.Dispose();
-            _imageSwitch?.Dispose();
+            _handiworkTab?.Dispose();
+            _scribeTab?.Dispose();
+            _iconsTab?.Dispose();
+            _imagesTab?.Dispose();
             _info.Dispose();
             _x.Dispose();
             _decorationIcon?.Dispose();
@@ -248,10 +249,10 @@ namespace DecorBlishhudModule
             // Update the placeholder image
             await RightSideSection.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
 
-            var customTab1 = new CustomTab(_homesteadSwitch, "Homestead", 4);
-            var customTab2 = new CustomTab(_scribeSwitch, "Guild Hall", 3);
-            var customTab3 = new CustomTab(_iconSwitch, "Icon Preview", 2);
-            var customTab4 = new CustomTab(_imageSwitch, "Image Preview", 1);
+            var customTab1 = new CustomTab(_handiworkTab, "Homestead Handiwork", 4);
+            var customTab2 = new CustomTab(_scribeTab, "Guild Hall Scribe", 3);
+            var customTab3 = new CustomTab(_iconsTab, "Icons Preview", 2);
+            var customTab4 = new CustomTab(_imagesTab, "Images Preview", 1);
 
             _decorWindow.TabsGroup1.Add(customTab1);
             _decorWindow.TabsGroup1.Add(customTab2);
@@ -271,6 +272,7 @@ namespace DecorBlishhudModule
 
                 if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab3)
                 {
+                    _decorWindow.Subtitle = "Homestead Decorations";
                     _decorationRightText.Visible = true;
                     _decorationImage.Visible = true;
                     _homesteadDecorationsFlowPanel.Visible = true;
@@ -281,6 +283,7 @@ namespace DecorBlishhudModule
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
                 {
+                    _decorWindow.Subtitle = "Guild Hall Decorations";
                     _decorationRightText.Visible = true;
                     _decorationImage.Visible = true;
                     _homesteadDecorationsFlowPanel.Visible = false;
@@ -291,6 +294,7 @@ namespace DecorBlishhudModule
                 }
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
                 {
+                    _decorWindow.Subtitle = "Homestead Decorations";
                     _decorationRightText.Visible = false;
                     _decorationImage.Visible = false;
                     _homesteadDecorationsFlowPanel.Visible = false;
@@ -301,6 +305,7 @@ namespace DecorBlishhudModule
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
                 {
+                    _decorWindow.Subtitle = "Guild Hall Decorations";
                     _decorationRightText.Visible = false;
                     _decorationImage.Visible = false;
                     _homesteadDecorationsFlowPanel.Visible = false;
@@ -330,7 +335,8 @@ namespace DecorBlishhudModule
             });
 
             // Wait for background tasks
-            Task.WhenAll(guildHallTask, imagePreviewTask);
+            Task.WhenAll(guildHallTask);
+            Task.WhenAll(imagePreviewTask);
 
 
             // Search functionality

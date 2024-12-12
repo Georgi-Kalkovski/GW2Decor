@@ -2,7 +2,7 @@
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 
-namespace DecorBlishhudModule
+namespace DecorBlishhudModule.Sections
 {
     public class SignatureSection
     {
@@ -27,8 +27,8 @@ namespace DecorBlishhudModule
                 StrokeText = true,
                 ShowShadow = true,
                 ShadowColor = new Color(0, 0, 0),
-                Height = 185,     
-                Width = 220,     
+                Height = 185,
+                Width = 220,
             };
 
             _parentWindow.Resized += (sender, args) => PositionSignatureLabel();

@@ -1,6 +1,6 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
-using DecorBlishhudModule.CustomTabLogic;
+using DecorBlishhudModule.CustomControls.CustomTab;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;

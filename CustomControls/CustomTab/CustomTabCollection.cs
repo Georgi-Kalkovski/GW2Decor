@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace DecorBlishhudModule.CustomTabLogic
+namespace DecorBlishhudModule.CustomControls.CustomTab
 {
     public class CustomTabCollection : ICollection<CustomTab>, IEnumerable<CustomTab>, IEnumerable
     {

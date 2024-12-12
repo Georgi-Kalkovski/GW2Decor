@@ -1,15 +1,15 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
-using Microsoft.Xna.Framework.Graphics;
-using System.IO;
-using System.Threading.Tasks;
-using System;
-using Point = Microsoft.Xna.Framework.Point;
-using System.Linq;
-using Microsoft.Xna.Framework;
 using DecorBlishhudModule.Model;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Point = Microsoft.Xna.Framework.Point;
 
-namespace DecorBlishhudModule
+namespace DecorBlishhudModule.Sections
 {
     public class RightSideSection
     {
@@ -130,7 +130,7 @@ namespace DecorBlishhudModule
                     {
                         for (int x = 0; x < originalTexture.Width; x++)
                         {
-                            int borderedIndex = (y + borderWidth) * borderedWidth + (x + borderWidth);
+                            int borderedIndex = (y + borderWidth) * borderedWidth + x + borderWidth;
                             borderedColorData[borderedIndex] = originalColorData[y * originalTexture.Width + x];
                         }
                     }

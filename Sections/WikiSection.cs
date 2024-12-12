@@ -1,9 +1,8 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
-using System;
 
-namespace DecorBlishhudModule
+namespace DecorBlishhudModule.Sections
 {
     public class WikiLicenseSection
     {

@@ -10,6 +10,8 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Point = Microsoft.Xna.Framework.Point;
 using DecorBlishhudModule.Model;
+using DecorBlishhudModule.CustomControls;
+using DecorBlishhudModule.Sections;
 
 namespace DecorBlishhudModule
 {
@@ -23,7 +25,7 @@ namespace DecorBlishhudModule
         public static async Task PopulateHomesteadIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
         {
 
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(_isIconView);
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
 
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
@@ -51,7 +53,8 @@ namespace DecorBlishhudModule
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
-                        ControlPadding = new Vector2(4, 4)
+                        ControlPadding = new Vector2(4, 4),
+                        OuterControlPadding = new Vector2(0, 4),
                     };
 
                     var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
@@ -66,7 +69,7 @@ namespace DecorBlishhudModule
         //Guild Hall Logic
         public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync(_isIconView);
+            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
 
             var flowPanelTasks = decorationsByCategory
                 .Where(entry => entry.Value != null && entry.Value.Count > 0)
@@ -88,7 +91,8 @@ namespace DecorBlishhudModule
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
-                        ControlPadding = new Vector2(4, 4)
+                        ControlPadding = new Vector2(4, 4),
+                        OuterControlPadding = new Vector2(0, 4),
                     };
 
                     var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
@@ -104,7 +108,7 @@ namespace DecorBlishhudModule
         public static async Task PopulateHomesteadBigIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
         {
 
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync(_isIconView);
+            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
 
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
@@ -132,7 +136,8 @@ namespace DecorBlishhudModule
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = true,
-                        ControlPadding = new Vector2(4, 10)
+                        ControlPadding = new Vector2(4, 10),
+                        OuterControlPadding = new Vector2(0, 10),
                     };
 
                     var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
@@ -147,7 +152,7 @@ namespace DecorBlishhudModule
         //Guild Hall Big Logic
         public static async Task PopulateGuildHallBigIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync(_isIconView);
+            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
 
             var flowPanelTasks = decorationsByCategory
                 .Where(entry => entry.Value != null && entry.Value.Count > 0)
@@ -169,7 +174,8 @@ namespace DecorBlishhudModule
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = true,
-                        ControlPadding = new Vector2(4, 10)
+                        ControlPadding = new Vector2(4, 10),
+                        OuterControlPadding = new Vector2(0, 10),
                     };
 
                     var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
@@ -271,7 +277,7 @@ namespace DecorBlishhudModule
                         var iconImage = new Image(iconTexture)
                         {
                             Parent = iconTextContainer,
-                            Location = new Point(3,3),
+                            Location = new Point(3, 3),
                             Size = new Point(44, 44),
                             BasicTooltipText = decoration.Name,
                         };
@@ -434,7 +440,7 @@ namespace DecorBlishhudModule
                 int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / (_isIconView ? 9.0 : 4.0));
                 int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
 
-                categoryFlowPanel.Height = calculatedHeight;
+                categoryFlowPanel.Height = calculatedHeight + (_isIconView ? 4 : 10);
 
                 categoryFlowPanel.Invalidate();
             }

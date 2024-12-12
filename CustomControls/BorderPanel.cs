@@ -1,8 +1,10 @@
-﻿using Blish_HUD.Content;
+﻿using Blish_HUD;
+using Blish_HUD.Content;
+using Blish_HUD.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Blish_HUD.Controls;
+namespace DecorBlishhudModule.CustomControls;
 
 public class BorderPanel : Panel
 {
@@ -14,15 +16,15 @@ public class BorderPanel : Panel
     public override void RecalculateLayout()
     {
         ResizeHandleBoundsRight = new Rectangle(
-            base.Width - _textureWindowCorner.Width + 3,
-            base.Height - _textureWindowCorner.Height + 3,
+            Width - _textureWindowCorner.Width + 3,
+            Height - _textureWindowCorner.Height + 3,
             _textureWindowCorner.Width,
             _textureWindowCorner.Height
         );
 
         ResizeHandleBoundsLeft = new Rectangle(
             -3,
-            base.Height - _textureWindowCorner.Height + 3,
+            Height - _textureWindowCorner.Height + 3,
             _textureWindowCorner.Width,
             _textureWindowCorner.Height
         );

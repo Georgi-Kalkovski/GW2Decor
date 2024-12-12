@@ -1,4 +1,4 @@
-﻿namespace DecorBlishhudModule.CustomTabLogic
+﻿namespace DecorBlishhudModule.CustomControls.CustomTab
 {
     public interface ICustomTabOwner
     {

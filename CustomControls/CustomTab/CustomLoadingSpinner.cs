@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Blish_HUD;
+using Blish_HUD.Controls;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Blish_HUD.Controls;
+namespace DecorBlishhudModule.CustomControls.CustomTab;
 
 public class CustomLoadingSpinner : LoadingSpinner
 {
@@ -9,7 +11,7 @@ public class CustomLoadingSpinner : LoadingSpinner
 
     public CustomLoadingSpinner()
     {
-        base.Size = new Point(32, 32);
+        Size = new Point(32, 32);
     }
 
     public void Paint(SpriteBatch spriteBatch, Rectangle bounds)

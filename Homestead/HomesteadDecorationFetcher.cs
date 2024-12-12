@@ -11,7 +11,7 @@ namespace DecorBlishhudModule
 {
     public class HomesteadDecorationFetcher
     {
-        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(bool _isIconView)
+        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync()
         {
             DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
@@ -70,11 +70,8 @@ namespace DecorBlishhudModule
                     if (wrapperImgNode != null)
                     {
                         var imageUrl = "https://wiki.guildwars2.com" + wrapperImgNode.GetAttributeValue("src", "").Trim();
-                        if (_isIconView)
-                        {
-                            imageUrl = imageUrl.Replace("/images/thumb/", "/images/");
-                            imageUrl = Regex.Replace(imageUrl, @"/\d+px-[^/]+$", "");
-                        }
+                        imageUrl = imageUrl.Replace("/images/thumb/", "/images/");
+                        imageUrl = Regex.Replace(imageUrl, @"/\d+px-[^/]+$", "");
                         decoration.ImageUrl = imageUrl;
                     }
                 }

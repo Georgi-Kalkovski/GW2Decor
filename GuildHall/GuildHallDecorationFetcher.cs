@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using DecorBlishhudModule.Homestead;
+using DecorBlishhudModule.Model;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using DecorBlishhudModule.Homestead;
-using DecorBlishhudModule.Model;
+using System.Threading.Tasks;
 
 namespace DecorBlishhudModule
 {
     public class GuildHallDecorationFetcher
     {
-        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync(bool _isIconView)
+        public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync()
         {
             // Dictionary to store decorations by category
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
@@ -27,7 +27,7 @@ namespace DecorBlishhudModule
                 string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Guild_hall/{formattedCategoryName}&format=json&prop=text";
 
                 // Fetch decorations for this category
-                var decorations = await FetchDecorationsForCategoryAsync(categoryUrl, _isIconView);
+                var decorations = await FetchDecorationsForCategoryAsync(categoryUrl);
                 return new KeyValuePair<string, List<Decoration>>(category, decorations);
             }).ToList();
 
@@ -43,7 +43,7 @@ namespace DecorBlishhudModule
             return decorationsByCategory;
         }
 
-        private static async Task<List<Decoration>> FetchDecorationsForCategoryAsync(string baseUrl, bool _isIconView)
+        private static async Task<List<Decoration>> FetchDecorationsForCategoryAsync(string baseUrl)
         {
             var decorations = new List<Decoration>();
 
