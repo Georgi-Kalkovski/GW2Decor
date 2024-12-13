@@ -391,23 +391,49 @@ namespace DecorBlishhudModule
                             BasicTooltipText = decoration.Name,
                         };
 
-                        //mainContainer.MouseEntered += (sender, e) =>
-                        //{
-                        //    if (lastClickedIconPanel != mainContainer)
-                        //    {
-                        //        mainContainer.BackgroundColor = Color.Gray;
-                        //        decorationImage.Opacity = 0.75f;
-                        //    }
-                        //};
+                        mainContainer.MouseEntered += (sender, e) =>
+                        {
+                            if (lastClickedIconPanel != mainContainer)
+                            {
+                                mainContainer.BackgroundColor = new Color(101, 101, 84, 36);
+                            }
+                        };
 
-                        //mainContainer.MouseLeft += (sender, e) =>
-                        //{
-                        //    if (lastClickedIconPanel != mainContainer)
-                        //    {
-                        //        mainContainer.BackgroundColor = Color.Transparent;
-                        //        decorationImage.Opacity = 1f;
-                        //    }
-                        //};
+                        mainContainer.MouseLeft += (sender, e) =>
+                        {
+                            if (lastClickedIconPanel != mainContainer)
+                            {
+                                mainContainer.BackgroundColor = new Color(0, 0, 0, 36);
+                            }
+                        };
+
+                        var copyPanel = new Image(DecorModule.DecorModuleInstance?.CopyIcon)
+                        {
+                            Parent = mainContainer,
+                            Size = new Point(24, 24),
+                            Location = new Point(mainContainer.Size.X - 24, -2),
+                            BasicTooltipText = "Save Name"
+                        };
+                        var savedPanel = new Panel
+                        {
+                            Parent = mainContainer,
+                            Location = new Point(90, 150),
+                            Title = "Saved !",
+                            Width = 70,
+                            Height = 45,
+                            ShowBorder = true,
+                            Opacity = 0f,
+                            Visible = false,
+                        };
+
+                        copyPanel.Click += (sender, e) =>
+                        {
+                            if (savedPanel.Visible == false)
+                            {
+                                SaveTasks.CopyTextToClipboard(decoration.Name);
+                                SaveTasks.ShowSavedPanel(savedPanel);
+                            }
+                        };
                     }
                 }
             }

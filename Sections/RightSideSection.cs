@@ -36,8 +36,8 @@ namespace DecorBlishhudModule.Sections
             {
                 if (savedPanel.Visible == false)
                 {
-                    CopyTextToClipboard(decoration.Name);
-                    ShowSavedPanel(savedPanel);
+                    SaveTasks.CopyTextToClipboard(decoration.Name);
+                    SaveTasks.ShowSavedPanel(savedPanel);
                 }
             };
 
@@ -45,8 +45,8 @@ namespace DecorBlishhudModule.Sections
             {
                 if (savedPanel.Visible == false)
                 {
-                    CopyTextToClipboard(decoration.Name);
-                    ShowSavedPanel(savedPanel);
+                    SaveTasks.CopyTextToClipboard(decoration.Name);
+                    SaveTasks.ShowSavedPanel(savedPanel);
                 }
             };
 
@@ -210,49 +210,6 @@ namespace DecorBlishhudModule.Sections
             }
 
             decorationImage.Size = new Point(targetWidth, targetHeight);
-        }
-
-        private static void CopyTextToClipboard(string text)
-        {
-            if (!string.IsNullOrEmpty(text))
-            {
-                try
-                {
-                    System.Windows.Forms.Clipboard.SetText(text);
-                    Logger.Info($"Copied '{text}' to clipboard.");
-                }
-                catch (Exception ex)
-                {
-                    Logger.Warn($"Failed to copy text to clipboard. Error: {ex.ToString()}");
-                }
-            }
-        }
-
-        public static async void ShowSavedPanel(Panel savedPanel)
-        {
-            savedPanel.Visible = true;
-            await FadePanel(savedPanel, 0f, 1f, 200);
-
-            await Task.Delay(500);
-
-            await FadePanel(savedPanel, 1f, 0f, 200);
-
-            savedPanel.Visible = false;
-        }
-
-        public static async Task FadePanel(Panel panel, float startOpacity, float endOpacity, int duration)
-        {
-            int steps = 30;
-            float stepDuration = duration / steps;
-            float opacityStep = (endOpacity - startOpacity) / steps;
-
-            for (int i = 0; i < steps; i++)
-            {
-                panel.Opacity = startOpacity + opacityStep * i;
-                await Task.Delay((int)stepDuration);
-            }
-
-            panel.Opacity = endOpacity;
         }
     }
 }

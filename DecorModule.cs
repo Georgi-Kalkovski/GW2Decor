@@ -34,6 +34,7 @@ namespace DecorBlishhudModule
         private Texture2D _imagesTab;
         private Texture2D _info;
         private Texture2D _x;
+        private Texture2D _copy;
         private LoadingSpinner _loadingSpinner;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
@@ -48,6 +49,8 @@ namespace DecorBlishhudModule
         public Label DecorationRightText => _decorationRightText;
         public Image DecorationImage => _decorationImage;
         public bool Loaded => _loaded;
+        public Texture2D CopyIcon => _copy;
+
 
         public HttpClient Client => client;
 
@@ -76,6 +79,7 @@ namespace DecorBlishhudModule
             _imagesTab = ContentsManager.GetTexture("test/images.png");
             _info = ContentsManager.GetTexture("test/info.png");
             _x = ContentsManager.GetTexture("test/x.png");
+            _copy = ContentsManager.GetTexture("test/copy.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconUnactive, _homesteadIconHover, _decorWindow, out _loadingSpinner);
@@ -132,8 +136,9 @@ namespace DecorBlishhudModule
             _scribeTab?.Dispose();
             _iconsTab?.Dispose();
             _imagesTab?.Dispose();
-            _info.Dispose();
-            _x.Dispose();
+            _info?.Dispose();
+            _x?.Dispose();
+            _copy?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
