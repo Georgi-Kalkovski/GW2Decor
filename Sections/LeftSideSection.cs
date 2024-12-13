@@ -12,6 +12,7 @@ using Point = Microsoft.Xna.Framework.Point;
 using DecorBlishhudModule.Model;
 using DecorBlishhudModule.CustomControls;
 using DecorBlishhudModule.Sections;
+using DecorBlishhudModule.Sections.LeftSideTasks;
 
 namespace DecorBlishhudModule
 {
@@ -89,7 +90,7 @@ namespace DecorBlishhudModule
 
             await Task.WhenAll(categoryTasks);
 
-            await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
+            await OrderDecorations.OrderDecorationsAsync(homesteadDecorationsFlowPanel, _isIconView);
         }
 
         public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
@@ -126,7 +127,7 @@ namespace DecorBlishhudModule
 
             await Task.WhenAll(flowPanelTasks);
 
-            await OrderDecorations(decorationsFlowPanel, _isIconView);
+            await OrderDecorations.OrderDecorationsAsync(decorationsFlowPanel, _isIconView);
         }
 
         public static async Task PopulateHomesteadBigIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
@@ -169,7 +170,7 @@ namespace DecorBlishhudModule
 
             await Task.WhenAll(categoryTasks);
 
-            await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
+            await OrderDecorations.OrderDecorationsAsync(homesteadDecorationsFlowPanel, _isIconView);
         }
 
         public static async Task PopulateGuildHallBigIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
@@ -206,7 +207,7 @@ namespace DecorBlishhudModule
 
             await Task.WhenAll(flowPanelTasks);
 
-            await OrderDecorations(decorationsFlowPanel, _isIconView);
+            await OrderDecorations.OrderDecorationsAsync(decorationsFlowPanel, _isIconView);
         }
 
         public static async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView)
@@ -430,135 +431,6 @@ namespace DecorBlishhudModule
             {
                 Logger.Warn($"Failed to create icon texture. Error: {ex.Message}");
                 return null;
-            }
-        }
-
-        public static async Task FilterDecorations(FlowPanel decorationsFlowPanel, string searchText, bool _isIconView)
-        {
-            searchText = searchText.ToLower();
-
-            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
-            {
-                bool hasVisibleDecoration = false;
-
-                var visibleDecorations = new List<Panel>();
-
-                foreach (var decorationIconPanel in categoryFlowPanel.Children.OfType<Panel>())
-                {
-                    var decorationIcon = decorationIconPanel.Children.OfType<Image>().FirstOrDefault();
-
-                    if (decorationIcon != null)
-                    {
-                        bool matchesSearch = decorationIcon.BasicTooltipText?.ToLower().Contains(searchText) ?? false;
-
-                        decorationIconPanel.Visible = matchesSearch;
-
-                        if (matchesSearch)
-                        {
-                            visibleDecorations.Add(decorationIconPanel);
-                            hasVisibleDecoration = true;
-                        }
-                    }
-                }
-
-                categoryFlowPanel.Visible = hasVisibleDecoration;
-
-                if (hasVisibleDecoration)
-                {
-                    // Sort visible decorations by name (BasicTooltipText)
-                    visibleDecorations.Sort((a, b) =>
-                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
-                                       b.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
-                                       StringComparison.OrdinalIgnoreCase));
-
-                    // Remove all visible decorations from the category panel first
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Remove(visibleDecoration);
-                    }
-
-                    // Reinsert them in the sorted order by appending at the end
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Add(visibleDecoration);
-                    }
-
-                    await AdjustCategoryHeightAsync(categoryFlowPanel, _isIconView);
-
-                    categoryFlowPanel.Invalidate();
-                }
-            }
-
-            decorationsFlowPanel.Invalidate();
-        }
-
-        public static Task AdjustCategoryHeightAsync(FlowPanel categoryFlowPanel, bool _isIconView)
-        {
-            int visibleDecorationCount = categoryFlowPanel.Children.OfType<Panel>().Count(p => p.Visible);
-
-            if (visibleDecorationCount == 0)
-            {
-                categoryFlowPanel.Height = 45;
-            }
-            else
-            {
-                int baseHeight = 45;
-                int heightIncrementPerDecorationSet = _isIconView ? 52 : 312;
-                int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / (_isIconView ? 9.0 : 4.0));
-                int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
-
-                categoryFlowPanel.Height = calculatedHeight + (_isIconView ? 4 : 10);
-
-                categoryFlowPanel.Invalidate();
-            }
-            return Task.CompletedTask;
-        }
-
-        public static async Task OrderDecorations(FlowPanel decorationsFlowPanel, bool _isIconView)
-        {
-            foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
-            {
-                bool hasVisibleDecoration = false;
-
-                var visibleDecorations = new List<Panel>();
-
-                // Collect all decoration icon panels
-                foreach (var decorationIconPanel in categoryFlowPanel.Children.OfType<Panel>())
-                {
-                    var decorationIcon = decorationIconPanel.Children.OfType<Image>().FirstOrDefault();
-
-                    if (decorationIcon != null)
-                    {
-                        decorationIconPanel.Visible = true;
-                        visibleDecorations.Add(decorationIconPanel);
-                        hasVisibleDecoration = true;
-                    }
-                }
-
-                categoryFlowPanel.Visible = hasVisibleDecoration;
-
-                if (hasVisibleDecoration)
-                {
-                    // Sort visible decorations by name (BasicTooltipText)
-                    visibleDecorations.Sort((a, b) =>
-                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
-                                       b.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
-                                       StringComparison.OrdinalIgnoreCase));
-
-                    // Remove all visible decorations from the category panel first
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Remove(visibleDecoration);
-                    }
-
-                    // Reinsert them in the sorted order by appending at the end
-                    foreach (var visibleDecoration in visibleDecorations)
-                    {
-                        categoryFlowPanel.Children.Add(visibleDecoration);
-                    }
-
-                    await AdjustCategoryHeightAsync(categoryFlowPanel, _isIconView);
-                }
             }
         }
     }

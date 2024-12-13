@@ -6,6 +6,7 @@ using Blish_HUD.Modules.Managers;
 using DecorBlishhudModule.CustomControls.CustomTab;
 using DecorBlishhudModule.Model;
 using DecorBlishhudModule.Sections;
+using DecorBlishhudModule.Sections.LeftSideTasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.ComponentModel.Composition;
@@ -110,8 +111,6 @@ namespace DecorBlishhudModule
                     }
                 }
             };
-
-            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 
             // Hide loading spinner when decorations are ready
             _loadingSpinner.Visible = false;
@@ -322,6 +321,8 @@ namespace DecorBlishhudModule
             customTab2.Enabled = false;
             customTab4.Enabled = false;
 
+            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
             {
@@ -345,10 +346,10 @@ namespace DecorBlishhudModule
             searchTextBox.TextChanged += async (sender, args) =>
             {
                 string searchText = searchTextBox.Text.ToLower();
-                await LeftSideSection.FilterDecorations(_homesteadDecorationsFlowPanel, searchText, true);
-                await LeftSideSection.FilterDecorations(guildHallDecorationsFlowPanel, searchText, true);
-                await LeftSideSection.FilterDecorations(homesteadDecorationsBigFlowPanel, searchText, false);
-                await LeftSideSection.FilterDecorations(guildHallDecorationsBigFlowPanel, searchText, false);
+                await FilterDecorations.FilterDecorationsAsync(_homesteadDecorationsFlowPanel, searchText, true);
+                await FilterDecorations.FilterDecorationsAsync(guildHallDecorationsFlowPanel, searchText, true);
+                await FilterDecorations.FilterDecorationsAsync(homesteadDecorationsBigFlowPanel, searchText, false);
+                await FilterDecorations.FilterDecorationsAsync(guildHallDecorationsBigFlowPanel, searchText, false);
 
                 clearButton.Visible = !string.IsNullOrEmpty(searchText);
             };
