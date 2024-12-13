@@ -40,12 +40,14 @@ namespace DecorBlishhudModule
         private Image _decorationImage;
         private SignatureSection _signatureLabelManager;
         private WikiLicenseSection _wikiLicenseManager;
-
         private FlowPanel _homesteadDecorationsFlowPanel;
+        private bool _loaded = false;
 
         public CustomTabbedWindow2 DecorWindow => _decorWindow;
         public Label DecorationRightText => _decorationRightText;
         public Image DecorationImage => _decorationImage;
+        public bool Loaded => _loaded;
+
         public HttpClient Client => client;
 
         internal static DecorModule DecorModuleInstance;
@@ -81,6 +83,17 @@ namespace DecorBlishhudModule
             // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
+
+            // Homestead placeholder decoration
+            var homesteadImagePlaceholder = new Decoration
+            {
+                Name = "Welcome to Decor. Enjoy your stay!",
+                IconUrl = null,
+                ImageUrl = "https://i.imgur.com/VBAy1WA.jpeg"
+            };
+
+            // Update the placeholder image
+            await RightSideSection.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
 
             // Toggle window visibility when corner icon is clicked
             _cornerIcon.Click += (s, e) =>
@@ -238,17 +251,6 @@ namespace DecorBlishhudModule
                 Location = new Point(_decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            // Homestead placeholder decoration
-            var homesteadImagePlaceholder = new Decoration
-            {
-                Name = "Welcome to Decor. Enjoy your stay!",
-                IconUrl = null,
-                ImageUrl = "https://i.imgur.com/VBAy1WA.jpeg"
-            };
-
-            // Update the placeholder image
-            await RightSideSection.UpdateDecorationImageAsync(homesteadImagePlaceholder, _decorWindow, _decorationImage);
-
             var customTab1 = new CustomTab(_handiworkTab, "Homestead Handiwork", 4);
             var customTab2 = new CustomTab(_scribeTab, "Guild Hall Scribe", 3);
             var customTab3 = new CustomTab(_iconsTab, "Icons Preview", 2);
@@ -325,6 +327,7 @@ namespace DecorBlishhudModule
             {
                 await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
                 customTab2.Enabled = true;
+                if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
             var imagePreviewTask = Task.Run(async () =>
@@ -332,12 +335,11 @@ namespace DecorBlishhudModule
                 await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
                 await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
                 customTab4.Enabled = true;
+                if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
-            // Wait for background tasks
             Task.WhenAll(guildHallTask);
             Task.WhenAll(imagePreviewTask);
-
 
             // Search functionality
             searchTextBox.TextChanged += async (sender, args) =>

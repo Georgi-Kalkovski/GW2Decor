@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using DecorBlishhudModule.Homestead;
+using DecorBlishhudModule.Model;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using DecorBlishhudModule.Model;
+using System.Threading.Tasks;
 
 namespace DecorBlishhudModule
 {
@@ -13,93 +14,129 @@ namespace DecorBlishhudModule
     {
         public static async Task<Dictionary<string, List<Decoration>>> FetchDecorationsAsync()
         {
+            // Request to the client
             DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+            // Dictionary to store decorations by category
             var decorationsByCategory = new Dictionary<string, List<Decoration>>();
 
-            // Fetch JSON data
-            string url = "https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead&format=json&prop=text";
-            var json = await DecorModule.DecorModuleInstance.Client.GetStringAsync(url);
-            var parsedJson = JObject.Parse(json);
+            // Get the categories (assuming this is already defined)
+            List<string> categories = HomesteadCategories.GetCategories();
 
-            // Extract HTML content
-            string htmlContent = parsedJson["parse"]?["text"]?["*"]?.ToString();
-            if (string.IsNullOrEmpty(htmlContent))
-                return decorationsByCategory;
+            // Create a list of tasks for each category
+            var fetchTasks = categories.Select(async category =>
+            {
+                string formattedCategoryName = category.Replace(" ", "_");
+                string categoryUrl = $"https://wiki.guildwars2.com/api.php?action=parse&page=Decoration/Homestead/{formattedCategoryName}&format=json&prop=text";
+
+                // Fetch decorations for this category
+                var decorations = await FetchDecorationsForCategoryAsync(categoryUrl);
+                return new KeyValuePair<string, List<Decoration>>(category, decorations);
+            }).ToList();
+
+            // Await all tasks
+            var results = await Task.WhenAll(fetchTasks);
+
+            // Populate the dictionary with results
+            foreach (var result in results)
+            {
+                decorationsByCategory[result.Key] = result.Value;
+            }
+
+            return decorationsByCategory;
+        }
+
+        private static async Task<List<Decoration>> FetchDecorationsForCategoryAsync(string baseUrl)
+        {
+            var decorations = new List<Decoration>();
+
+            // Combine sections 1 and 2
+            string[] sections = { "1", "2" };
+            string combinedHtmlContent = string.Empty;
+
+            foreach (var section in sections)
+            {
+                // Fetch JSON data for each section
+                var url = $"{baseUrl}&section={section}";
+                var json = await DecorModule.DecorModuleInstance.Client.GetStringAsync(url);
+                var parsedJson = JObject.Parse(json);
+
+                // Extract HTML content for the section
+                string htmlContent = parsedJson["parse"]?["text"]?["*"]?.ToString();
+                if (!string.IsNullOrEmpty(htmlContent))
+                {
+                    combinedHtmlContent += htmlContent;
+                }
+            }
 
             var doc = new HtmlDocument();
-            doc.LoadHtml(htmlContent);
+            doc.LoadHtml(combinedHtmlContent);
 
-            // Find all decorations with class "filter-plain"
-            var decorationNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'filter-plain')]");
-            if (decorationNodes == null)
-                return decorationsByCategory;
-
-            // Iterate through each decoration node
-            foreach (var node in decorationNodes)
+            // Find the decorations list container more generally
+            var listNode = doc.DocumentNode.SelectSingleNode("ancestor::h2/following-sibling::div[@class='smw-ul-columns'] | //div[contains(@class, 'smw-ul-columns')]");
+            if (listNode != null)
             {
-                var decoration = new Decoration();
-
-                // Extract name
-                decoration.Name = node?.InnerText
-                   .Contains(".png") == true
-                       ? node.InnerText
-                           .Replace("&#160;", "")
-                           .Replace("\n\n", "")
-                           .Split(new[] { ".png" }, StringSplitOptions.None)
-                           .ElementAtOrDefault(1) ?? "Unknown"
-                       : node.InnerText
-                           .Replace("\n&#160;", "")
-                           .Replace("\n\n", "") ?? "Unknown";
-
-                // Extract icon URL
-                var headingDiv = node.SelectSingleNode(".//div[contains(@class, 'heading')]");
-                var iconNode = headingDiv.SelectSingleNode(".//img");
-                if (iconNode != null)
+                var listItems = listNode.SelectNodes(".//li[@class='smw-row']");
+                foreach (var item in listItems)
                 {
-                    decoration.IconUrl = "https://wiki.guildwars2.com" + iconNode.GetAttributeValue("src", "").Trim();
-                }
-                else
-                {
-                    decoration.IconUrl = "https://wiki.guildwars2.com/images/7/74/Skill.png"; // Default
-                }
+                    var decoration = new Decoration();
 
-                var wrapperDiv = node.SelectSingleNode(".//div[contains(@class, 'wrapper')]");
-                if (wrapperDiv != null)
-                {
-                    var wrapperImgNode = wrapperDiv.SelectSingleNode(".//img");
-                    if (wrapperImgNode != null)
+                    // Extract name using text between '>' and '</a>'
+                    var nameNode = item.InnerText;
+                    if (nameNode != null)
                     {
-                        var imageUrl = "https://wiki.guildwars2.com" + wrapperImgNode.GetAttributeValue("src", "").Trim();
+                        decoration.Name = nameNode.Trim().Replace("\u00A0", " ").Replace("&nbsp;", "").Trim();
+                    }
+
+                    // Extract icon URL
+                    var iconNode = item.SelectSingleNode(".//img");
+                    if (iconNode != null)
+                    {
+                        decoration.IconUrl = "https://wiki.guildwars2.com" + iconNode.GetAttributeValue("src", "").Trim();
+                    }
+                    else
+                    {
+                        // Use default icon URL if iconNode is null
+                        decoration.IconUrl = "https://wiki.guildwars2.com/images/7/74/Skill.png";
+                        var nameParts = nameNode?.Split(new[] { ".png" }, StringSplitOptions.None);
+                        if (nameParts != null && nameParts.Length > 1)
+                        {
+                            decoration.Name = nameParts[1].Trim();
+                        }
+                    }
+                    // Add to list
+                    decorations.Add(decoration);
+                }
+            }
+
+            // Parse the "Gallery" section for images
+            var galleryNode = doc.DocumentNode.SelectSingleNode("//div[contains(@class, 'srf-gallery')]");
+            if (galleryNode != null)
+            {
+                var galleryItems = galleryNode.SelectNodes(".//li[@class='gallerybox']");
+                foreach (var galleryItem in galleryItems)
+                {
+                    var nameNode = galleryItem.SelectSingleNode(".//div[@class='gallerytext']//a");
+                    string galleryName = nameNode?.InnerText.Trim();
+
+                    var imgNode = galleryItem.SelectSingleNode(".//img");
+                    string imageUrl = imgNode != null ? "https://wiki.guildwars2.com" + imgNode.GetAttributeValue("src", "").Trim() : null;
+
+                    if (imageUrl != null)
+                    {
                         imageUrl = imageUrl.Replace("/images/thumb/", "/images/");
                         imageUrl = Regex.Replace(imageUrl, @"/\d+px-[^/]+$", "");
-                        decoration.ImageUrl = imageUrl;
                     }
-                }
-                else
-                {
-                    decoration.ImageUrl = decoration.IconUrl; // Fallback to icon URL
-                }
 
-                // Assign to categories based on classes
-                var classList = node.GetAttributeValue("class", "").Split(' ');
-                foreach (var cls in classList)
-                {
-                    if (cls.StartsWith("f-", StringComparison.OrdinalIgnoreCase))
+                    // Match with existing decoration based on name
+                    var matchedDecoration = decorations.FirstOrDefault(d =>
+                            d.Name.Trim().Equals(galleryName?.Trim(), StringComparison.OrdinalIgnoreCase));
+                    if (matchedDecoration != null && imageUrl != null)
                     {
-                        var category = cls.Substring(2)
-                            .Replace("-", " ")
-                            .Replace("table and seating", "table, seating, etc.")
-                            .Replace("flags and signs", "flag, signs, markers, etc.")
-                            .Trim();
-                        if (!decorationsByCategory.ContainsKey(category))
-                        {
-                            decorationsByCategory[category] = new List<Decoration>();
-                        }
-                        decorationsByCategory[category].Add(decoration);
+                        matchedDecoration.ImageUrl = imageUrl;
                     }
                 }
             }
-            return decorationsByCategory;
+            return decorations;
         }
     }
 }

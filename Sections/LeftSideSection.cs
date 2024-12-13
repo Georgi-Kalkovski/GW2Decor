@@ -19,13 +19,39 @@ namespace DecorBlishhudModule
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
+        private static Dictionary<string, List<Decoration>> _homesteadDecorationsCache;
+        private static Dictionary<string, List<Decoration>> _guildHallDecorationsCache;
         private static Panel lastClickedIconPanel = null;
 
-        //Homestead Logic
+        private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
+        {
+            return _homesteadDecorationsCache != null
+                ? Task.FromResult(_homesteadDecorationsCache)
+                : RefreshHomesteadDecorationsAsync();
+        }
+
+        private static Task<Dictionary<string, List<Decoration>>> FetchGuildHallDecorationsAsync()
+        {
+            return _guildHallDecorationsCache != null
+                ? Task.FromResult(_guildHallDecorationsCache)
+                : RefreshGuildHallDecorationsAsync();
+        }
+
+        private static async Task<Dictionary<string, List<Decoration>>> RefreshHomesteadDecorationsAsync()
+        {
+            _homesteadDecorationsCache = await HomesteadDecorationFetcher.FetchDecorationsAsync();
+            return _homesteadDecorationsCache;
+        }
+
+        private static async Task<Dictionary<string, List<Decoration>>> RefreshGuildHallDecorationsAsync()
+        {
+            _guildHallDecorationsCache = await GuildHallDecorationFetcher.FetchDecorationsAsync();
+            return _guildHallDecorationsCache;
+        }
+
         public static async Task PopulateHomesteadIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
         {
-
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
+            var decorationsByCategory = await FetchHomesteadDecorationsAsync();
 
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
@@ -52,7 +78,7 @@ namespace DecorBlishhudModule
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
-                        CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
+                        CanCollapse = false,
                         ControlPadding = new Vector2(4, 4),
                         OuterControlPadding = new Vector2(0, 4),
                     };
@@ -66,10 +92,9 @@ namespace DecorBlishhudModule
             await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
         }
 
-        //Guild Hall Logic
         public static async Task PopulateGuildHallIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
+            var decorationsByCategory = await FetchGuildHallDecorationsAsync();
 
             var flowPanelTasks = decorationsByCategory
                 .Where(entry => entry.Value != null && entry.Value.Count > 0)
@@ -90,7 +115,7 @@ namespace DecorBlishhudModule
                         FlowDirection = ControlFlowDirection.LeftToRight,
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
-                        CanCollapse = false, // Maybe true in the future when Scrollbar jump to the top is fixed.
+                        CanCollapse = false,
                         ControlPadding = new Vector2(4, 4),
                         OuterControlPadding = new Vector2(0, 4),
                     };
@@ -104,11 +129,9 @@ namespace DecorBlishhudModule
             await OrderDecorations(decorationsFlowPanel, _isIconView);
         }
 
-        //Homestead Big Logic
         public static async Task PopulateHomesteadBigIconsInFlowPanel(FlowPanel homesteadDecorationsFlowPanel, bool _isIconView)
         {
-
-            var decorationsByCategory = await HomesteadDecorationFetcher.FetchDecorationsAsync();
+            var decorationsByCategory = await FetchHomesteadDecorationsAsync();
 
             var caseInsensitiveCategories = new Dictionary<string, List<Decoration>>(StringComparer.OrdinalIgnoreCase);
             foreach (var kvp in decorationsByCategory)
@@ -149,10 +172,9 @@ namespace DecorBlishhudModule
             await OrderDecorations(homesteadDecorationsFlowPanel, _isIconView);
         }
 
-        //Guild Hall Big Logic
         public static async Task PopulateGuildHallBigIconsInFlowPanel(FlowPanel decorationsFlowPanel, bool _isIconView)
         {
-            var decorationsByCategory = await GuildHallDecorationFetcher.FetchDecorationsAsync();
+            var decorationsByCategory = await FetchGuildHallDecorationsAsync();
 
             var flowPanelTasks = decorationsByCategory
                 .Where(entry => entry.Value != null && entry.Value.Count > 0)
@@ -232,6 +254,9 @@ namespace DecorBlishhudModule
 
                         decorationIconImage.Click += async (s, e) =>
                         {
+                            var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
+                            var loaded = DecorModule.DecorModuleInstance.Loaded;
+
                             if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == new Color(254, 254, 176))
                             {
                                 lastClickedIconPanel.BackgroundColor = Color.Black;
@@ -242,8 +267,50 @@ namespace DecorBlishhudModule
                             decorationIconImage.Opacity = 1f;
 
                             lastClickedIconPanel = borderPanel;
-                            var decorModule = DecorModule.DecorModuleInstance;
-                            await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+
+                            var loaderSpinner = new LoadingSpinner
+                            {
+                                Parent = decorWindow,
+                                Size = new Point(32, 32),
+                                Location = new Point(727, 320),
+                            };
+
+                            var loadingLabel = new Label
+                            {
+                                Parent = decorWindow,
+                                Text = "Loading...",
+                                Font = GameService.Content.DefaultFont16,
+                                Location = new Point(762, 325),
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                AutoSizeWidth = true,
+                            };
+
+                            var loadingLabel2 = new Label();
+                            if (!loaded)
+                            {
+                                loadingLabel2 = new Label
+                                {
+                                    Parent = decorWindow,
+                                    Text = "The image may take longer as the full data is fetched.",
+                                    Font = GameService.Content.DefaultFont16,
+                                    Location = new Point(620, 350),
+                                    HorizontalAlignment = HorizontalAlignment.Center,
+                                    AutoSizeWidth = true,
+                                };
+                            }
+
+                            try
+                            {
+                                var decorModule = DecorModule.DecorModuleInstance;
+                                await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+                            }
+                            finally
+                            {
+                                // Remove the LoaderSpinner and Label after the image is loaded
+                                loaderSpinner.Dispose();
+                                loadingLabel.Dispose();
+                                loadingLabel2.Dispose();
+                            }
                         };
                     }
                 }
