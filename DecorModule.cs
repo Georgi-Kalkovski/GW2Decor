@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
@@ -48,6 +49,8 @@ namespace DecorBlishhudModule
         public CustomTabbedWindow2 DecorWindow => _decorWindow;
         public Label DecorationRightText => _decorationRightText;
         public Image DecorationImage => _decorationImage;
+        public Texture2D X => _x;
+        public Texture2D Info => _info;
         public bool Loaded => _loaded;
         public Texture2D CopyIcon => _copy;
 
@@ -88,6 +91,9 @@ namespace DecorBlishhudModule
             // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
+
+            // Spawn the corner info icon
+            await InfoSection.InitializeInfoPanel();
 
             // Homestead placeholder decoration
             var homesteadImagePlaceholder = new Decoration
@@ -178,8 +184,6 @@ namespace DecorBlishhudModule
                 Visible = false,
                 BackgroundTexture = _x,
             };
-
-            var infoText = new InfoSection(_decorWindow, _info);
 
             _homesteadDecorationsFlowPanel = new FlowPanel
             {
@@ -286,6 +290,7 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(false);
+                    InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
                 {
@@ -297,6 +302,7 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(false);
+                    InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
                 {
@@ -308,6 +314,7 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = true;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(true);
+                    InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
                 {
@@ -319,6 +326,7 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = true;
                     _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(true);
+                    InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
             };
 

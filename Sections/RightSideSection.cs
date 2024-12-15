@@ -24,8 +24,8 @@ namespace DecorBlishhudModule.Sections
             {
                 Parent = _decorWindow,
                 Location = new Point(770, 550),
-                Title = "Saved !",
-                Width = 70,
+                Title = "Copied !",
+                Width = 80,
                 Height = 45,
                 ShowBorder = true,
                 Opacity = 0f,

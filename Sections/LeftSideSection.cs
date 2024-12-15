@@ -13,6 +13,7 @@ using DecorBlishhudModule.Model;
 using DecorBlishhudModule.CustomControls;
 using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
+using System.Threading;
 
 namespace DecorBlishhudModule
 {
@@ -23,6 +24,8 @@ namespace DecorBlishhudModule
         private static Dictionary<string, List<Decoration>> _homesteadDecorationsCache;
         private static Dictionary<string, List<Decoration>> _guildHallDecorationsCache;
         private static Panel lastClickedIconPanel = null;
+        private CancellationTokenSource _cancellationTokenSource;
+        private static bool isOperationRunning = false;
 
         private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
         {
@@ -84,7 +87,7 @@ namespace DecorBlishhudModule
                         OuterControlPadding = new Vector2(0, 4),
                     };
 
-                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(tasks);
                 });
 
@@ -121,7 +124,7 @@ namespace DecorBlishhudModule
                         OuterControlPadding = new Vector2(0, 4),
                     };
 
-                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(iconTasks);
                 }).ToList();
 
@@ -164,7 +167,7 @@ namespace DecorBlishhudModule
                         OuterControlPadding = new Vector2(0, 10),
                     };
 
-                    var tasks = decorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(tasks);
                 });
 
@@ -201,7 +204,7 @@ namespace DecorBlishhudModule
                         OuterControlPadding = new Vector2(0, 10),
                     };
 
-                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconAsync(decoration, categoryFlowPanel, _isIconView));
+                    var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
                     await Task.WhenAll(iconTasks);
                 }).ToList();
 
@@ -210,7 +213,7 @@ namespace DecorBlishhudModule
             await OrderDecorations.OrderDecorationsAsync(decorationsFlowPanel, _isIconView);
         }
 
-        public static async Task CreateDecorationIconAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView)
+        public static async Task CreateDecorationIconsImagesAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView)
         {
             try
             {
@@ -255,6 +258,11 @@ namespace DecorBlishhudModule
 
                         decorationIconImage.Click += async (s, e) =>
                         {
+                            if (isOperationRunning)
+                            {
+                                return;
+                            }
+
                             var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
                             var loaded = DecorModule.DecorModuleInstance.Loaded;
 
@@ -300,14 +308,28 @@ namespace DecorBlishhudModule
                                 };
                             }
 
+                            isOperationRunning = true;
+
                             try
                             {
                                 var decorModule = DecorModule.DecorModuleInstance;
-                                await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+
+                                await Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        await RightSideSection.UpdateDecorationImageAsync(decoration, decorModule.DecorWindow, decorModule.DecorationImage);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("Error occurred during decoration image update: " + ex.Message);
+                                    }
+                                });
                             }
                             finally
                             {
-                                // Remove the LoaderSpinner and Label after the image is loaded
+                                isOperationRunning = false;
+
                                 loaderSpinner.Dispose();
                                 loadingLabel.Dispose();
                                 loadingLabel2.Dispose();
@@ -407,31 +429,191 @@ namespace DecorBlishhudModule
                             }
                         };
 
-                        var copyPanel = new Image(DecorModule.DecorModuleInstance?.CopyIcon)
+                        var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
+                        var borderedTexture = BorderCreator.CreateBorderedTexture(imageTexture);
+
+                        // Panel behind big image
+                        var bigImagePanel = new Panel
+                        {
+                            Parent = decorWindow,
+                            Size = new Point(1045, 632),
+                            Location = new Point(10, 40),
+                            BackgroundColor = Color.Black,
+                            Opacity = 0.5f,
+                            Visible = false,
+                            ZIndex = 100,
+                        };
+
+                        // Big image
+                        var bigImage = new Image(borderedTexture)
+                        {
+                            Parent = decorWindow,
+                            Visible = false,
+                            ZIndex = 101,
+                        };
+
+                        bool bigImageIsVisible = false;
+
+                        float aspectRatioBig = (float)imageTexture.Width / imageTexture.Height;
+
+                        int maxWidth = decorWindow.Size.X - 400;
+                        int maxHeight = decorWindow.Size.Y - 300;
+
+                        int targetWidth, targetHeight;
+
+                        if (aspectRatioBig > 1)
+                        {
+                            targetWidth = maxWidth;
+                            targetHeight = (int)(maxWidth / aspectRatioBig);
+
+                            if (targetHeight > maxHeight)
+                            {
+                                targetHeight = maxHeight;
+                                targetWidth = (int)(maxHeight * aspectRatioBig);
+                            }
+                        }
+                        else
+                        {
+                            targetHeight = maxHeight;
+                            targetWidth = (int)(maxHeight * aspectRatioBig);
+
+                            if (targetWidth > maxWidth)
+                            {
+                                targetWidth = maxWidth;
+                                targetHeight = (int)(maxWidth / aspectRatioBig);
+                            }
+                        }
+                        bigImage.Size = new Point(targetWidth, targetHeight);
+
+                        bigImage.Location = new Point(
+                            (decorWindow.Size.X - bigImage.Size.X - 90) / 2,
+                            (decorWindow.Size.Y - bigImage.Size.Y - 80) / 2
+                        );
+
+                        // X image on the top right corner of the big image
+                        var textureX = DecorModule.DecorModuleInstance.X;
+
+                        int textureWidth = 30;
+                        int textureHeight = 30;
+
+                        float aspectRatioX = (float)textureX.Width / textureX.Height;
+
+                        if (aspectRatioX > 1)
+                        {
+                            textureWidth = Math.Min(textureWidth, bigImage.Size.X / 5);
+                            textureHeight = (int)(textureWidth / aspectRatioX);
+                        }
+                        else
+                        {
+                            textureHeight = Math.Min(textureHeight, bigImage.Size.Y / 5);
+                            textureWidth = (int)(textureHeight * aspectRatioX);
+                        }
+
+                        var textureXImage = new Image(textureX)
+                        {
+                            Parent = decorWindow,
+                            Size = new Point(textureWidth, textureHeight),
+                            Location = new Point(
+                                bigImage.Location.X + bigImage.Size.X - textureWidth - 10,
+                                bigImage.Location.Y + 10
+                            ),
+                            ZIndex = 102,
+                            Visible = false
+                        };
+
+                        decorationImage.Click += (s, e) =>
+                        {
+                            if (!bigImageIsVisible)
+                            {
+                                bigImage.Visible = true;
+                                bigImagePanel.Visible = true;
+                                bigImageIsVisible = true;
+                                textureXImage.Visible = true;
+                            }
+                            else
+                            {
+                                bigImage.Visible = false;
+                                bigImagePanel.Visible = false;
+                                bigImageIsVisible = false;
+                                textureXImage.Visible = false;
+                            }
+                        };
+
+                        bigImage.Click += (s, e) =>
+                        {
+                            if (bigImageIsVisible)
+                            {
+                                bigImage.Visible = false;
+                                bigImagePanel.Visible = false;
+                                bigImageIsVisible = false;
+                                textureXImage.Visible = false;
+                            }
+                        };
+
+                        decorWindow.Click += (s, e) =>
+                        {
+                            if (bigImage.Visible)
+                            {
+                                bigImage.Visible = false;
+                                bigImagePanel.Visible = false;
+                                bigImageIsVisible = false;
+                                textureXImage.Visible = false;
+                            }
+                        };
+
+                        // Copy icon panel
+                        var copyPanelContainer = new Panel
                         {
                             Parent = mainContainer,
                             Size = new Point(24, 24),
                             Location = new Point(mainContainer.Size.X - 24, -2),
-                            BasicTooltipText = "Save Name"
                         };
-                        var savedPanel = new Panel
+
+                        // Copy icon
+                        var copyIcon = new Image(DecorModule.DecorModuleInstance?.CopyIcon)
+                        {
+                            Parent = copyPanelContainer,
+                            Size = copyPanelContainer.Size,
+                            BasicTooltipText = "Copy Name"
+                        };
+
+                        var savePanel = new Panel
                         {
                             Parent = mainContainer,
                             Location = new Point(90, 150),
-                            Title = "Saved !",
-                            Width = 70,
+                            Title = "Copied !",
+                            Width = 80,
                             Height = 45,
                             ShowBorder = true,
                             Opacity = 0f,
                             Visible = false,
                         };
 
-                        copyPanel.Click += (sender, e) =>
+                        var copyBrightnessOverlay = new Panel
                         {
-                            if (savedPanel.Visible == false)
+                            Parent = copyPanelContainer,
+                            Size = copyPanelContainer.Size,
+                            Location = Point.Zero,
+                            BackgroundColor = Color.White * 0.3f,
+                            Visible = false,
+                        };
+
+                        copyIcon.MouseEntered += (s, e) =>
+                        {
+                            copyBrightnessOverlay.Visible = true;
+                        };
+
+                        copyIcon.MouseLeft += (s, e) =>
+                        {
+                            copyBrightnessOverlay.Visible = false;
+                        };
+
+                        copyBrightnessOverlay.Click += (sender, e) =>
+                        {
+                            if (savePanel.Visible == false)
                             {
                                 SaveTasks.CopyTextToClipboard(decoration.Name);
-                                SaveTasks.ShowSavedPanel(savedPanel);
+                                SaveTasks.ShowSavedPanel(savePanel);
                             }
                         };
                     }

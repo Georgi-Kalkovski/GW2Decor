@@ -27,9 +27,9 @@ namespace DecorBlishhudModule
         public static async void ShowSavedPanel(Panel savedPanel)
         {
             savedPanel.Visible = true;
-            await FadePanel(savedPanel, 0f, 1f, 200);
+            await FadePanel(savedPanel, 0f, 1f, 100);
 
-            await Task.Delay(500);
+            await Task.Delay(100);
 
             await FadePanel(savedPanel, 1f, 0f, 200);
 
