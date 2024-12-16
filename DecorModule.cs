@@ -51,7 +51,7 @@ namespace DecorBlishhudModule
         public Image DecorationImage => _decorationImage;
         public Texture2D X => _x;
         public Texture2D Info => _info;
-        public bool Loaded => _loaded;
+        public new bool Loaded => _loaded;
         public Texture2D CopyIcon => _copy;
 
 
@@ -93,7 +93,7 @@ namespace DecorBlishhudModule
             await CreateGw2StyleWindowThatDisplaysAllDecorations(windowBackgroundTexture);
 
             // Spawn the corner info icon
-            await InfoSection.InitializeInfoPanel();
+            InfoSection.InitializeInfoPanel();
 
             // Homestead placeholder decoration
             var homesteadImagePlaceholder = new Decoration
@@ -352,8 +352,21 @@ namespace DecorBlishhudModule
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
-            Task.WhenAll(guildHallTask);
-            Task.WhenAll(imagePreviewTask);
+            guildHallTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Guild Hall task failed.");
+                }
+            });
+
+            imagePreviewTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Image Preview task failed.");
+                }
+            });
 
             // Search functionality
             searchTextBox.TextChanged += async (sender, args) =>

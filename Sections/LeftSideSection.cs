@@ -24,7 +24,6 @@ namespace DecorBlishhudModule
         private static Dictionary<string, List<Decoration>> _homesteadDecorationsCache;
         private static Dictionary<string, List<Decoration>> _guildHallDecorationsCache;
         private static Panel lastClickedIconPanel = null;
-        private CancellationTokenSource _cancellationTokenSource;
         private static bool isOperationRunning = false;
 
         private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
@@ -218,7 +217,7 @@ namespace DecorBlishhudModule
             try
             {
                 var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
-                var iconTexture = CreateIconTexture(iconResponse);
+                var iconTexture = CreateIconTexture(iconResponse, 64);
                 if (_isIconView == true)
                 {
                     if (iconTexture != null)
@@ -340,7 +339,7 @@ namespace DecorBlishhudModule
                 else
                 {
                     var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
-                    var imageTexture = CreateIconTexture(imageResponse);
+                    var imageTexture = CreateIconTexture(imageResponse, 250);
                     if (imageTexture != null && iconTexture != null)
                     {
                         // Main container for the decoration
@@ -539,14 +538,28 @@ namespace DecorBlishhudModule
                             }
                         };
 
-                        bigImage.Click += (s, e) =>
+                        bigImage.Click += async (s, e) =>
                         {
-                            if (bigImageIsVisible)
+                            try
                             {
+                                var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                                var originalTexture = CreateIconTexture(imageResponse, 250); // Revert the max dimension to 250
+
+                                if (originalTexture != null)
+                                {
+                                    decorationImage.Texture = originalTexture;
+                                    decorationImage.Size = new Point(originalTexture.Width, originalTexture.Height); // Adjust the size dynamically
+                                }
+
+                                // Also hide the big image itself
                                 bigImage.Visible = false;
                                 bigImagePanel.Visible = false;
                                 bigImageIsVisible = false;
                                 textureXImage.Visible = false;
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Warn($"Failed to revert decoration image. Error: {ex.Message}");
                             }
                         };
 
@@ -625,14 +638,32 @@ namespace DecorBlishhudModule
             }
         }
 
-        private static Texture2D CreateIconTexture(byte[] iconResponse)
+        private static Texture2D CreateIconTexture(byte[] iconResponse, int maxDimension)
         {
             try
             {
                 using (var memoryStream = new MemoryStream(iconResponse))
-                using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                using (var originalImage = System.Drawing.Image.FromStream(memoryStream))
                 {
-                    return Texture2D.FromStream(graphicsContext.GraphicsDevice, memoryStream);
+                    int newWidth = originalImage.Width;
+                    int newHeight = originalImage.Height;
+
+                    if (originalImage.Width > maxDimension || originalImage.Height > maxDimension)
+                    {
+                        float scale = Math.Min((float)maxDimension / originalImage.Width, (float)maxDimension / originalImage.Height);
+                        newWidth = (int)(originalImage.Width * scale);
+                        newHeight = (int)(originalImage.Height * scale);
+                    }
+
+                    using (var resizedImage = new System.Drawing.Bitmap(originalImage, newWidth, newHeight))
+                    using (var resizedStream = new MemoryStream())
+                    using (var graphicsContext = GameService.Graphics.LendGraphicsDeviceContext())
+                    {
+                        resizedImage.Save(resizedStream, System.Drawing.Imaging.ImageFormat.Png);
+                        resizedStream.Seek(0, SeekOrigin.Begin);
+
+                        return Texture2D.FromStream(graphicsContext.GraphicsDevice, resizedStream);
+                    }
                 }
             }
             catch (Exception ex)

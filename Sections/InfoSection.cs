@@ -14,7 +14,7 @@ public class InfoSection
     private static Panel _infoTextPanel;
     private static Label _infoText;
 
-    public static async Task InitializeInfoPanel()
+    public static void InitializeInfoPanel()
     {
         // Create Info Panel and Text
         var infoIcon = new Image
@@ -51,45 +51,32 @@ public class InfoSection
             Font = GameService.Content.DefaultFont16,
         };
 
-        infoIcon.MouseEntered += (sender, args) =>
-        {
-            AnimatePanel(_infoTextPanel, true);
-        };
-
-        infoIcon.MouseLeft += (sender, args) =>
-        {
-            AnimatePanel(_infoTextPanel, false);
-        };
+        infoIcon.MouseEntered += async (sender, args) => await AnimatePanel(_infoTextPanel, true);
+        infoIcon.MouseLeft += async (sender, args) => await AnimatePanel(_infoTextPanel, false);
     }
 
     private static async Task AnimatePanel(Panel panel, bool fadeIn)
     {
         var targetOpacity = fadeIn ? 1.0f : 0.0f;
+        var step = fadeIn ? 0.1f : -0.1f;
 
         if (fadeIn)
         {
             panel.Visible = true;
         }
 
-        var timer = new System.Windows.Forms.Timer { Interval = 1 };
-        timer.Tick += (s, e) =>
+        while ((fadeIn && panel.Opacity < targetOpacity) || (!fadeIn && panel.Opacity > targetOpacity))
         {
-            panel.Opacity += fadeIn ? 0.1f : -0.1f;
-            panel.Opacity = MathHelper.Clamp(panel.Opacity, 0.0f, 1.0f);
+            panel.Opacity = MathHelper.Clamp(panel.Opacity + step, 0.0f, 1.0f);
+            await Task.Delay(16); // Smooth animation at ~60fps
+        }
 
-            if (fadeIn && panel.Opacity >= 1.0f)
-            {
-                panel.Opacity = 1.0f;
-                timer.Stop();
-            }
-            else if (!fadeIn && panel.Opacity <= 0.0f)
-            {
-                panel.Opacity = 0.0f;
-                panel.Visible = false;
-                timer.Stop();
-            }
-        };
-        timer.Start();
+        panel.Opacity = targetOpacity;
+
+        if (!fadeIn)
+        {
+            panel.Visible = false;
+        }
     }
 
     public static void UpdateInfoText(string newText)
