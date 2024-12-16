@@ -217,7 +217,7 @@ namespace DecorBlishhudModule
             try
             {
                 var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
-                var iconTexture = CreateIconTexture(iconResponse, 64);
+                var iconTexture = CreateIconTexture(iconResponse);
                 if (_isIconView == true)
                 {
                     if (iconTexture != null)
@@ -339,7 +339,7 @@ namespace DecorBlishhudModule
                 else
                 {
                     var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
-                    var imageTexture = CreateIconTexture(imageResponse, 250);
+                    var imageTexture = CreateIconTexture(imageResponse);
                     if (imageTexture != null && iconTexture != null)
                     {
                         // Main container for the decoration
@@ -538,28 +538,14 @@ namespace DecorBlishhudModule
                             }
                         };
 
-                        bigImage.Click += async (s, e) =>
+                        bigImage.Click += (s, e) =>
                         {
-                            try
+                            if (bigImageIsVisible)
                             {
-                                var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
-                                var originalTexture = CreateIconTexture(imageResponse, 250); // Revert the max dimension to 250
-
-                                if (originalTexture != null)
-                                {
-                                    decorationImage.Texture = originalTexture;
-                                    decorationImage.Size = new Point(originalTexture.Width, originalTexture.Height); // Adjust the size dynamically
-                                }
-
-                                // Also hide the big image itself
                                 bigImage.Visible = false;
                                 bigImagePanel.Visible = false;
                                 bigImageIsVisible = false;
                                 textureXImage.Visible = false;
-                            }
-                            catch (Exception ex)
-                            {
-                                Logger.Warn($"Failed to revert decoration image. Error: {ex.Message}");
                             }
                         };
 
@@ -638,13 +624,15 @@ namespace DecorBlishhudModule
             }
         }
 
-        private static Texture2D CreateIconTexture(byte[] iconResponse, int maxDimension)
+        private static Texture2D CreateIconTexture(byte[] iconResponse)
         {
             try
             {
                 using (var memoryStream = new MemoryStream(iconResponse))
                 using (var originalImage = System.Drawing.Image.FromStream(memoryStream))
                 {
+                    int maxDimension = 600;
+
                     int newWidth = originalImage.Width;
                     int newHeight = originalImage.Height;
 
@@ -672,5 +660,6 @@ namespace DecorBlishhudModule
                 return null;
             }
         }
+
     }
 }
