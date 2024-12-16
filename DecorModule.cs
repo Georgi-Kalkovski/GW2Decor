@@ -12,7 +12,6 @@ using Microsoft.Xna.Framework.Graphics;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
 using Point = Microsoft.Xna.Framework.Point;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
@@ -36,7 +35,6 @@ namespace DecorBlishhudModule
         private Texture2D _info;
         private Texture2D _x;
         private Texture2D _copy;
-        private LoadingSpinner _loadingSpinner;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
         private Label _decorationRightText;
@@ -85,8 +83,15 @@ namespace DecorBlishhudModule
             _copy = ContentsManager.GetTexture("test/copy.png");
 
             // Create corner icon and show loading spinner
-            _cornerIcon = CornerIconHelper.CreateLoadingIcon(_homesteadIconUnactive, _homesteadIconHover, _decorWindow, out _loadingSpinner);
-            _loadingSpinner.Visible = true;
+            _cornerIcon = new CornerIcon()
+            {
+                Icon = _homesteadIconUnactive,
+                HoverIcon = _homesteadIconHover,
+                IconName = "Decor",
+                Priority = 1645843523,
+                LoadingMessage = "Decor is fetching data...",
+                Parent = GameService.Graphics.SpriteScreen
+            };
 
             // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
@@ -122,9 +127,6 @@ namespace DecorBlishhudModule
                 }
             };
 
-            // Hide loading spinner when decorations are ready
-            _loadingSpinner.Visible = false;
-
             // Set up signature and license labels
             _signatureLabelManager = new SignatureSection(_decorWindow);
             _wikiLicenseManager = new WikiLicenseSection(_decorWindow);
@@ -136,7 +138,6 @@ namespace DecorBlishhudModule
             _homesteadIconMenu?.Dispose();
             _homesteadIconHover?.Dispose();
             _homesteadIconUnactive?.Dispose();
-            _loadingSpinner?.Dispose();
             _decorWindow?.Dispose();
             _handiworkTab?.Dispose();
             _scribeTab?.Dispose();
@@ -335,6 +336,9 @@ namespace DecorBlishhudModule
             customTab4.Enabled = false;
 
             await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+
+            // Hide loading spinner when decorations are ready
+            _cornerIcon.LoadingMessage = null;
 
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
