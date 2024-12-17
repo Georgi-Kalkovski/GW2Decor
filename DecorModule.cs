@@ -28,6 +28,8 @@ namespace DecorBlishhudModule
         private Texture2D _homesteadIconMenu;
         private Texture2D _homesteadIconHover;
         private Texture2D _homesteadIconUnactive;
+        private Texture2D _homesteadScreen;
+        private Texture2D _guildhallScreen;
         private Texture2D _handiworkTab;
         private Texture2D _scribeTab;
         private Texture2D _iconsTab;
@@ -74,6 +76,8 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
             _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");
             _homesteadIconMenu = ContentsManager.GetTexture("test/homesteadIconMenu.png");
+            _homesteadScreen = ContentsManager.GetTexture("test/homestead_screen.png");
+            _guildhallScreen = ContentsManager.GetTexture("test/guildhall_screen.png");
             _handiworkTab = ContentsManager.GetTexture("test/handiwork.png");
             _scribeTab = ContentsManager.GetTexture("test/scribe.png");
             _iconsTab = ContentsManager.GetTexture("test/icons.png");
@@ -138,6 +142,8 @@ namespace DecorBlishhudModule
             _homesteadIconMenu?.Dispose();
             _homesteadIconHover?.Dispose();
             _homesteadIconUnactive?.Dispose();
+            _homesteadScreen?.Dispose();
+            _guildhallScreen?.Dispose();
             _decorWindow?.Dispose();
             _handiworkTab?.Dispose();
             _scribeTab?.Dispose();
@@ -167,6 +173,18 @@ namespace DecorBlishhudModule
                 Location = new Point(300, 300),
                 SavesPosition = true,
                 Id = $"{nameof(DecorModule)}_Decoration_Window",
+            };
+
+            // Background image setup
+            var backgroundImage = new Image
+            {
+                Parent = _decorWindow,
+                Size = new Point(_decorWindow.Size.X - 55, _decorWindow.Size.Y - 75),
+                Location = new Point(0, 0),
+                Opacity = 0.3f,
+                BackgroundColor = new Color(0, 0, 0, 10),
+                Texture = _homesteadScreen,
+                Visible = true
             };
 
             var searchTextBox = new TextBox
@@ -284,6 +302,8 @@ namespace DecorBlishhudModule
                 if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab3)
                 {
                     _decorWindow.Subtitle = "Homestead Decorations";
+                    backgroundImage.Texture = _homesteadScreen;
+                    backgroundImage.Visible = true;
                     _decorationRightText.Visible = true;
                     _decorationImage.Visible = true;
                     _homesteadDecorationsFlowPanel.Visible = true;
@@ -296,6 +316,8 @@ namespace DecorBlishhudModule
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
                 {
                     _decorWindow.Subtitle = "Guild Hall Decorations";
+                    backgroundImage.Texture = _guildhallScreen;
+                    backgroundImage.Visible = true;
                     _decorationRightText.Visible = true;
                     _decorationImage.Visible = true;
                     _homesteadDecorationsFlowPanel.Visible = false;
@@ -308,6 +330,8 @@ namespace DecorBlishhudModule
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
                 {
                     _decorWindow.Subtitle = "Homestead Decorations";
+                    backgroundImage.Texture = _homesteadScreen;
+                    backgroundImage.Visible = true;
                     _decorationRightText.Visible = false;
                     _decorationImage.Visible = false;
                     _homesteadDecorationsFlowPanel.Visible = false;
@@ -320,6 +344,8 @@ namespace DecorBlishhudModule
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
                 {
                     _decorWindow.Subtitle = "Guild Hall Decorations";
+                    backgroundImage.Texture = _guildhallScreen;
+                    backgroundImage.Visible = true;
                     _decorationRightText.Visible = false;
                     _decorationImage.Visible = false;
                     _homesteadDecorationsFlowPanel.Visible = false;
