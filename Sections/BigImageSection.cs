@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.IO;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Threading.Tasks;
 using Point = Microsoft.Xna.Framework.Point;
 
