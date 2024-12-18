@@ -28,7 +28,7 @@ namespace DecorBlishhudModule.Sections
                 ShowShadow = true,
                 ShadowColor = new Color(0, 0, 0),
                 Height = 185,
-                Width = 220,
+                Width = 235,
             };
 
             _parentWindow.Resized += (sender, args) => PositionSignatureLabel();

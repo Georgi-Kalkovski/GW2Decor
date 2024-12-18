@@ -48,7 +48,7 @@ namespace DecorBlishhudModule.Sections
 
         public void UpdateWidthBasedOnFlowPanel(bool isBigView)
         {
-            _licenseLabel.Width = isBigView ? 1110 : 600; // Adjust width based on the view type
+            _licenseLabel.Width = isBigView ? 1120 : 600; // Adjust width based on the view type
             PositionLicenseLabel(); // Reposition the label after width adjustment
         }
     }
