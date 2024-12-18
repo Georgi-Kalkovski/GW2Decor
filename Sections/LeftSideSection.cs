@@ -13,7 +13,6 @@ using DecorBlishhudModule.Model;
 using DecorBlishhudModule.CustomControls;
 using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
-using System.Threading;
 
 namespace DecorBlishhudModule
 {
@@ -21,6 +20,7 @@ namespace DecorBlishhudModule
     {
         private static readonly Logger Logger = Logger.GetLogger<DecorModule>();
 
+        private static readonly Dictionary<string, Texture2D> _sharedTextureCache = new();
         private static Dictionary<string, List<Decoration>> _homesteadDecorationsCache;
         private static Dictionary<string, List<Decoration>> _guildHallDecorationsCache;
         private static Panel lastClickedIconPanel = null;
@@ -216,8 +216,14 @@ namespace DecorBlishhudModule
         {
             try
             {
-                var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.IconUrl);
-                var iconTexture = CreateIconTexture(iconResponse);
+                // Fetch or create the icon texture
+                var iconTexture = await GetOrCreateTextureAsync(decoration.Name, decoration.IconUrl);
+
+                if (iconTexture == null)
+                {
+                    Logger.Warn($"Icon texture for '{decoration.Name}' could not be loaded.");
+                    return;
+                }
                 if (_isIconView == true)
                 {
                     if (iconTexture != null)
@@ -338,289 +344,314 @@ namespace DecorBlishhudModule
                 }
                 else
                 {
-                    var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
-                    var imageTexture = CreateIconTexture(imageResponse);
-                    if (imageTexture != null && iconTexture != null)
+                    // Fetch or create the larger image texture
+                    var imageTexture = await GetOrCreateTextureAsync(decoration.Name + "_Image", decoration.ImageUrl);
+
+                    if (imageTexture == null) return;
+                    // Main container for the decoration
+                    var mainContainer = new BorderPanel
                     {
-                        // Main container for the decoration
-                        var mainContainer = new BorderPanel
+                        Parent = categoryFlowPanel,
+                        Size = new Point(254, 300),
+                        BackgroundColor = new Color(0, 0, 0, 36),
+                        BasicTooltipText = decoration.Name,
+
+                    };
+
+                    // Icon and text container (horizontal layout)
+                    var iconTextContainer = new Panel
+                    {
+                        Parent = mainContainer,
+                        Location = new Point(0, 0),
+                        Size = new Point(254, 50),
+                        BackgroundColor = Color.Black,
+                        BasicTooltipText = decoration.Name,
+                    };
+
+                    // Icon
+                    var iconImage = new Image(iconTexture)
+                    {
+                        Parent = iconTextContainer,
+                        Location = new Point(3, 3),
+                        Size = new Point(44, 44),
+                        BasicTooltipText = decoration.Name,
+                    };
+
+                    // Decoration Name Label
+                    var nameLabel = new Label
+                    {
+                        Parent = iconTextContainer,
+                        Size = new Point(190, 40),
+                        Location = new Point(iconImage.Location.X + iconImage.Size.X + 8, 5),
+                        Text = decoration.Name,
+                        Font = decoration.Name.ToString().Length > 30 ? GameService.Content.DefaultFont12 : GameService.Content.DefaultFont14,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Middle,
+                        BasicTooltipText = decoration.Name,
+                    };
+
+                    // Image Panel
+                    int imageWidth = imageTexture.Width;
+                    int imageHeight = imageTexture.Height;
+                    float aspectRatio = (float)imageWidth / imageHeight;
+
+                    int width = 245;
+                    int height = (int)(245 / aspectRatio);
+
+                    if (height > 245)
+                    {
+                        height = 245;
+                        width = (int)(245 * aspectRatio);
+                    }
+
+                    int xOffset = (mainContainer.Size.X - width) / 2;
+                    int yOffset = iconTextContainer.Location.Y + iconTextContainer.Size.Y;
+
+                    int remainingHeight = mainContainer.Size.Y - iconTextContainer.Size.Y;
+                    int centeredYOffset = (remainingHeight - height) / 2 + yOffset;
+
+                    var decorationImage = new Image(imageTexture)
+                    {
+                        Parent = mainContainer,
+                        Location = new Point(xOffset, centeredYOffset),
+                        Size = new Point(width - 3, height),
+                        BasicTooltipText = decoration.Name,
+                    };
+
+                    mainContainer.MouseEntered += (sender, e) =>
+                    {
+                        if (lastClickedIconPanel != mainContainer)
                         {
-                            Parent = categoryFlowPanel,
-                            Size = new Point(254, 300),
-                            BackgroundColor = new Color(0, 0, 0, 36),
-                            BasicTooltipText = decoration.Name,
-
-                        };
-
-                        // Icon and text container (horizontal layout)
-                        var iconTextContainer = new Panel
-                        {
-                            Parent = mainContainer,
-                            Location = new Point(0, 0),
-                            Size = new Point(254, 50),
-                            BackgroundColor = Color.Black,
-                            BasicTooltipText = decoration.Name,
-                        };
-
-                        // Icon
-                        var iconImage = new Image(iconTexture)
-                        {
-                            Parent = iconTextContainer,
-                            Location = new Point(3, 3),
-                            Size = new Point(44, 44),
-                            BasicTooltipText = decoration.Name,
-                        };
-
-                        // Decoration Name Label
-                        var nameLabel = new Label
-                        {
-                            Parent = iconTextContainer,
-                            Size = new Point(190, 40),
-                            Location = new Point(iconImage.Location.X + iconImage.Size.X + 8, 5),
-                            Text = decoration.Name,
-                            Font = decoration.Name.ToString().Length > 30 ? GameService.Content.DefaultFont12 : GameService.Content.DefaultFont14,
-                            HorizontalAlignment = HorizontalAlignment.Left,
-                            VerticalAlignment = VerticalAlignment.Middle,
-                            BasicTooltipText = decoration.Name,
-                        };
-
-                        // Image Panel
-                        int imageWidth = imageTexture.Width;
-                        int imageHeight = imageTexture.Height;
-                        float aspectRatio = (float)imageWidth / imageHeight;
-
-                        int width = 245;
-                        int height = (int)(245 / aspectRatio);
-
-                        if (height > 245)
-                        {
-                            height = 245;
-                            width = (int)(245 * aspectRatio);
+                            mainContainer.BackgroundColor = new Color(101, 101, 84, 36);
                         }
+                    };
 
-                        int xOffset = (mainContainer.Size.X - width) / 2;
-                        int yOffset = iconTextContainer.Location.Y + iconTextContainer.Size.Y;
-
-                        int remainingHeight = mainContainer.Size.Y - iconTextContainer.Size.Y;
-                        int centeredYOffset = (remainingHeight - height) / 2 + yOffset;
-
-                        var decorationImage = new Image(imageTexture)
+                    mainContainer.MouseLeft += (sender, e) =>
+                    {
+                        if (lastClickedIconPanel != mainContainer)
                         {
-                            Parent = mainContainer,
-                            Location = new Point(xOffset, centeredYOffset),
-                            Size = new Point(width - 3, height),
-                            BasicTooltipText = decoration.Name,
-                        };
-
-                        mainContainer.MouseEntered += (sender, e) =>
-                        {
-                            if (lastClickedIconPanel != mainContainer)
-                            {
-                                mainContainer.BackgroundColor = new Color(101, 101, 84, 36);
-                            }
-                        };
-
-                        mainContainer.MouseLeft += (sender, e) =>
-                        {
-                            if (lastClickedIconPanel != mainContainer)
-                            {
-                                mainContainer.BackgroundColor = new Color(0, 0, 0, 36);
-                            }
-                        };
-
-                        var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
-                        var borderedTexture = BorderCreator.CreateBorderedTexture(imageTexture);
-
-                        // Panel behind big image
-                        var bigImagePanel = new Panel
-                        {
-                            Parent = decorWindow,
-                            Size = new Point(1045, 632),
-                            Location = new Point(10, 40),
-                            BackgroundColor = Color.Black,
-                            Opacity = 0.5f,
-                            Visible = false,
-                            ZIndex = 100,
-                        };
-
-                        // Big image
-                        var bigImage = new Image(borderedTexture)
-                        {
-                            Parent = decorWindow,
-                            Visible = false,
-                            ZIndex = 101,
-                        };
-
-                        bool bigImageIsVisible = false;
-
-                        float aspectRatioBig = (float)imageTexture.Width / imageTexture.Height;
-
-                        int maxWidth = decorWindow.Size.X - 400;
-                        int maxHeight = decorWindow.Size.Y - 300;
-
-                        int targetWidth, targetHeight;
-
-                        if (aspectRatioBig > 1)
-                        {
-                            targetWidth = maxWidth;
-                            targetHeight = (int)(maxWidth / aspectRatioBig);
-
-                            if (targetHeight > maxHeight)
-                            {
-                                targetHeight = maxHeight;
-                                targetWidth = (int)(maxHeight * aspectRatioBig);
-                            }
+                            mainContainer.BackgroundColor = new Color(0, 0, 0, 36);
                         }
-                        else
+                    };
+
+                    var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
+                    var borderedTexture = BorderCreator.CreateBorderedTexture(imageTexture);
+
+                    // Panel behind big image
+                    var bigImagePanel = new Panel
+                    {
+                        Parent = decorWindow,
+                        Size = new Point(1045, 632),
+                        Location = new Point(10, 40),
+                        BackgroundColor = Color.Black,
+                        Opacity = 0.5f,
+                        Visible = false,
+                        ZIndex = 100,
+                    };
+
+                    // Big image
+                    var bigImage = new Image(borderedTexture)
+                    {
+                        Parent = decorWindow,
+                        Visible = false,
+                        ZIndex = 101,
+                    };
+
+                    bool bigImageIsVisible = false;
+
+                    float aspectRatioBig = (float)imageTexture.Width / imageTexture.Height;
+
+                    int maxWidth = decorWindow.Size.X - 400;
+                    int maxHeight = decorWindow.Size.Y - 300;
+
+                    int targetWidth, targetHeight;
+
+                    if (aspectRatioBig > 1)
+                    {
+                        targetWidth = maxWidth;
+                        targetHeight = (int)(maxWidth / aspectRatioBig);
+
+                        if (targetHeight > maxHeight)
                         {
                             targetHeight = maxHeight;
                             targetWidth = (int)(maxHeight * aspectRatioBig);
-
-                            if (targetWidth > maxWidth)
-                            {
-                                targetWidth = maxWidth;
-                                targetHeight = (int)(maxWidth / aspectRatioBig);
-                            }
                         }
-                        bigImage.Size = new Point(targetWidth, targetHeight);
+                    }
+                    else
+                    {
+                        targetHeight = maxHeight;
+                        targetWidth = (int)(maxHeight * aspectRatioBig);
 
-                        bigImage.Location = new Point(
-                            (decorWindow.Size.X - bigImage.Size.X - 90) / 2,
-                            (decorWindow.Size.Y - bigImage.Size.Y - 80) / 2
-                        );
-
-                        // X image on the top right corner of the big image
-                        var textureX = DecorModule.DecorModuleInstance.X;
-
-                        int textureWidth = 30;
-                        int textureHeight = 30;
-
-                        float aspectRatioX = (float)textureX.Width / textureX.Height;
-
-                        if (aspectRatioX > 1)
+                        if (targetWidth > maxWidth)
                         {
-                            textureWidth = Math.Min(textureWidth, bigImage.Size.X / 5);
-                            textureHeight = (int)(textureWidth / aspectRatioX);
+                            targetWidth = maxWidth;
+                            targetHeight = (int)(maxWidth / aspectRatioBig);
+                        }
+                    }
+                    bigImage.Size = new Point(targetWidth, targetHeight);
+
+                    bigImage.Location = new Point(
+                        (decorWindow.Size.X - bigImage.Size.X - 90) / 2,
+                        (decorWindow.Size.Y - bigImage.Size.Y - 80) / 2
+                    );
+
+                    // X image on the top right corner of the big image
+                    var textureX = DecorModule.DecorModuleInstance.X;
+
+                    int textureWidth = 30;
+                    int textureHeight = 30;
+
+                    float aspectRatioX = (float)textureX.Width / textureX.Height;
+
+                    if (aspectRatioX > 1)
+                    {
+                        textureWidth = Math.Min(textureWidth, bigImage.Size.X / 5);
+                        textureHeight = (int)(textureWidth / aspectRatioX);
+                    }
+                    else
+                    {
+                        textureHeight = Math.Min(textureHeight, bigImage.Size.Y / 5);
+                        textureWidth = (int)(textureHeight * aspectRatioX);
+                    }
+
+                    var textureXImage = new Image(textureX)
+                    {
+                        Parent = decorWindow,
+                        Size = new Point(textureWidth, textureHeight),
+                        Location = new Point(
+                            bigImage.Location.X + bigImage.Size.X - textureWidth - 10,
+                            bigImage.Location.Y + 10
+                        ),
+                        ZIndex = 102,
+                        Visible = false
+                    };
+
+                    decorationImage.Click += (s, e) =>
+                    {
+                        if (!bigImageIsVisible)
+                        {
+                            bigImage.Visible = true;
+                            bigImagePanel.Visible = true;
+                            bigImageIsVisible = true;
+                            textureXImage.Visible = true;
                         }
                         else
                         {
-                            textureHeight = Math.Min(textureHeight, bigImage.Size.Y / 5);
-                            textureWidth = (int)(textureHeight * aspectRatioX);
+                            bigImage.Visible = false;
+                            bigImagePanel.Visible = false;
+                            bigImageIsVisible = false;
+                            textureXImage.Visible = false;
                         }
+                    };
 
-                        var textureXImage = new Image(textureX)
+                    bigImage.Click += (s, e) =>
+                    {
+                        if (bigImageIsVisible)
                         {
-                            Parent = decorWindow,
-                            Size = new Point(textureWidth, textureHeight),
-                            Location = new Point(
-                                bigImage.Location.X + bigImage.Size.X - textureWidth - 10,
-                                bigImage.Location.Y + 10
-                            ),
-                            ZIndex = 102,
-                            Visible = false
-                        };
+                            bigImage.Visible = false;
+                            bigImagePanel.Visible = false;
+                            bigImageIsVisible = false;
+                            textureXImage.Visible = false;
+                        }
+                    };
 
-                        decorationImage.Click += (s, e) =>
+                    decorWindow.Click += (s, e) =>
+                    {
+                        if (bigImage.Visible)
                         {
-                            if (!bigImageIsVisible)
-                            {
-                                bigImage.Visible = true;
-                                bigImagePanel.Visible = true;
-                                bigImageIsVisible = true;
-                                textureXImage.Visible = true;
-                            }
-                            else
-                            {
-                                bigImage.Visible = false;
-                                bigImagePanel.Visible = false;
-                                bigImageIsVisible = false;
-                                textureXImage.Visible = false;
-                            }
-                        };
+                            bigImage.Visible = false;
+                            bigImagePanel.Visible = false;
+                            bigImageIsVisible = false;
+                            textureXImage.Visible = false;
+                        }
+                    };
 
-                        bigImage.Click += (s, e) =>
-                        {
-                            if (bigImageIsVisible)
-                            {
-                                bigImage.Visible = false;
-                                bigImagePanel.Visible = false;
-                                bigImageIsVisible = false;
-                                textureXImage.Visible = false;
-                            }
-                        };
+                    // Copy icon panel
+                    var copyPanelContainer = new Panel
+                    {
+                        Parent = mainContainer,
+                        Size = new Point(24, 24),
+                        Location = new Point(mainContainer.Size.X - 24, -2),
+                    };
 
-                        decorWindow.Click += (s, e) =>
-                        {
-                            if (bigImage.Visible)
-                            {
-                                bigImage.Visible = false;
-                                bigImagePanel.Visible = false;
-                                bigImageIsVisible = false;
-                                textureXImage.Visible = false;
-                            }
-                        };
+                    // Copy icon
+                    var copyIcon = new Image(DecorModule.DecorModuleInstance?.CopyIcon)
+                    {
+                        Parent = copyPanelContainer,
+                        Size = copyPanelContainer.Size,
+                        BasicTooltipText = "Copy Name"
+                    };
 
-                        // Copy icon panel
-                        var copyPanelContainer = new Panel
-                        {
-                            Parent = mainContainer,
-                            Size = new Point(24, 24),
-                            Location = new Point(mainContainer.Size.X - 24, -2),
-                        };
+                    var savePanel = new Panel
+                    {
+                        Parent = mainContainer,
+                        Location = new Point(90, 150),
+                        Title = "Copied !",
+                        Width = 80,
+                        Height = 45,
+                        ShowBorder = true,
+                        Opacity = 0f,
+                        Visible = false,
+                    };
 
-                        // Copy icon
-                        var copyIcon = new Image(DecorModule.DecorModuleInstance?.CopyIcon)
-                        {
-                            Parent = copyPanelContainer,
-                            Size = copyPanelContainer.Size,
-                            BasicTooltipText = "Copy Name"
-                        };
+                    var copyBrightnessOverlay = new Panel
+                    {
+                        Parent = copyPanelContainer,
+                        Size = copyPanelContainer.Size,
+                        Location = Point.Zero,
+                        BackgroundColor = Color.White * 0.3f,
+                        Visible = false,
+                    };
 
-                        var savePanel = new Panel
-                        {
-                            Parent = mainContainer,
-                            Location = new Point(90, 150),
-                            Title = "Copied !",
-                            Width = 80,
-                            Height = 45,
-                            ShowBorder = true,
-                            Opacity = 0f,
-                            Visible = false,
-                        };
+                    copyIcon.MouseEntered += (s, e) =>
+                    {
+                        copyBrightnessOverlay.Visible = true;
+                    };
 
-                        var copyBrightnessOverlay = new Panel
-                        {
-                            Parent = copyPanelContainer,
-                            Size = copyPanelContainer.Size,
-                            Location = Point.Zero,
-                            BackgroundColor = Color.White * 0.3f,
-                            Visible = false,
-                        };
+                    copyIcon.MouseLeft += (s, e) =>
+                    {
+                        copyBrightnessOverlay.Visible = false;
+                    };
 
-                        copyIcon.MouseEntered += (s, e) =>
+                    copyBrightnessOverlay.Click += (sender, e) =>
+                    {
+                        if (savePanel.Visible == false)
                         {
-                            copyBrightnessOverlay.Visible = true;
-                        };
-
-                        copyIcon.MouseLeft += (s, e) =>
-                        {
-                            copyBrightnessOverlay.Visible = false;
-                        };
-
-                        copyBrightnessOverlay.Click += (sender, e) =>
-                        {
-                            if (savePanel.Visible == false)
-                            {
-                                SaveTasks.CopyTextToClipboard(decoration.Name);
-                                SaveTasks.ShowSavedPanel(savePanel);
-                            }
-                        };
-                    }
+                            SaveTasks.CopyTextToClipboard(decoration.Name);
+                            SaveTasks.ShowSavedPanel(savePanel);
+                        }
+                    };
                 }
             }
             catch (Exception ex)
             {
                 Logger.Warn($"Failed to load decoration icon for '{decoration.Name}'. Error: {ex.Message}");
+            }
+        }
+
+        private static async Task<Texture2D> GetOrCreateTextureAsync(string key, string iconUrl)
+        {
+            if (_sharedTextureCache.TryGetValue(key, out var existingTexture))
+            {
+                return existingTexture;
+            }
+
+            try
+            {
+                var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(iconUrl);
+                var newTexture = CreateIconTexture(iconResponse);
+
+                if (newTexture != null)
+                {
+                    _sharedTextureCache[key] = newTexture;
+                }
+
+                return newTexture;
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Failed to load texture for '{key}'. Error: {ex.Message}");
+                return null;
             }
         }
 
@@ -660,6 +691,20 @@ namespace DecorBlishhudModule
                 return null;
             }
         }
+        private static void CleanupSharedTextureCache()
+        {
+            foreach (var texture in _sharedTextureCache.Values)
+            {
+                texture.Dispose();
+            }
 
+            _sharedTextureCache.Clear();
+            Logger.Info("Shared texture cache cleaned up.");
+        }
+        protected void Unload()
+        {
+            CleanupSharedTextureCache();
+            this.Unload();
+        }
     }
 }
