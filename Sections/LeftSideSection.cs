@@ -348,6 +348,7 @@ namespace DecorBlishhudModule
                     var imageTexture = await GetOrCreateTextureAsync(decoration.Name + "_Image", decoration.ImageUrl);
 
                     if (imageTexture == null) return;
+
                     // Main container for the decoration
                     var mainContainer = new BorderPanel
                     {
@@ -437,133 +438,14 @@ namespace DecorBlishhudModule
                     var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
                     var borderedTexture = BorderCreator.CreateBorderedTexture(imageTexture);
 
-                    // Panel behind big image
-                    var bigImagePanel = new Panel
+                    decorationImage.Click += async (s, e) =>
                     {
-                        Parent = decorWindow,
-                        Size = new Point(1045, 632),
-                        Location = new Point(10, 40),
-                        BackgroundColor = Color.Black,
-                        Opacity = 0.5f,
-                        Visible = false,
-                        ZIndex = 100,
-                    };
 
-                    // Big image
-                    var bigImage = new Image(borderedTexture)
-                    {
-                        Parent = decorWindow,
-                        Visible = false,
-                        ZIndex = 101,
-                    };
+                        decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
 
-                    bool bigImageIsVisible = false;
+                        decorationImage = new Image(borderedTexture) { Parent = decorWindow };
 
-                    float aspectRatioBig = (float)imageTexture.Width / imageTexture.Height;
-
-                    int maxWidth = decorWindow.Size.X - 400;
-                    int maxHeight = decorWindow.Size.Y - 300;
-
-                    int targetWidth, targetHeight;
-
-                    if (aspectRatioBig > 1)
-                    {
-                        targetWidth = maxWidth;
-                        targetHeight = (int)(maxWidth / aspectRatioBig);
-
-                        if (targetHeight > maxHeight)
-                        {
-                            targetHeight = maxHeight;
-                            targetWidth = (int)(maxHeight * aspectRatioBig);
-                        }
-                    }
-                    else
-                    {
-                        targetHeight = maxHeight;
-                        targetWidth = (int)(maxHeight * aspectRatioBig);
-
-                        if (targetWidth > maxWidth)
-                        {
-                            targetWidth = maxWidth;
-                            targetHeight = (int)(maxWidth / aspectRatioBig);
-                        }
-                    }
-                    bigImage.Size = new Point(targetWidth, targetHeight);
-
-                    bigImage.Location = new Point(
-                        (decorWindow.Size.X - bigImage.Size.X - 90) / 2,
-                        (decorWindow.Size.Y - bigImage.Size.Y - 80) / 2
-                    );
-
-                    // X image on the top right corner of the big image
-                    var textureX = DecorModule.DecorModuleInstance.X;
-
-                    int textureWidth = 30;
-                    int textureHeight = 30;
-
-                    float aspectRatioX = (float)textureX.Width / textureX.Height;
-
-                    if (aspectRatioX > 1)
-                    {
-                        textureWidth = Math.Min(textureWidth, bigImage.Size.X / 5);
-                        textureHeight = (int)(textureWidth / aspectRatioX);
-                    }
-                    else
-                    {
-                        textureHeight = Math.Min(textureHeight, bigImage.Size.Y / 5);
-                        textureWidth = (int)(textureHeight * aspectRatioX);
-                    }
-
-                    var textureXImage = new Image(textureX)
-                    {
-                        Parent = decorWindow,
-                        Size = new Point(textureWidth, textureHeight),
-                        Location = new Point(
-                            bigImage.Location.X + bigImage.Size.X - textureWidth - 10,
-                            bigImage.Location.Y + 10
-                        ),
-                        ZIndex = 102,
-                        Visible = false
-                    };
-
-                    decorationImage.Click += (s, e) =>
-                    {
-                        if (!bigImageIsVisible)
-                        {
-                            bigImage.Visible = true;
-                            bigImagePanel.Visible = true;
-                            bigImageIsVisible = true;
-                            textureXImage.Visible = true;
-                        }
-                        else
-                        {
-                            bigImage.Visible = false;
-                            bigImagePanel.Visible = false;
-                            bigImageIsVisible = false;
-                            textureXImage.Visible = false;
-                        }
-                    };
-
-                    bigImage.Click += (s, e) =>
-                    {
-                        if (bigImageIsVisible)
-                        {
-                            bigImage.Visible = false;
-                            bigImagePanel.Visible = false;
-                            bigImageIsVisible = false;
-                            textureXImage.Visible = false;
-                        }
-                    };
-
-                    decorWindow.Click += (s, e) =>
-                    {
-                        if (bigImage.Visible)
-                        {
-                            bigImage.Visible = false;
-                            bigImagePanel.Visible = false;
-                            bigImageIsVisible = false;
-                            textureXImage.Visible = false;
-                        }
+                        await BigImageSection.UpdateDecorationImageAsync(decoration, decorWindow, decorationImage);
                     };
 
                     // Copy icon panel
@@ -662,7 +544,7 @@ namespace DecorBlishhudModule
                 using (var memoryStream = new MemoryStream(iconResponse))
                 using (var originalImage = System.Drawing.Image.FromStream(memoryStream))
                 {
-                    int maxDimension = 600;
+                    int maxDimension = 200;
 
                     int newWidth = originalImage.Width;
                     int newHeight = originalImage.Height;
@@ -699,6 +581,8 @@ namespace DecorBlishhudModule
             }
 
             _sharedTextureCache.Clear();
+            _homesteadDecorationsCache.Clear();
+            _guildHallDecorationsCache.Clear();
             Logger.Info("Shared texture cache cleaned up.");
         }
         protected void Unload()
