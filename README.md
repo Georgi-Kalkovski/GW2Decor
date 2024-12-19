@@ -38,7 +38,7 @@ Image Preview
 # 💸 Support Me
 #### I don't expect anything in return, but if you want you can:
 send some gold/items ingame: Terter.4125
-donate via https://revolut.me/terterbg or https://ko-fi.com/terterbg
+<br>donate via https://revolut.me/terterbg or https://ko-fi.com/terterbg
 
 # ©️ Credits
 <br>Code: Terter.4125
