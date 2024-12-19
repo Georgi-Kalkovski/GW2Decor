@@ -10,7 +10,7 @@ Homestead Handiwork
 <br>Guild Hall Scribe
 <br>![image](https://github.com/user-attachments/assets/683b1ab2-5a03-42d7-9cce-faf09991d3d6)
 
-## ⬜ Icons Preview
+## 🔳 Icons Preview
 #### The Icons Previewer displays all available decorations on the left. Clicking on an icon reveals a preview of that decoration on the right.
 Icons Preview
 <br>![image](https://github.com/user-attachments/assets/963f8896-f986-4e44-96dc-6236fe68a180)
