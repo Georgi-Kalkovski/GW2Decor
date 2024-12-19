@@ -4,10 +4,12 @@
 
 # 🏠🏰 Decor Sections
 #### Decor is a simple previewer for both Homestead and Guild Hall decorations. 
-![image](https://github.com/user-attachments/assets/4648825d-dd76-4282-8784-c7094279818c)
 Homestead Handiwork
-![image](https://github.com/user-attachments/assets/683b1ab2-5a03-42d7-9cce-faf09991d3d6)
-Guild Hall Scribe
+<br>![image](https://github.com/user-attachments/assets/4648825d-dd76-4282-8784-c7094279818c)
+
+<br>Guild Hall Scribe
+<br>![image](https://github.com/user-attachments/assets/683b1ab2-5a03-42d7-9cce-faf09991d3d6)
+
 ## ⬜ Icons Preview
 #### The Icons Previewer displays all available decorations on the left. Clicking on an icon reveals a preview of that decoration on the right.
 ![image](https://github.com/user-attachments/assets/963f8896-f986-4e44-96dc-6236fe68a180)
@@ -39,9 +41,9 @@ send some gold/items ingame: Terter.4125
 donate via https://revolut.me/terterbg or https://ko-fi.com/terterbg
 
 # ©️ Credits
-Code: Terter.4125
-Overlay: [Blish HUD](https://blishhud.com/)
-Icons and Images: [GW2 Wiki](https://wiki.guildwars2.com/wiki/Main_Page) - The images are sourced from the Guild Wars 2 Wiki and are the property of their respective owners.
+<br>Code: Terter.4125
+<br>Overlay: [Blish HUD](https://blishhud.com/)
+<br>Icons and Images: [GW2 Wiki](https://wiki.guildwars2.com/wiki/Main_Page) - The images are sourced from the Guild Wars 2 Wiki and are the property of their respective owners.
 
 # 💌 PS
 #### I had a great time creating this tool and hope you enjoy using it as much as I enjoyed making it. I hope it makes your life a little easier. ❤️
