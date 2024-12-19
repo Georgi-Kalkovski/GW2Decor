@@ -12,15 +12,15 @@ Homestead Handiwork
 
 ## ⬜ Icons Preview
 #### The Icons Previewer displays all available decorations on the left. Clicking on an icon reveals a preview of that decoration on the right.
-![image](https://github.com/user-attachments/assets/963f8896-f986-4e44-96dc-6236fe68a180)
 Icons Preview
+<br>![image](https://github.com/user-attachments/assets/963f8896-f986-4e44-96dc-6236fe68a180)
 
 ![image](https://github.com/user-attachments/assets/6ab6f6bf-5851-4620-b051-e9f224e31a57)
 #### You can also click on the name or the image to copy its name.
 ## 🎴 Images Preview
 #### The Images Previewer showcases both the icon and its corresponding decoration image.
-![image](https://github.com/user-attachments/assets/0d295bc7-d6b1-43b9-a333-d6d7e80c45b4)
 Image Preview
+<br>![image](https://github.com/user-attachments/assets/0d295bc7-d6b1-43b9-a333-d6d7e80c45b4)
 
 ![image](https://github.com/user-attachments/assets/732c0780-acca-49b8-9ea9-bcb4825695a8)
 #### Clicking on an image zoomes it in. Clicking on a copy icon copies the name of the decoration.
