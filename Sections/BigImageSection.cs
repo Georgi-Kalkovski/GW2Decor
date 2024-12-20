@@ -21,13 +21,14 @@ namespace DecorBlishhudModule.Sections
             _decorationImage.ZIndex = 101;
 
             var textureX = DecorModule.DecorModuleInstance.X2;
+            var textureXActive = DecorModule.DecorModuleInstance.X2Active;
 
             var textureXImage = new Image(textureX)
             {
                 Parent = _decorWindow,
-                Size = new Point(25, 25),
+                Size = new Point(30, 30),
                 ZIndex = 102,
-                Visible = false
+                Visible = false,
             };
 
             if (bigImagePanel == null)
@@ -75,6 +76,16 @@ namespace DecorBlishhudModule.Sections
                 {
                     Logger.Warn($"Failed to load decoration image for '{decoration.Name}'. Error: {ex.ToString()}");
                 }
+
+                textureXImage.MouseEntered += (s, e) =>
+                {
+                    textureXImage.Texture = textureXActive;
+                };
+
+                textureXImage.MouseLeft += (s, e) =>
+                {
+                    textureXImage.Texture = textureX;
+                };
 
                 _decorationImage.Click += async (s, e) =>
                 {
@@ -204,7 +215,7 @@ namespace DecorBlishhudModule.Sections
         private static void PositionXIconAtTopLeft(Image xIcon, Image decorationImage)
         {
             int offsetX = 35;
-            int offsetY = 10;
+            int offsetY = 5;
 
             xIcon.Location = new Point(
                 decorationImage.Location.X + decorationImage.Size.X - offsetX,

@@ -16,17 +16,17 @@ public class BorderPanel : Panel
     public override void RecalculateLayout()
     {
         ResizeHandleBoundsRight = new Rectangle(
-            Width - _textureWindowCorner.Width + 3,
+            Width - _textureWindowCorner.Width + 2,
             Height - _textureWindowCorner.Height + 3,
             _textureWindowCorner.Width,
             _textureWindowCorner.Height
         );
 
         ResizeHandleBoundsLeft = new Rectangle(
-            -3,
+            -2,
             Height - _textureWindowCorner.Height + 3,
             _textureWindowCorner.Width,
-            _textureWindowCorner.Height
+            _textureWindowCorner.Height 
         );
     }
 

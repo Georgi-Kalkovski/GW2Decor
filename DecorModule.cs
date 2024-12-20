@@ -35,8 +35,10 @@ namespace DecorBlishhudModule
         private Texture2D _iconsTab;
         private Texture2D _imagesTab;
         private Texture2D _info;
+        private Texture2D _blackTexture;
         private Texture2D _x;
         private Texture2D _x2;
+        private Texture2D _x2Active;
         private Texture2D _copy;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
@@ -50,8 +52,10 @@ namespace DecorBlishhudModule
         public CustomTabbedWindow2 DecorWindow => _decorWindow;
         public Label DecorationRightText => _decorationRightText;
         public Image DecorationImage => _decorationImage;
+        public Texture2D BlackTexture => _blackTexture;
         public Texture2D X => _x;
         public Texture2D X2 => _x2;
+        public Texture2D X2Active => _x2Active;
         public Texture2D Info => _info;
         public new bool Loaded => _loaded;
         public Texture2D CopyIcon => _copy;
@@ -85,8 +89,10 @@ namespace DecorBlishhudModule
             _iconsTab = ContentsManager.GetTexture("test/icons.png");
             _imagesTab = ContentsManager.GetTexture("test/images.png");
             _info = ContentsManager.GetTexture("test/info.png");
+            _blackTexture = ContentsManager.GetTexture("test/black_texture.png");
             _x = ContentsManager.GetTexture("test/x.png");
             _x2 = ContentsManager.GetTexture("test/x2.png");
+            _x2Active = ContentsManager.GetTexture("test/x2_active.png");
             _copy = ContentsManager.GetTexture("test/copy.png");
 
             // Create corner icon and show loading spinner
@@ -153,8 +159,10 @@ namespace DecorBlishhudModule
             _iconsTab?.Dispose();
             _imagesTab?.Dispose();
             _info?.Dispose();
+            _blackTexture?.Dispose();
             _x?.Dispose();
             _x2?.Dispose();
+            _x2Active?.Dispose();
             _copy?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();

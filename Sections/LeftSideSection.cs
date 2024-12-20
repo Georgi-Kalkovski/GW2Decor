@@ -364,9 +364,9 @@ namespace DecorBlishhudModule
                     {
                         Parent = mainContainer,
                         Location = new Point(0, 0),
-                        Size = new Point(254, 50),
-                        BackgroundColor = Color.Black,
+                        Size = new Point(256, 50),
                         BasicTooltipText = decoration.Name,
+                        BackgroundTexture = DecorModule.DecorModuleInstance.BlackTexture,
                     };
 
                     // Icon
@@ -414,7 +414,7 @@ namespace DecorBlishhudModule
                     var decorationImage = new Image(imageTexture)
                     {
                         Parent = mainContainer,
-                        Location = new Point(xOffset, centeredYOffset),
+                        Location = new Point(xOffset + 2, centeredYOffset - 1),
                         Size = new Point(width - 3, height),
                         BasicTooltipText = decoration.Name,
                     };
@@ -453,7 +453,7 @@ namespace DecorBlishhudModule
                     {
                         Parent = mainContainer,
                         Size = new Point(24, 24),
-                        Location = new Point(mainContainer.Size.X - 24, -2),
+                        Location = new Point(mainContainer.Size.X - 24, 0),
                     };
 
                     // Copy icon
