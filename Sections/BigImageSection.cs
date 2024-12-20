@@ -37,7 +37,7 @@ namespace DecorBlishhudModule.Sections
                 {
                     Parent = _decorWindow,
                     Size = new Point(1045, 632),
-                    Location = new Point(10, 40),
+                    Location = new Point(11, 43),
                     BackgroundColor = Color.Black,
                     Opacity = 0.5f,
                     Visible = false,
