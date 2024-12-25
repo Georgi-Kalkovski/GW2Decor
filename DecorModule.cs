@@ -26,6 +26,8 @@ namespace DecorBlishhudModule
 
         private CornerIcon _cornerIcon;
         private Texture2D _homesteadIconMenu;
+        private Texture2D _homesteadIconMenuWintersday;
+        private Texture2D _currentEmblem;
         private Texture2D _homesteadIconHover;
         private Texture2D _homesteadIconUnactive;
         private Texture2D _homesteadScreen;
@@ -82,6 +84,7 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
             _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");
             _homesteadIconMenu = ContentsManager.GetTexture("test/homesteadIconMenu.png");
+            _homesteadIconMenuWintersday = ContentsManager.GetTexture("test/homesteadIconMenuWinterstay.png");
             _homesteadScreen = ContentsManager.GetTexture("test/homestead_screen.png");
             _guildhallScreen = ContentsManager.GetTexture("test/guildhall_screen.png");
             _handiworkTab = ContentsManager.GetTexture("test/handiwork.png");
@@ -105,6 +108,9 @@ namespace DecorBlishhudModule
                 LoadingMessage = "Decor is fetching data...",
                 Parent = GameService.Graphics.SpriteScreen
             };
+
+            // Fetch theme-specific icon
+            _currentEmblem = await MainIconTheme.GetThemeIconAsync(_homesteadIconMenu, _homesteadIconMenuWintersday);
 
             // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
@@ -149,6 +155,7 @@ namespace DecorBlishhudModule
         {
             _cornerIcon?.Dispose();
             _homesteadIconMenu?.Dispose();
+            _homesteadIconMenuWintersday?.Dispose();
             _homesteadIconHover?.Dispose();
             _homesteadIconUnactive?.Dispose();
             _homesteadScreen?.Dispose();
@@ -180,7 +187,7 @@ namespace DecorBlishhudModule
             {
                 Parent = GameService.Graphics.SpriteScreen,
                 Title = "Decor",
-                Emblem = _homesteadIconMenu,
+                Emblem = _currentEmblem,
                 Subtitle = "Homestead Decorations",
                 Location = new Point(300, 300),
                 SavesPosition = true,
