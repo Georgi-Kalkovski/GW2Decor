@@ -26,6 +26,11 @@ namespace DecorBlishhudModule
 
         private CornerIcon _cornerIcon;
         private Texture2D _homesteadIconMenu;
+        private Texture2D _homesteadIconMenuLunar;
+        private Texture2D _homesteadIconMenuSAB;
+        private Texture2D _homesteadIconMenuDragonBash;
+        private Texture2D _homesteadIconMenuFOTFW;
+        private Texture2D _homesteadIconMenuHalloween;
         private Texture2D _homesteadIconMenuWintersday;
         private Texture2D _currentEmblem;
         private Texture2D _homesteadIconHover;
@@ -84,6 +89,11 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
             _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");
             _homesteadIconMenu = ContentsManager.GetTexture("test/homesteadIconMenu.png");
+            _homesteadIconMenuLunar = ContentsManager.GetTexture("test/homesteadIconMenuLunar.png");
+            _homesteadIconMenuSAB = ContentsManager.GetTexture("test/homesteadIconMenuSAB.png");
+            _homesteadIconMenuDragonBash = ContentsManager.GetTexture("test/homesteadIconMenuDragonBash.png");
+            _homesteadIconMenuFOTFW = ContentsManager.GetTexture("test/homesteadIconMenuFOTFW.png");
+            _homesteadIconMenuHalloween = ContentsManager.GetTexture("test/homesteadIconMenuHalloween.png");
             _homesteadIconMenuWintersday = ContentsManager.GetTexture("test/homesteadIconMenuWinterstay.png");
             _homesteadScreen = ContentsManager.GetTexture("test/homestead_screen.png");
             _guildhallScreen = ContentsManager.GetTexture("test/guildhall_screen.png");
@@ -110,7 +120,15 @@ namespace DecorBlishhudModule
             };
 
             // Fetch theme-specific icon
-            _currentEmblem = await MainIconTheme.GetThemeIconAsync(_homesteadIconMenu, _homesteadIconMenuWintersday);
+            _currentEmblem = await MainIconTheme.GetThemeIconAsync(
+                _homesteadIconMenu,
+                _homesteadIconMenuLunar,
+                _homesteadIconMenuSAB,
+                _homesteadIconMenuDragonBash,
+                _homesteadIconMenuFOTFW,
+                _homesteadIconMenuHalloween,
+                _homesteadIconMenuWintersday
+                );
 
             // Window background
             var windowBackgroundTexture = AsyncTexture2D.FromAssetId(155997);
@@ -155,6 +173,11 @@ namespace DecorBlishhudModule
         {
             _cornerIcon?.Dispose();
             _homesteadIconMenu?.Dispose();
+            _homesteadIconMenuLunar?.Dispose();
+            _homesteadIconMenuSAB?.Dispose();
+            _homesteadIconMenuDragonBash?.Dispose();
+            _homesteadIconMenuFOTFW.Dispose();
+            _homesteadIconMenuHalloween.Dispose();
             _homesteadIconMenuWintersday?.Dispose();
             _homesteadIconHover?.Dispose();
             _homesteadIconUnactive?.Dispose();
