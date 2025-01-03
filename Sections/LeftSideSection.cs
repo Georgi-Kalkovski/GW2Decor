@@ -83,7 +83,7 @@ namespace DecorBlishhudModule
                         Height = calculatedHeight,
                         CanCollapse = false,
                         ControlPadding = new Vector2(4, 4),
-                        OuterControlPadding = new Vector2(0, 4),
+                        OuterControlPadding = new Vector2(6, 4),
                     };
 
                     var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
@@ -120,7 +120,7 @@ namespace DecorBlishhudModule
                         Height = calculatedHeight,
                         CanCollapse = false,
                         ControlPadding = new Vector2(4, 4),
-                        OuterControlPadding = new Vector2(0, 4),
+                        OuterControlPadding = new Vector2(6, 4),
                     };
 
                     var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
@@ -162,8 +162,8 @@ namespace DecorBlishhudModule
                         Width = homesteadDecorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = true,
-                        ControlPadding = new Vector2(4, 10),
-                        OuterControlPadding = new Vector2(0, 10),
+                        ControlPadding = new Vector2(8, 10),
+                        OuterControlPadding = new Vector2(10, 10),
                     };
 
                     var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
@@ -199,8 +199,8 @@ namespace DecorBlishhudModule
                         Width = decorationsFlowPanel.Width - 20,
                         Height = calculatedHeight,
                         CanCollapse = true,
-                        ControlPadding = new Vector2(4, 10),
-                        OuterControlPadding = new Vector2(0, 10),
+                        ControlPadding = new Vector2(8, 10),
+                        OuterControlPadding = new Vector2(10, 10),
                     };
 
                     var iconTasks = categoryDecorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));

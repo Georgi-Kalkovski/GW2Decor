@@ -204,8 +204,8 @@ namespace DecorBlishhudModule
         {
             _decorWindow = new CustomTabbedWindow2(
                 windowBackgroundTexture,
-                new Rectangle(20, 26, 560, 640),
-                new Rectangle(70, 40, 550, 640),
+                new Rectangle(0, 26, 590, 640),
+                new Rectangle(50, 40, 550, 640),
                 new Point(1150, 800))
             {
                 Parent = GameService.Graphics.SpriteScreen,
@@ -221,7 +221,7 @@ namespace DecorBlishhudModule
             var backgroundImage = new Image
             {
                 Parent = _decorWindow,
-                Size = new Point(_decorWindow.Size.X - 55, _decorWindow.Size.Y - 75),
+                Size = new Point(_decorWindow.Size.X - 75, _decorWindow.Size.Y - 75),
                 Location = new Point(0, 0),
                 Opacity = 0.3f,
                 BackgroundColor = new Color(0, 0, 0, 10),
@@ -275,8 +275,8 @@ namespace DecorBlishhudModule
                 Parent = _decorWindow,
                 FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
-                Width = 1050,
-                Height = 640,
+                Width = 1080,
+                Height = 660,
                 CanScroll = true,
                 Location = new Point(10, searchTextBox.Bottom + 10),
                 Visible = false
@@ -287,8 +287,8 @@ namespace DecorBlishhudModule
                 Parent = _decorWindow,
                 FlowDirection = ControlFlowDirection.SingleTopToBottom,
                 ShowBorder = true,
-                Width = 1050,
-                Height = 640,
+                Width = 1080,
+                Height = 660,
                 CanScroll = true,
                 Location = new Point(10, searchTextBox.Bottom + 10),
                 Visible = false
@@ -352,7 +352,8 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
-                    _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(false);
+                    _wikiLicenseManager.UpdateFlowPanelPosition(false);
+                    _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
@@ -366,7 +367,8 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = true;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
-                    _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(false);
+                    _wikiLicenseManager.UpdateFlowPanelPosition(false);
+                    _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
@@ -380,7 +382,8 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = true;
                     guildHallDecorationsBigFlowPanel.Visible = false;
-                    _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(true);
+                    _wikiLicenseManager.UpdateFlowPanelPosition(true);
+                    _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
@@ -394,7 +397,8 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = true;
-                    _wikiLicenseManager.UpdateWidthBasedOnFlowPanel(true);
+                    _wikiLicenseManager.UpdateFlowPanelPosition(true);
+                    _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
             };

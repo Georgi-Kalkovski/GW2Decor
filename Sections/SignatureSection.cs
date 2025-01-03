@@ -45,5 +45,12 @@ namespace DecorBlishhudModule.Sections
 
             _signatureLabel.Invalidate();
         }
+
+        public void UpdateFlowPanelPosition(bool isBigView)
+        {
+            _signatureLabel.Width = isBigView ? 215 : 235;
+            _signatureLabel.Height = isBigView ? 145 : 195;
+            PositionSignatureLabel();
+        }
     }
 }

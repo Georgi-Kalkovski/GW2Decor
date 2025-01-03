@@ -8,7 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Point = Microsoft.Xna.Framework.Point;
 
-namespace DecorBlishhudModule.Sections
+namespace DecorBlishhudModule.Sections.LeftSideTasks
 {
     public class BigImageSection
     {
@@ -36,8 +36,8 @@ namespace DecorBlishhudModule.Sections
                 bigImagePanel = new Panel
                 {
                     Parent = _decorWindow,
-                    Size = new Point(1045, 632),
-                    Location = new Point(11, 43),
+                    Size = new Point(1075, 652),
+                    Location = new Point(11, 40),
                     BackgroundColor = Color.Black,
                     Opacity = 0.5f,
                     Visible = false,
@@ -183,7 +183,7 @@ namespace DecorBlishhudModule.Sections
             int centerX = (parent.Width - image.Size.X) / 2;
             int centerY = (parent.Height - image.Size.Y) / 2;
 
-            image.Location = new Point(centerX - 48, centerY - 40);
+            image.Location = new Point(centerX - 48, centerY - 35);
         }
 
         public static void AdjustImageSize(Texture2D loadedTexture, Image decorationImage)

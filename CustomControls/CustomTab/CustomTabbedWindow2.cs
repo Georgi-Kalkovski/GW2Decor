@@ -12,9 +12,8 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
     {
         private const int TAB_VERTICALOFFSET = 80;
         private const int TAB_HEIGHT = 50;
-        private const int TAB_WIDTH = 100;
+        private const int TAB_WIDTH = 80;
         private const int TAB_GAP = 40;
-
         private static readonly Texture2D _textureTabActive = Content.GetTexture("window-tab-active");
 
         private CustomTab _selectedTabGroup1;
@@ -169,7 +168,7 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
                         TAB_WIDTH,
                         TAB_HEIGHT
                     );
-                    spriteBatch.DrawOnCtrl(this, WindowBackground, destinationRectangle, new Rectangle(WindowRegion.Left + destinationRectangle.X, destinationRectangle.Y - (int)Padding.Top, destinationRectangle.Width, destinationRectangle.Height));
+                    spriteBatch.DrawOnCtrl(this, WindowBackground, destinationRectangle, new Rectangle(WindowRegion.Left + destinationRectangle.X + 20, destinationRectangle.Y - (int)Padding.Top, destinationRectangle.Width, destinationRectangle.Height));
                     spriteBatch.DrawOnCtrl(this, _textureTabActive, destinationRectangle);
                 }
                 tab.Draw(this, spriteBatch, new Rectangle(SidebarActiveBounds.X, y, SidebarActiveBounds.Width, TAB_HEIGHT), isSelected, isHovered);
@@ -190,7 +189,7 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
                         TAB_WIDTH,
                         TAB_HEIGHT
                     );
-                    spriteBatch.DrawOnCtrl(this, WindowBackground, destinationRectangle, new Rectangle(WindowRegion.Left + destinationRectangle.X, destinationRectangle.Y - (int)Padding.Top, destinationRectangle.Width, destinationRectangle.Height));
+                    spriteBatch.DrawOnCtrl(this, WindowBackground, destinationRectangle, new Rectangle(WindowRegion.Left + destinationRectangle.X + 20, destinationRectangle.Y - (int)Padding.Top, destinationRectangle.Width, destinationRectangle.Height));
                     spriteBatch.DrawOnCtrl(this, _textureTabActive, destinationRectangle);
                 }
                 tab.Draw(this, spriteBatch, new Rectangle(SidebarActiveBounds.X, y, SidebarActiveBounds.Width, TAB_HEIGHT), isSelected, isHovered);

@@ -46,10 +46,11 @@ namespace DecorBlishhudModule.Sections
             _licenseLabel.Invalidate();
         }
 
-        public void UpdateWidthBasedOnFlowPanel(bool isBigView)
+        public void UpdateFlowPanelPosition(bool isBigView)
         {
-            _licenseLabel.Width = isBigView ? 1120 : 600; // Adjust width based on the view type
-            PositionLicenseLabel(); // Reposition the label after width adjustment
+            _licenseLabel.Width = isBigView ? 1120 : 600;
+            _licenseLabel.Height = isBigView ? 155 : 205;
+            PositionLicenseLabel();  
         }
     }
 }
