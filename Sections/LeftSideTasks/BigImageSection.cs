@@ -37,7 +37,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                 {
                     Parent = _decorWindow,
                     Size = new Point(1075, 652),
-                    Location = new Point(11, 40),
+                    Location = new Point(11, 42),
                     BackgroundColor = Color.Black,
                     Opacity = 0.5f,
                     Visible = false,
@@ -183,7 +183,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
             int centerX = (parent.Width - image.Size.X) / 2;
             int centerY = (parent.Height - image.Size.Y) / 2;
 
-            image.Location = new Point(centerX - 48, centerY - 35);
+            image.Location = new Point(centerX - 48, centerY - 30);
         }
 
         public static void AdjustImageSize(Texture2D loadedTexture, Image decorationImage)

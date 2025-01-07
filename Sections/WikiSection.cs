@@ -27,7 +27,7 @@ namespace DecorBlishhudModule.Sections
                 StrokeText = true,
                 ShowShadow = true,
                 ShadowColor = new Color(0, 0, 0),
-                Height = 195,
+                Height = 205,
                 Width = 600,
             };
 
@@ -49,7 +49,7 @@ namespace DecorBlishhudModule.Sections
         public void UpdateFlowPanelPosition(bool isBigView)
         {
             _licenseLabel.Width = isBigView ? 1120 : 600;
-            _licenseLabel.Height = isBigView ? 155 : 205;
+            _licenseLabel.Height = isBigView ? 145 : 205;
             PositionLicenseLabel();  
         }
     }

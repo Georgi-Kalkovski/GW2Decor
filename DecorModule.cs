@@ -47,6 +47,7 @@ namespace DecorBlishhudModule
         private Texture2D _x2;
         private Texture2D _x2Active;
         private Texture2D _copy;
+        private Texture2D _heart;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
         private Label _decorationRightText;
@@ -66,6 +67,7 @@ namespace DecorBlishhudModule
         public Texture2D Info => _info;
         public new bool Loaded => _loaded;
         public Texture2D CopyIcon => _copy;
+        public Texture2D Heart => _heart;
 
 
         public HttpClient Client => client;
@@ -107,6 +109,7 @@ namespace DecorBlishhudModule
             _x2 = ContentsManager.GetTexture("test/x2.png");
             _x2Active = ContentsManager.GetTexture("test/x2_active.png");
             _copy = ContentsManager.GetTexture("test/copy.png");
+            _heart = ContentsManager.GetTexture("test/heart.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = new CornerIcon()
@@ -194,6 +197,7 @@ namespace DecorBlishhudModule
             _x2?.Dispose();
             _x2Active?.Dispose();
             _copy?.Dispose();
+            _heart?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -233,15 +237,16 @@ namespace DecorBlishhudModule
             {
                 Parent = _decorWindow,
                 Location = new Point(20, 0),
-                Width = 240,
+                Size = new Point(280, 30),
+                Font = GameService.Content.DefaultFont16,
                 PlaceholderText = "Search Decorations..."
             };
 
             var clearButton = new Panel
             {
                 Parent = _decorWindow,
-                Location = new Point(searchTextBox.Right - 22, searchTextBox.Top + 5),
-                Size = new Point(16, 16),
+                Location = new Point(searchTextBox.Right - 23, searchTextBox.Top + 5),
+                Size = new Point(18, 18),
                 Visible = false,
                 BackgroundTexture = _x,
             };
