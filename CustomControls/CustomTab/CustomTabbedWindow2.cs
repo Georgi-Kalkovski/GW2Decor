@@ -18,9 +18,11 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
 
         private CustomTab _selectedTabGroup1;
         private CustomTab _selectedTabGroup2;
+        private CustomTab _selectedTabGroup3;
 
         public CustomTabCollection TabsGroup1 { get; }
         public CustomTabCollection TabsGroup2 { get; }
+        public CustomTabCollection TabsGroup3 { get; }
 
         public CustomTab SelectedTabGroup1
         {
@@ -48,6 +50,19 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
             }
         }
 
+        public CustomTab SelectedTabGroup3
+        {
+            get => _selectedTabGroup3;
+            set
+            {
+                CustomTab previousTab = _selectedTabGroup3;
+                if ((value == null || TabsGroup3.Contains(value)) && SetProperty(ref _selectedTabGroup3, value, invalidateLayout: true, nameof(SelectedTabGroup3)))
+                {
+                    OnTabChanged(new ValueChangedEventArgs<CustomTab>(previousTab, value));
+                }
+            }
+        }
+
         private CustomTab HoveredTab { get; set; }
 
         public event EventHandler<ValueChangedEventArgs<CustomTab>> TabChanged;
@@ -61,31 +76,19 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
             TabChanged?.Invoke(this, e);
         }
 
-        public CustomTabbedWindow2(AsyncTexture2D background, Rectangle windowRegion, Rectangle contentRegion)
-        {
-            TabsGroup1 = new CustomTabCollection(this);
-            TabsGroup2 = new CustomTabCollection(this);
-            ShowSideBar = true;
-            ConstructWindow(background, windowRegion, contentRegion);
-        }
-
-        public CustomTabbedWindow2(Texture2D background, Rectangle windowRegion, Rectangle contentRegion)
-            : this((AsyncTexture2D)background, windowRegion, contentRegion)
-        {
-        }
-
         public CustomTabbedWindow2(AsyncTexture2D background, Rectangle windowRegion, Rectangle contentRegion, Point windowSize)
         {
             TabsGroup1 = new CustomTabCollection(this);
             TabsGroup2 = new CustomTabCollection(this);
+            TabsGroup3 = new CustomTabCollection(this);
             ShowSideBar = true;
             ConstructWindow(background, windowRegion, contentRegion, windowSize);
         }
-
         public CustomTabbedWindow2(Texture2D background, Rectangle windowRegion, Rectangle contentRegion, Point windowSize)
             : this((AsyncTexture2D)background, windowRegion, contentRegion, windowSize)
         {
         }
+
         protected override void OnClick(MouseEventArgs e)
         {
             if (HoveredTab != null && HoveredTab.Enabled)
@@ -93,10 +96,20 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
                 if (TabsGroup1.Contains(HoveredTab))
                 {
                     SelectedTabGroup1 = HoveredTab;
+                    SelectedTabGroup2 = SelectedTabGroup2 == null ? TabsGroup2.FromIndex(0) : SelectedTabGroup2;
+                    SelectedTabGroup3 = null;
                 }
                 else if (TabsGroup2.Contains(HoveredTab))
                 {
+                    SelectedTabGroup1 = SelectedTabGroup1 == null ? TabsGroup1.FromIndex(0) : SelectedTabGroup2;
                     SelectedTabGroup2 = HoveredTab;
+                    SelectedTabGroup3 = null;
+                }
+                else if (TabsGroup3.Contains(HoveredTab))
+                {
+                    SelectedTabGroup1 = null;
+                    SelectedTabGroup2 = null;
+                    SelectedTabGroup3 = HoveredTab;
                 }
             }
             base.OnClick(e);
@@ -104,9 +117,12 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
 
         private void UpdateTabStates()
         {
-            int totalTabHeightGroup1 = TAB_VERTICALOFFSET + TAB_HEIGHT * TabsGroup1.Count;
-
-            SideBarHeight = totalTabHeightGroup1 + TAB_HEIGHT * TabsGroup2.Count + TAB_GAP;
+            SideBarHeight =
+                TAB_VERTICALOFFSET +
+                TAB_HEIGHT * TabsGroup1.Count +
+                TAB_HEIGHT * TabsGroup2.Count +
+                TAB_HEIGHT * TabsGroup3.Count +
+                TAB_GAP * 2;
 
             HoveredTab = MouseOver && SidebarActiveBounds.Contains(RelativeMousePosition)
                 ? TabsFromPosition(RelativeMousePosition.Y - SidebarActiveBounds.Top)
@@ -132,7 +148,18 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
 
             foreach (var tab in TabsGroup2)
             {
-                int tabTop = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + TAB_HEIGHT * TabsGroup1.Count + TAB_GAP + (tabIndex - 2) * TAB_HEIGHT;
+                int tabTop = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + TAB_GAP + tabIndex * TAB_HEIGHT;
+
+                if (yPosition + 40 >= tabTop && yPosition + 40 <= tabTop + TAB_HEIGHT)
+                {
+                    return tab;
+                }
+                tabIndex++;
+            }
+
+            foreach (var tab in TabsGroup3)
+            {
+                int tabTop = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + 2 * TAB_GAP + tabIndex * TAB_HEIGHT;
 
                 if (yPosition + 40 >= tabTop && yPosition + 40 <= tabTop + TAB_HEIGHT)
                 {
@@ -177,8 +204,29 @@ namespace DecorBlishhudModule.CustomControls.CustomTab
 
             foreach (var tab in TabsGroup2)
             {
-                int y = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + TAB_HEIGHT * TabsGroup1.Count + TAB_GAP + (tabIndex - 2) * TAB_HEIGHT;
+                int y = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + TAB_GAP + tabIndex * TAB_HEIGHT;
                 bool isSelected = tab == SelectedTabGroup2;
+                bool isHovered = tab == HoveredTab;
+
+                if (isSelected)
+                {
+                    Rectangle destinationRectangle = new Rectangle(
+                        SidebarActiveBounds.Left - (TAB_WIDTH - SidebarActiveBounds.Width) + 2,
+                        y,
+                        TAB_WIDTH,
+                        TAB_HEIGHT
+                    );
+                    spriteBatch.DrawOnCtrl(this, WindowBackground, destinationRectangle, new Rectangle(WindowRegion.Left + destinationRectangle.X + 20, destinationRectangle.Y - (int)Padding.Top, destinationRectangle.Width, destinationRectangle.Height));
+                    spriteBatch.DrawOnCtrl(this, _textureTabActive, destinationRectangle);
+                }
+                tab.Draw(this, spriteBatch, new Rectangle(SidebarActiveBounds.X, y, SidebarActiveBounds.Width, TAB_HEIGHT), isSelected, isHovered);
+                tabIndex++;
+            }
+
+            foreach (var tab in TabsGroup3)
+            {
+                int y = SidebarActiveBounds.Top + TAB_VERTICALOFFSET + TAB_GAP * 2 + tabIndex * TAB_HEIGHT;
+                bool isSelected = tab == SelectedTabGroup3;
                 bool isHovered = tab == HoveredTab;
 
                 if (isSelected)

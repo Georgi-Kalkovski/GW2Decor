@@ -37,10 +37,16 @@ namespace DecorBlishhudModule
         private Texture2D _homesteadIconUnactive;
         private Texture2D _homesteadScreen;
         private Texture2D _guildhallScreen;
+        private Texture2D _farmScreen;
+        private Texture2D _lumberScreen;
+        private Texture2D _metalScreen;
         private Texture2D _handiworkTab;
         private Texture2D _scribeTab;
         private Texture2D _iconsTab;
         private Texture2D _imagesTab;
+        private Texture2D _farmTab;
+        private Texture2D _lumberTab;
+        private Texture2D _metalTab;
         private Texture2D _info;
         private Texture2D _blackTexture;
         private Texture2D _x;
@@ -99,10 +105,16 @@ namespace DecorBlishhudModule
             _homesteadIconMenuWintersday = ContentsManager.GetTexture("test/homesteadIconMenuWinterstay.png");
             _homesteadScreen = ContentsManager.GetTexture("test/homestead_screen.png");
             _guildhallScreen = ContentsManager.GetTexture("test/guildhall_screen.png");
+            _farmScreen = ContentsManager.GetTexture("test/farm_screen.png");
+            _lumberScreen = ContentsManager.GetTexture("test/lumber_screen.png");
+            _metalScreen = ContentsManager.GetTexture("test/metal_screen.png");
             _handiworkTab = ContentsManager.GetTexture("test/handiwork.png");
             _scribeTab = ContentsManager.GetTexture("test/scribe.png");
             _iconsTab = ContentsManager.GetTexture("test/icons.png");
             _imagesTab = ContentsManager.GetTexture("test/images.png");
+            _farmTab = ContentsManager.GetTexture("test/farm.png");
+            _lumberTab = ContentsManager.GetTexture("test/lumber.png");
+            _metalTab = ContentsManager.GetTexture("test/metal.png");
             _info = ContentsManager.GetTexture("test/info.png");
             _blackTexture = ContentsManager.GetTexture("test/black_texture.png");
             _x = ContentsManager.GetTexture("test/x.png");
@@ -186,11 +198,17 @@ namespace DecorBlishhudModule
             _homesteadIconUnactive?.Dispose();
             _homesteadScreen?.Dispose();
             _guildhallScreen?.Dispose();
+            _farmScreen?.Dispose();
+            _lumberScreen?.Dispose();
+            _metalScreen?.Dispose();
             _decorWindow?.Dispose();
             _handiworkTab?.Dispose();
             _scribeTab?.Dispose();
             _iconsTab?.Dispose();
             _imagesTab?.Dispose();
+            _farmTab?.Dispose();
+            _lumberTab?.Dispose();
+            _metalTab?.Dispose();
             _info?.Dispose();
             _blackTexture?.Dispose();
             _x?.Dispose();
@@ -325,26 +343,34 @@ namespace DecorBlishhudModule
                 Location = new Point(_decorationRightText.Left, _decorationIcon.Bottom + 5)
             };
 
-            var customTab1 = new CustomTab(_handiworkTab, "Homestead Handiwork", 4);
-            var customTab2 = new CustomTab(_scribeTab, "Guild Hall Scribe", 3);
-            var customTab3 = new CustomTab(_iconsTab, "Icons Preview", 2);
-            var customTab4 = new CustomTab(_imagesTab, "Images Preview", 1);
+            var customTab1 = new CustomTab(_handiworkTab, "Homestead Handiwork", 7);
+            var customTab2 = new CustomTab(_scribeTab, "Guild Hall Scribe", 6);
+            var customTab3 = new CustomTab(_iconsTab, "Icons Preview", 5);
+            var customTab4 = new CustomTab(_imagesTab, "Images Preview", 4);
+            var customTab5 = new CustomTab(_farmTab, "Refinement - Farm", 3);
+            var customTab6 = new CustomTab(_lumberTab, "Refinement - Lumber Mill", 2);
+            var customTab7 = new CustomTab(_metalTab, "Refinement - Metal Forge", 1);
 
             _decorWindow.TabsGroup1.Add(customTab1);
             _decorWindow.TabsGroup1.Add(customTab2);
             _decorWindow.TabsGroup2.Add(customTab3);
             _decorWindow.TabsGroup2.Add(customTab4);
+            _decorWindow.TabsGroup3.Add(customTab5);
+            _decorWindow.TabsGroup3.Add(customTab6);
+            _decorWindow.TabsGroup3.Add(customTab7);
 
             _decorWindow.SelectedTabGroup1 = _decorWindow.TabsGroup1.FirstOrDefault();
             _decorWindow.SelectedTabGroup2 = _decorWindow.TabsGroup2.FirstOrDefault();
 
             CustomTab activeTabGroup1 = _decorWindow.SelectedTabGroup1;
             CustomTab activeTabGroup2 = _decorWindow.SelectedTabGroup2;
+            CustomTab activeTabGroup3 = _decorWindow.SelectedTabGroup3;
 
             _decorWindow.TabChanged += (s, e) =>
             {
                 CustomTab activeTabGroup1 = _decorWindow.SelectedTabGroup1;
                 CustomTab activeTabGroup2 = _decorWindow.SelectedTabGroup2;
+                CustomTab activeTabGroup3 = _decorWindow.SelectedTabGroup3;
 
                 if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab3)
                 {
@@ -406,6 +432,21 @@ namespace DecorBlishhudModule
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
+                else if (activeTabGroup3 == customTab5)
+                {
+                    _decorWindow.Subtitle = "Refinement - Farm";
+                    backgroundImage.Texture = _farmScreen;
+                }
+                else if (activeTabGroup3 == customTab6)
+                {
+                    _decorWindow.Subtitle = "Refinement - Lumber Mill";
+                    backgroundImage.Texture = _lumberScreen;
+                }
+                else if (activeTabGroup3 == customTab7)
+                {
+                    _decorWindow.Subtitle = "Refinement - Metal Forge";
+                    backgroundImage.Texture = _metalScreen;
+                }
             };
 
             // Disable the tabs initially
@@ -432,6 +473,12 @@ namespace DecorBlishhudModule
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
+
+            // TODO:
+            // Flow Panels / Data fetcher / Tables
+            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Farm&format=json&prop=text&section=6
+            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Lumber_Mill&format=json&prop=text&section=6
+            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Metal_Forge&format=json&prop=text&section=3
 
             guildHallTask.ContinueWith(t =>
             {
