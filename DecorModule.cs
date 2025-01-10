@@ -5,6 +5,7 @@ using Blish_HUD.Modules;
 using Blish_HUD.Modules.Managers;
 using DecorBlishhudModule.CustomControls.CustomTab;
 using DecorBlishhudModule.Model;
+using DecorBlishhudModule.Refinement;
 using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
 using Microsoft.Xna.Framework;
@@ -54,6 +55,8 @@ namespace DecorBlishhudModule
         private Texture2D _x2Active;
         private Texture2D _copy;
         private Texture2D _heart;
+        private Texture2D _copperCoin;
+        private Texture2D _silverCoin;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
         private Label _decorationRightText;
@@ -74,6 +77,8 @@ namespace DecorBlishhudModule
         public new bool Loaded => _loaded;
         public Texture2D CopyIcon => _copy;
         public Texture2D Heart => _heart;
+        public Texture2D CopperCoin => _copperCoin;
+        public Texture2D SilverCoin => _silverCoin;
 
 
         public HttpClient Client => client;
@@ -122,6 +127,8 @@ namespace DecorBlishhudModule
             _x2Active = ContentsManager.GetTexture("test/x2_active.png");
             _copy = ContentsManager.GetTexture("test/copy.png");
             _heart = ContentsManager.GetTexture("test/heart.png");
+            _copperCoin = ContentsManager.GetTexture("test/coin_copper.png");
+            _silverCoin = ContentsManager.GetTexture("test/coin_silver.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = new CornerIcon()
@@ -216,6 +223,8 @@ namespace DecorBlishhudModule
             _x2Active?.Dispose();
             _copy?.Dispose();
             _heart?.Dispose();
+            _copperCoin?.Dispose();
+            _silverCoin?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -317,6 +326,36 @@ namespace DecorBlishhudModule
                 Visible = false
             };
 
+            var farmPanel = new FlowPanel
+            {
+                Parent = _decorWindow,
+                FlowDirection = ControlFlowDirection.SingleLeftToRight,
+                Width = 1080,
+                Height = 660,
+                CanScroll = true,
+                Visible = false
+            };
+
+            var lumberPanel = new FlowPanel
+            {
+                Parent = _decorWindow,
+                FlowDirection = ControlFlowDirection.SingleLeftToRight,
+                Width = 1080,
+                Height = 660,
+                CanScroll = true,
+                Visible = false
+            };
+
+            var metalPanel = new FlowPanel
+            {
+                Parent = _decorWindow,
+                FlowDirection = ControlFlowDirection.SingleLeftToRight,
+                Width = 1080,
+                Height = 660,
+                CanScroll = true,
+                Visible = false
+            };
+
             _decorationRightText = new Label
             {
                 Parent = _decorWindow,
@@ -383,6 +422,10 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = true;
+                    farmPanel.Visible = false; 
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
@@ -398,6 +441,10 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = true;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = true;
+                    farmPanel.Visible = false;
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
@@ -413,6 +460,10 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = true;
                     guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = true;
+                    farmPanel.Visible = false;
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
@@ -428,6 +479,10 @@ namespace DecorBlishhudModule
                     guildHallDecorationsFlowPanel.Visible = false;
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = true;
+                    searchTextBox.Visible = true;
+                    farmPanel.Visible = false;
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
@@ -436,16 +491,46 @@ namespace DecorBlishhudModule
                 {
                     _decorWindow.Subtitle = "Refinement - Farm";
                     backgroundImage.Texture = _farmScreen;
+                    _decorationRightText.Visible = false;
+                    _decorationImage.Visible = false;
+                    _homesteadDecorationsFlowPanel.Visible = false;
+                    guildHallDecorationsFlowPanel.Visible = false;
+                    homesteadDecorationsBigFlowPanel.Visible = false;
+                    guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = false;
+                    farmPanel.Visible = true;
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = false;
                 }
                 else if (activeTabGroup3 == customTab6)
                 {
                     _decorWindow.Subtitle = "Refinement - Lumber Mill";
                     backgroundImage.Texture = _lumberScreen;
+                    _decorationRightText.Visible = false;
+                    _decorationImage.Visible = false;
+                    _homesteadDecorationsFlowPanel.Visible = false;
+                    guildHallDecorationsFlowPanel.Visible = false;
+                    homesteadDecorationsBigFlowPanel.Visible = false;
+                    guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = false;
+                    farmPanel.Visible = false;
+                    lumberPanel.Visible = true;
+                    metalPanel.Visible = false;
                 }
                 else if (activeTabGroup3 == customTab7)
                 {
                     _decorWindow.Subtitle = "Refinement - Metal Forge";
                     backgroundImage.Texture = _metalScreen;
+                    _decorationRightText.Visible = false;
+                    _decorationImage.Visible = false;
+                    _homesteadDecorationsFlowPanel.Visible = false;
+                    guildHallDecorationsFlowPanel.Visible = false;
+                    homesteadDecorationsBigFlowPanel.Visible = false;
+                    guildHallDecorationsBigFlowPanel.Visible = false;
+                    searchTextBox.Visible = false;
+                    farmPanel.Visible = false;
+                    lumberPanel.Visible = false;
+                    metalPanel.Visible = true;
                 }
             };
 
@@ -454,6 +539,10 @@ namespace DecorBlishhudModule
             customTab4.Enabled = false;
 
             await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+
+            await CustomTable.Initialize(farmPanel, "farm");
+            await CustomTable.Initialize(lumberPanel, "lumber");
+            await CustomTable.Initialize(metalPanel, "metal");
 
             // Hide loading spinner when decorations are ready
             _cornerIcon.LoadingMessage = null;
@@ -473,12 +562,6 @@ namespace DecorBlishhudModule
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
-
-            // TODO:
-            // Flow Panels / Data fetcher / Tables
-            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Farm&format=json&prop=text&section=6
-            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Lumber_Mill&format=json&prop=text&section=6
-            // https://wiki.guildwars2.com/api.php?action=parse&page=Homestead_Refinement%E2%80%94Metal_Forge&format=json&prop=text&section=3
 
             guildHallTask.ContinueWith(t =>
             {
