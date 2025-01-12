@@ -2,6 +2,7 @@
 {
     public int Id { get; set; }
     public string Name { get; set; }
+    public string Icon { get; set; }
     public int DefaultQty { get; set; }
     public string DefaultBuy { get; set; }
     public string DefaultSell { get; set; }

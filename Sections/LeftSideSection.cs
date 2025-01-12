@@ -511,7 +511,7 @@ namespace DecorBlishhudModule
             }
         }
 
-        private static async Task<Texture2D> GetOrCreateTextureAsync(string key, string iconUrl)
+        public static async Task<Texture2D> GetOrCreateTextureAsync(string key, string iconUrl)
         {
             if (_sharedTextureCache.TryGetValue(key, out var existingTexture))
             {

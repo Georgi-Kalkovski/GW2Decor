@@ -48,10 +48,14 @@ namespace DecorBlishhudModule.Refinement
                 // Extract item ID from the data-id attribute in the buy column
                 string id = columns[2].SelectSingleNode(".//span[@data-id]")?.GetAttributeValue("data-id", "");
 
+                var imageNode = columns[0].SelectSingleNode(".//img");
+                string imageUrl = imageNode?.GetAttributeValue("src", "");
+
                 var item = new Item
                 {
                     Id = int.Parse(id),
                     Name = columns[0].InnerText.Trim(),
+                    Icon = "https://wiki.guildwars2.com" + imageUrl,
                     DefaultQty = int.TryParse(columns[1].InnerText.Trim(), out var defaultQty) ? defaultQty : 0,
                     DefaultBuy = columns[2].InnerText.Trim(),
                     DefaultSell = columns[3].InnerText.Trim(),

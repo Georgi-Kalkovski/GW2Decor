@@ -1,7 +1,9 @@
 ﻿using Blish_HUD;
 using Blish_HUD.Controls;
+using Blish_HUD.Modules.Managers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DecorBlishhudModule.Refinement
@@ -85,13 +87,122 @@ namespace DecorBlishhudModule.Refinement
             return headerPanel;
         }
 
+        private static async Task PopulateTable(string type)
+        {
+            // Fetch items
+            var itemsByCategory = await ItemFetcher.FetchItemsAsync(type);
+
+            // Flatten and sort items by name
+            var sortedItems = itemsByCategory
+                .SelectMany(category => category.Value)
+                .OrderBy(item => item.Name)
+                .ToList();
+
+            int itemCount = 0;
+
+            foreach (var item in sortedItems)
+            {
+                itemCount++;
+
+                // Determine if the current row is even
+                bool isEvenRow = itemCount % 2 == 0;
+                Color rowBackgroundColor = isEvenRow ? new Color(0, 0, 0, 100) : Color.Transparent;
+
+                // Add Name
+                var nameFlowPanel = new FlowPanel
+                {
+                    Parent = name,
+                    FlowDirection = ControlFlowDirection.TopToBottom,
+                    Size = new Point(255, 30),
+                };
+                var texture = await LeftSideSection.GetOrCreateTextureAsync(item.Name, item.Icon);
+
+                if (texture != null)
+                {
+                    new Image(texture)
+                    {
+                        Parent = nameFlowPanel,
+                        Size = new Point(30, 30), // Adjust size
+                        Location = new Point(0, 0),
+                        BackgroundColor = Color.Transparent,
+                    };
+                }
+                new Label
+                {
+                    Parent = nameFlowPanel,
+                    Text = " " + item.Name,
+                    Size = new Point(255, 30),
+                    TextColor = Color.White,
+                    Font = GameService.Content.DefaultFont16,
+                    BackgroundColor = rowBackgroundColor,
+                    Padding = new Thickness(10, 0)
+                };
+
+                // Add Default columns
+                new Label
+                {
+                    Parent = defQty,
+                    Text = "    " + item.DefaultQty.ToString(),
+                    Size = new Point(60, 30),
+                    TextColor = Color.White,
+                    Font = GameService.Content.DefaultFont16,
+                    BackgroundColor = rowBackgroundColor
+                };
+
+                CreateCurrencyDisplay(defBuy, item.DefaultBuy, silver, copper, rowBackgroundColor);
+                CreateCurrencyDisplay(defSell, item.DefaultSell, silver, copper, rowBackgroundColor);
+
+                // Add Trade Efficiency (1x) columns
+                new Label
+                {
+                    Parent = eff1Qty,
+                    Text = "    " + item.TradeEfficiency1Qty.ToString(),
+                    Size = new Point(60, 30),
+                    TextColor = Color.White,
+                    Font = GameService.Content.DefaultFont16,
+                    BackgroundColor = rowBackgroundColor
+                };
+
+                CreateCurrencyDisplay(eff1Buy, item.TradeEfficiency1Buy, silver, copper, rowBackgroundColor);
+                CreateCurrencyDisplay(eff1Sell, item.TradeEfficiency1Sell, silver, copper, rowBackgroundColor);
+
+                // Add Trade Efficiency (2x) columns
+                new Label
+                {
+                    Parent = eff2Qty,
+                    Text = "    " + item.TradeEfficiency2Qty.ToString(),
+                    Size = new Point(60, 30),
+                    TextColor = Color.White,
+                    Font = GameService.Content.DefaultFont16,
+                    BackgroundColor = rowBackgroundColor
+                };
+
+                CreateCurrencyDisplay(eff2Buy, item.TradeEfficiency2Buy, silver, copper, rowBackgroundColor);
+                CreateCurrencyDisplay(eff2Sell, item.TradeEfficiency2Sell, silver, copper, rowBackgroundColor);
+            }
+
+            int labelHeight = 30;
+            int padding = 40;
+            int totalHeight = (labelHeight * itemCount) + padding;
+
+            name.Size = new Point(name.Size.X, totalHeight);
+            def.Size = new Point(def.Size.X, totalHeight + 35);
+            eff1.Size = new Point(eff1.Size.X, totalHeight + 35);
+            eff2.Size = new Point(eff2.Size.X, totalHeight + 35);
+            name.Location = new Point(name.Location.X, name.Location.Y + 36);
+
+            // Update the sizes of inner headers to match parent headers
+            UpdateInnerPanelHeights();
+        }
+
+
         private static FlowPanel CreateCurrencyDisplay(FlowPanel parent, string value, Texture2D silverIcon, Texture2D copperIcon, Color backgroundColor)
         {
             var flowPanel = new FlowPanel
             {
                 Parent = parent,
-                Size = new Point(97, 30),
-                Location = value.Length == 4 ? new Point(50, 0) : new Point(0, 0),
+                Size = new Point(98, 30),
+                Location = value.Length == 4 ? new Point(60, 0) : new Point(0, 0),
                 BackgroundColor = backgroundColor
             };
 
@@ -101,13 +212,12 @@ namespace DecorBlishhudModule.Refinement
                 Parent = flowPanel,
                 Text = value.Length >= 3
                     ? value.Length == 3
-                        ? value.Substring(value.Length - 3, 1)
+                        ? " " + value.Substring(value.Length - 3, 1)
                         : value.Substring(value.Length - 4, 2)
                     : string.Empty,
-                Size = value.Length > 2 ? new Point(13, 30) : new Point(40, 0),
+                Size = value.Length > 2 ? new Point(18, 30) : new Point(45, 0),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
-                BackgroundColor = backgroundColor
             };
 
             new Image(silverIcon)
@@ -120,10 +230,9 @@ namespace DecorBlishhudModule.Refinement
             {
                 Parent = flowPanel,
                 Text = value.Length >= 2 ? value.Substring(value.Length - 2) : value,
-                Size = new Point(20, 30),
+                Size = new Point(25, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
-                BackgroundColor = backgroundColor
             };
 
             new Image(copperIcon)
@@ -134,92 +243,6 @@ namespace DecorBlishhudModule.Refinement
             return flowPanel;
         }
 
-        private static async Task PopulateTable(string type)
-        {
-            // Fetch items
-            var itemsByCategory = await ItemFetcher.FetchItemsAsync(type);
-
-            int itemCount = 0;
-
-            foreach (var category in itemsByCategory)
-            {
-                foreach (var item in category.Value)
-                {
-                    itemCount++;
-
-                    // Determine if the current row is even
-                    bool isEvenRow = itemCount % 2 == 0;
-                    Color rowBackgroundColor = isEvenRow ? new Color(0, 0, 0, 100) : Color.Transparent;
-
-                    // Add Name
-                    new Label
-                    {
-                        Parent = name,
-                        Text = item.Name,
-                        Size = new Point(255, 30),
-                        TextColor = Color.White,
-                        Font = GameService.Content.DefaultFont16,
-                        BackgroundColor = rowBackgroundColor,
-                        Padding = new Thickness(10, 0)
-                    };
-
-                    // Add Default columns
-                    new Label
-                    {
-                        Parent = defQty,
-                        Text = item.DefaultQty.ToString(),
-                        Size = new Point(60, 30),
-                        TextColor = Color.White,
-                        Font = GameService.Content.DefaultFont16,
-                        BackgroundColor = rowBackgroundColor
-                    };
-
-                    CreateCurrencyDisplay(defBuy, item.DefaultBuy, silver, copper, rowBackgroundColor);
-                    CreateCurrencyDisplay(defSell, item.DefaultSell, silver, copper, rowBackgroundColor);
-
-                    // Add Trade Efficiency (1x) columns
-                    new Label
-                    {
-                        Parent = eff1Qty,
-                        Text = item.TradeEfficiency1Qty.ToString(),
-                        Size = new Point(60, 30),
-                        TextColor = Color.White,
-                        Font = GameService.Content.DefaultFont16,
-                        BackgroundColor = rowBackgroundColor
-                    };
-
-                    CreateCurrencyDisplay(eff1Buy, item.TradeEfficiency1Buy, silver, copper, rowBackgroundColor);
-                    CreateCurrencyDisplay(eff1Sell, item.TradeEfficiency1Sell, silver, copper, rowBackgroundColor);
-
-                    // Add Trade Efficiency (2x) columns
-                    new Label
-                    {
-                        Parent = eff2Qty,
-                        Text = item.TradeEfficiency2Qty.ToString(),
-                        Size = new Point(60, 30),
-                        TextColor = Color.White,
-                        Font = GameService.Content.DefaultFont16,
-                        BackgroundColor = rowBackgroundColor
-                    };
-
-                    CreateCurrencyDisplay(eff2Buy, item.TradeEfficiency2Buy, silver, copper, rowBackgroundColor);
-                    CreateCurrencyDisplay(eff2Sell, item.TradeEfficiency2Sell, silver, copper, rowBackgroundColor);
-                }
-            }
-
-            int labelHeight = 30;
-            int padding = 40;
-            int totalHeight = (labelHeight * itemCount) + padding;
-
-            name.Size = new Point(name.Size.X, totalHeight);
-            def.Size = new Point(def.Size.X, totalHeight + 35);
-            eff1.Size = new Point(eff1.Size.X, totalHeight + 35);
-            eff2.Size = new Point(eff2.Size.X, totalHeight + 35);
-            name.Location = new Point(name.Location.X, name.Location.Y + 35);
-
-            // Update the sizes of inner headers to match parent headers
-            UpdateInnerPanelHeights();
-        }
         private static void UpdateInnerPanelHeights()
         {
             // Match the height of the parent panels
