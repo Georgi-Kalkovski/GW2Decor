@@ -538,11 +538,11 @@ namespace DecorBlishhudModule
             customTab2.Enabled = false;
             customTab4.Enabled = false;
 
-            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+             //await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 
-            await CustomTable.Initialize(farmPanel, "farm");
-            await CustomTable.Initialize(lumberPanel, "lumber");
-            await CustomTable.Initialize(metalPanel, "metal");
+            await CustomTableFarm.Initialize(farmPanel, "farm");
+            await CustomTableLumber.Initialize(lumberPanel, "lumber");
+            await CustomTableMetal.Initialize(metalPanel, "metal");
 
             // Hide loading spinner when decorations are ready
             _cornerIcon.LoadingMessage = null;
@@ -550,15 +550,15 @@ namespace DecorBlishhudModule
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
             {
-                await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
+                //await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
                 customTab2.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
             var imagePreviewTask = Task.Run(async () =>
             {
-                await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
-                await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
+                //await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
+                //await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });

@@ -40,10 +40,10 @@ namespace DecorBlishhudModule.Refinement
 
             // Parse each row into the Item model
             List<Item> items = new List<Item>();
-            foreach (var row in rows.Skip(1)) // Skip the header row
+            foreach (var row in rows.Skip(1))
             {
                 var columns = row.SelectNodes("td");
-                if (columns == null || columns.Count < 10) continue; // Ensure sufficient columns exist
+                if (columns == null || columns.Count < 10) continue;
 
                 // Extract item ID from the data-id attribute in the buy column
                 string id = columns[2].SelectSingleNode(".//span[@data-id]")?.GetAttributeValue("data-id", "");
@@ -102,9 +102,6 @@ namespace DecorBlishhudModule.Refinement
             foreach (var item in items)
             {
                 var priceInfo = priceData?.FirstOrDefault(p => p.Id == item.Id);
-
-                Logger.Info($"item ID: {item.Id}");
-                Logger.Info($"priceInfo: {priceInfo}");
 
                 if (priceInfo != null)
                 {
