@@ -111,7 +111,23 @@ namespace DecorBlishhudModule.Refinement
                 headerPanel.Click += (s, e) =>
                 {
                     _ascended = !_ascended; // Toggle ascending/descending
-                    SortAndPopulate(type, sortKeySelector); // Sort items and update the table
+
+                    _ = SortAndPopulate(type, item =>
+                    {
+                        try
+                        {
+                            if (text == "Buy" || text == "Sell")
+                            {
+                                return int.Parse(sortKeySelector(item).ToString());
+                            }
+                        }
+                        catch
+                        {
+                            return 0;
+                        }
+
+                        return sortKeySelector(item);
+                    });
                 };
             }
 
@@ -121,8 +137,8 @@ namespace DecorBlishhudModule.Refinement
         private static async Task SortAndPopulate(string type, Func<Item, IComparable> sortKeySelector)
         {
             _currentItemsByType[type] = _currentItemsByType[type]
-                .OrderBy(item => _ascended ? sortKeySelector(item) : null)
-                .ThenByDescending(item => !_ascended ? sortKeySelector(item) : null)
+                .OrderBy(item => !_ascended ? sortKeySelector(item) : null)
+                .ThenByDescending(item => _ascended ? sortKeySelector(item) : null)
                 .ToList();
 
             await PopulateTable(type);

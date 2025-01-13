@@ -538,7 +538,7 @@ namespace DecorBlishhudModule
             customTab2.Enabled = false;
             customTab4.Enabled = false;
 
-             //await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+             await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 
             await CustomTableFarm.Initialize(farmPanel, "farm");
             await CustomTableLumber.Initialize(lumberPanel, "lumber");
@@ -550,20 +550,20 @@ namespace DecorBlishhudModule
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
             {
-                //await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
+                await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
                 customTab2.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
             var imagePreviewTask = Task.Run(async () =>
             {
-                //await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
-                //await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
+                await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
+                await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
 
-            guildHallTask.ContinueWith(t =>
+            _ = guildHallTask.ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
@@ -571,7 +571,7 @@ namespace DecorBlishhudModule
                 }
             });
 
-            imagePreviewTask.ContinueWith(t =>
+            _ = imagePreviewTask.ContinueWith(t =>
             {
                 if (t.IsFaulted)
                 {
