@@ -57,6 +57,10 @@ namespace DecorBlishhudModule
         private Texture2D _heart;
         private Texture2D _copperCoin;
         private Texture2D _silverCoin;
+        private Texture2D _arrowUp;
+        private Texture2D _arrowDown;
+        private Texture2D _arrowNeutral;
+        private Texture2D _efficiancy;
         private CustomTabbedWindow2 _decorWindow;
         private Image _decorationIcon;
         private Label _decorationRightText;
@@ -79,7 +83,10 @@ namespace DecorBlishhudModule
         public Texture2D Heart => _heart;
         public Texture2D CopperCoin => _copperCoin;
         public Texture2D SilverCoin => _silverCoin;
-
+        public Texture2D ArrowUp => _arrowUp;
+        public Texture2D ArrowDown => _arrowDown;
+        public Texture2D ArrowNeutral => _arrowNeutral;
+        public Texture2D Efficiency => _efficiancy;
 
         public HttpClient Client => client;
 
@@ -129,6 +136,10 @@ namespace DecorBlishhudModule
             _heart = ContentsManager.GetTexture("test/heart.png");
             _copperCoin = ContentsManager.GetTexture("test/coin_copper.png");
             _silverCoin = ContentsManager.GetTexture("test/coin_silver.png");
+            _arrowUp = ContentsManager.GetTexture("test/arrow_up.png");
+            _arrowDown = ContentsManager.GetTexture("test/arrow_down.png");
+            _arrowNeutral = ContentsManager.GetTexture("test/arrow_neutral.png");
+            _efficiancy = ContentsManager.GetTexture("test/efficiency.png");
 
             // Create corner icon and show loading spinner
             _cornerIcon = new CornerIcon()
@@ -225,6 +236,10 @@ namespace DecorBlishhudModule
             _heart?.Dispose();
             _copperCoin?.Dispose();
             _silverCoin?.Dispose();
+            _arrowUp?.Dispose();
+            _arrowDown?.Dispose();
+            _arrowNeutral?.Dispose();
+            _efficiancy?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -331,7 +346,7 @@ namespace DecorBlishhudModule
                 Parent = _decorWindow,
                 FlowDirection = ControlFlowDirection.SingleLeftToRight,
                 Width = 1080,
-                Height = 660,
+                Height = 700,
                 CanScroll = true,
                 Visible = false
             };
@@ -423,11 +438,12 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = true;
-                    farmPanel.Visible = false; 
+                    farmPanel.Visible = false;
                     lumberPanel.Visible = false;
                     metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
+                    InfoSection.UpdateInfoVisible(true);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
@@ -447,6 +463,7 @@ namespace DecorBlishhudModule
                     metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
+                    InfoSection.UpdateInfoVisible(true);
                     InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
                 }
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
@@ -466,6 +483,7 @@ namespace DecorBlishhudModule
                     metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
+                    InfoSection.UpdateInfoVisible(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
@@ -485,6 +503,7 @@ namespace DecorBlishhudModule
                     metalPanel.Visible = false;
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
+                    InfoSection.UpdateInfoVisible(true);
                     InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
                 }
                 else if (activeTabGroup3 == customTab5)
@@ -501,6 +520,9 @@ namespace DecorBlishhudModule
                     farmPanel.Visible = true;
                     lumberPanel.Visible = false;
                     metalPanel.Visible = false;
+                    _wikiLicenseManager.UpdateFlowPanelPosition(true);
+                    _signatureLabelManager.UpdateFlowPanelPosition(true);
+                    InfoSection.UpdateInfoVisible(false);
                 }
                 else if (activeTabGroup3 == customTab6)
                 {
@@ -516,6 +538,9 @@ namespace DecorBlishhudModule
                     farmPanel.Visible = false;
                     lumberPanel.Visible = true;
                     metalPanel.Visible = false;
+                    _wikiLicenseManager.UpdateFlowPanelPosition(true);
+                    _signatureLabelManager.UpdateFlowPanelPosition(true);
+                    InfoSection.UpdateInfoVisible(false);
                 }
                 else if (activeTabGroup3 == customTab7)
                 {
@@ -531,21 +556,62 @@ namespace DecorBlishhudModule
                     farmPanel.Visible = false;
                     lumberPanel.Visible = false;
                     metalPanel.Visible = true;
+                    _wikiLicenseManager.UpdateFlowPanelPosition(true);
+                    _signatureLabelManager.UpdateFlowPanelPosition(true);
+                    InfoSection.UpdateInfoVisible(false);
                 }
             };
 
             // Disable the tabs initially
             customTab2.Enabled = false;
             customTab4.Enabled = false;
+            customTab5.Enabled = false;
+            customTab6.Enabled = false;
+            customTab7.Enabled = false;
 
-             await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
-
-            await CustomTableFarm.Initialize(farmPanel, "farm");
-            await CustomTableLumber.Initialize(lumberPanel, "lumber");
-            await CustomTableMetal.Initialize(metalPanel, "metal");
+            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 
             // Hide loading spinner when decorations are ready
             _cornerIcon.LoadingMessage = null;
+
+            var refinementMetalPreviewTask = Task.Run(async () =>
+            {
+                await CustomTableMetal.Initialize(metalPanel, "metal");
+                customTab7.Enabled = true;
+            });
+            _ = refinementMetalPreviewTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Refinement - Metal task failed.");
+                }
+            });
+
+            var refinementLumberPreviewTask = Task.Run(async () =>
+            {
+                await CustomTableLumber.Initialize(lumberPanel, "lumber");
+                customTab6.Enabled = true;
+            });
+            _ = refinementLumberPreviewTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Refinement - Lumber task failed.");
+                }
+            });
+
+            var refinementFarmPreviewTask = Task.Run(async () =>
+            {
+                await CustomTableFarm.Initialize(farmPanel, "farm");
+                customTab5.Enabled = true;
+            });
+            _ = refinementFarmPreviewTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Refinement - Farm task failed.");
+                }
+            });
 
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
@@ -553,6 +619,13 @@ namespace DecorBlishhudModule
                 await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
                 customTab2.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
+            });
+            _ = guildHallTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    Logger.Warn(t.Exception, "Guild Hall task failed.");
+                }
             });
 
             var imagePreviewTask = Task.Run(async () =>
@@ -562,15 +635,6 @@ namespace DecorBlishhudModule
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
-
-            _ = guildHallTask.ContinueWith(t =>
-            {
-                if (t.IsFaulted)
-                {
-                    Logger.Warn(t.Exception, "Guild Hall task failed.");
-                }
-            });
-
             _ = imagePreviewTask.ContinueWith(t =>
             {
                 if (t.IsFaulted)

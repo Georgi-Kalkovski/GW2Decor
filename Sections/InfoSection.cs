@@ -11,13 +11,15 @@ public class InfoSection
     private static CustomTabbedWindow2 _decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
     private static Texture2D _info = DecorModule.DecorModuleInstance.Info;
 
+    private static Image _infoIcon;
     private static Panel _infoTextPanel;
+    private static Panel _infoTextPanelBackground;
     private static Label _infoText;
 
     public static void InitializeInfoPanel()
     {
         // Create Info Panel and Text
-        var infoIcon = new Image
+        _infoIcon = new Image
         {
             Parent = _decorWindow,
             Location = new Point(_decorWindow.Width - 120, 5),
@@ -34,6 +36,16 @@ public class InfoSection
             ShowBorder = true,
             Visible = false,
             Opacity = 0,
+            ZIndex = 1
+        };
+
+        _infoTextPanelBackground = new Panel
+        {
+            Parent = _infoTextPanel,
+            Size = new Point(300, 60),
+            Location = new Point(0, 0),
+            BackgroundColor = new Color(0, 0, 0, 205),
+            ZIndex = 0
         };
 
         _infoText = new Label
@@ -51,8 +63,8 @@ public class InfoSection
             Font = GameService.Content.DefaultFont16,
         };
 
-        infoIcon.MouseEntered += async (sender, args) => await AnimatePanel(_infoTextPanel, true);
-        infoIcon.MouseLeft += async (sender, args) => await AnimatePanel(_infoTextPanel, false);
+        _infoIcon.MouseEntered += async (sender, args) => await AnimatePanel(_infoTextPanel, true);
+        _infoIcon.MouseLeft += async (sender, args) => await AnimatePanel(_infoTextPanel, false);
     }
 
     private static async Task AnimatePanel(Panel panel, bool fadeIn)
@@ -82,5 +94,17 @@ public class InfoSection
     public static void UpdateInfoText(string newText)
     {
         _infoText.Text = newText;
+    }
+
+    public static void UpdateInfoVisible(bool visible)
+    {
+        if (visible == true)
+        {
+            _infoIcon.Visible = true;
+        }
+        if (visible == false)
+        {
+            _infoIcon.Visible = false;
+        }
     }
 }

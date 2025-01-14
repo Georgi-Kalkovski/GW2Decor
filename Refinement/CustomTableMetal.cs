@@ -13,24 +13,32 @@ namespace DecorBlishhudModule.Refinement
     {
         private static FlowPanel _tablePanel;
 
-        private static FlowPanel name;
-        private static FlowPanel def;
-        private static FlowPanel eff1;
-        private static FlowPanel eff2;
-        private static FlowPanel defQty;
-        private static FlowPanel defBuy;
-        private static FlowPanel defSell;
-        private static FlowPanel eff1Qty;
-        private static FlowPanel eff1Buy;
-        private static FlowPanel eff1Sell;
-        private static FlowPanel eff2Qty;
-        private static FlowPanel eff2Buy;
-        private static FlowPanel eff2Sell;
+        private static FlowPanel _name;
+        private static FlowPanel _def;
+        private static FlowPanel _eff1;
+        private static FlowPanel _eff2;
+        private static FlowPanel _defQty;
+        private static FlowPanel _defBuy;
+        private static FlowPanel _defSell;
+        private static FlowPanel _eff1Qty;
+        private static FlowPanel _eff1Buy;
+        private static FlowPanel _eff1Sell;
+        private static FlowPanel _eff2Qty;
+        private static FlowPanel _eff2Buy;
+        private static FlowPanel _eff2Sell;
 
         private static Texture2D _copper = DecorModule.DecorModuleInstance.CopperCoin;
         private static Texture2D _silver = DecorModule.DecorModuleInstance.SilverCoin;
 
-        private static bool _ascended = true;
+        private static Texture2D _effiency = DecorModule.DecorModuleInstance.Efficiency;
+
+        private static Texture2D _arrowUp = DecorModule.DecorModuleInstance.ArrowUp;
+        private static Texture2D _arrowDown = DecorModule.DecorModuleInstance.ArrowDown;
+        private static Texture2D _arrowNeutral = DecorModule.DecorModuleInstance.ArrowNeutral;
+
+
+        private static string _activeColumn = "Name";
+        private static bool _isAscending = true;
 
         private static Dictionary<string, List<Item>> _currentItemsByType = new();
         private static Dictionary<string, Dictionary<string, List<Item>>> _itemsByCategoryByType = new();
@@ -40,35 +48,38 @@ namespace DecorBlishhudModule.Refinement
             if (!_itemsByCategoryByType.ContainsKey(type))
             {
                 _itemsByCategoryByType[type] = await ItemFetcher.FetchItemsAsync(type);
-                _currentItemsByType[type] = null; // Initialize the current items for this type
+                _currentItemsByType[type] = null;
             }
 
             _tablePanel = tablePanel;
-            _tablePanel.Location = new Point(20, 10);
+            _tablePanel.Location = new Point(20, 0);
             _tablePanel.ShowBorder = true;
             _tablePanel.Width = 1050;
             _tablePanel.ControlPadding = new Vector2(2, 0);
 
             // Create headers
-            name = CreateHeader("Name", 255, 565, item => item.Name, type);
-            def = CreateHeader("Default", 255, 600, null, type);
-            eff1 = CreateHeader("Trade Efficiency (1x)", 255, 600, null, type);
-            eff2 = CreateHeader("Trade Efficiency (2x)", 255, 600, null, type);
+            _name = CreateHeader("Name", 255, 565, item => item.Name, type);
+            _name.Icon = _arrowDown;
+            _def = CreateHeader("Default", 255, 600, null, type);
+            _eff1 = CreateHeader("Trade Efficiency (1x)", 255, 600, null, type);
+            _eff1.Icon = _effiency;
+            _eff2 = CreateHeader("Trade Efficiency (2x)", 255, 600, null, type);
+            _eff2.Icon = _effiency;
 
             // Create Default columns
-            defQty = CreateInnerHeader("Qty", 60, def, item => item.DefaultQty, type);
-            defBuy = CreateInnerHeader("Buy", 97, def, item => item.DefaultBuy, type);
-            defSell = CreateInnerHeader("Sell", 97, def, item => item.DefaultSell, type);
+            _defQty = CreateInnerHeader("Qty", 68, _def, item => item.DefaultQty, type);
+            _defBuy = CreateInnerHeader("Buy", 93, _def, item => item.DefaultBuy, type);
+            _defSell = CreateInnerHeader("Sell", 93, _def, item => item.DefaultSell, type);
 
             // Create Efficiency (1x) columns
-            eff1Qty = CreateInnerHeader("Qty", 60, eff1, item => item.TradeEfficiency1Qty, type);
-            eff1Buy = CreateInnerHeader("Buy", 97, eff1, item => item.TradeEfficiency1Buy, type);
-            eff1Sell = CreateInnerHeader("Sell", 97, eff1, item => item.TradeEfficiency1Sell, type);
+            _eff1Qty = CreateInnerHeader("Qty", 68, _eff1, item => item.TradeEfficiency1Qty, type);
+            _eff1Buy = CreateInnerHeader("Buy", 93, _eff1, item => item.TradeEfficiency1Buy, type);
+            _eff1Sell = CreateInnerHeader("Sell", 93, _eff1, item => item.TradeEfficiency1Sell, type);
 
             // Create Efficiency (2x) columns
-            eff2Qty = CreateInnerHeader("Qty", 60, eff2, item => item.TradeEfficiency2Qty, type);
-            eff2Buy = CreateInnerHeader("Buy", 97, eff2, item => item.TradeEfficiency2Buy, type);
-            eff2Sell = CreateInnerHeader("Sell", 97, eff2, item => item.TradeEfficiency2Sell, type);
+            _eff2Qty = CreateInnerHeader("Qty", 68, _eff2, item => item.TradeEfficiency2Qty, type);
+            _eff2Buy = CreateInnerHeader("Buy", 93, _eff2, item => item.TradeEfficiency2Buy, type);
+            _eff2Sell = CreateInnerHeader("Sell", 93, _eff2, item => item.TradeEfficiency2Sell, type);
 
             // Fetch and populate the table with items
             await PopulateTable(type);
@@ -88,30 +99,73 @@ namespace DecorBlishhudModule.Refinement
             {
                 headerPanel.Click += (s, e) =>
                 {
-                    _ascended = !_ascended; // Toggle ascending/descending
-                    SortAndPopulate(type, sortKeySelector); // Sort items and update the table
+                    ResetHeaderIcons();
+
+                    if (_activeColumn == text)
+                    {
+                        _isAscending = !_isAscending;
+                    }
+                    else
+                    {
+                        _activeColumn = text;
+                        _isAscending = true;
+                    }
+
+                    headerPanel.Icon = _isAscending ? _arrowDown : _arrowUp;
+
+                    SortAndPopulate(type, sortKeySelector);
                 };
-            };
+            }
 
             return headerPanel;
         }
 
         private static FlowPanel CreateInnerHeader(string text, int xSize, Panel flowPanel, Func<Item, IComparable> sortKeySelector = null, string type = null)
         {
+
             var headerPanel = new FlowPanel
             {
                 Parent = flowPanel,
                 Title = text,
                 Width = xSize,
-                Location = new Point(10, 0)
+                Location = new Point(10, 0),
+                Icon = _arrowNeutral
             };
 
             if (sortKeySelector != null)
             {
                 headerPanel.Click += (s, e) =>
                 {
-                    _ascended = !_ascended; // Toggle ascending/descending
-                    SortAndPopulate(type, sortKeySelector); // Sort items and update the table
+                    ResetHeaderIcons();
+
+                    if (_activeColumn == text)
+                    {
+                        _isAscending = !_isAscending;
+                    }
+                    else
+                    {
+                        _activeColumn = text;
+                        _isAscending = true;
+                    }
+
+                    headerPanel.Icon = _activeColumn == text ? (_isAscending ? _arrowDown : _arrowUp) : null;
+
+                    _ = SortAndPopulate(type, item =>
+                    {
+                        try
+                        {
+                            if (text == "Buy" || text == "Sell")
+                            {
+                                return int.Parse(sortKeySelector(item).ToString());
+                            }
+                        }
+                        catch
+                        {
+                            return 0;
+                        }
+
+                        return sortKeySelector(item);
+                    });
                 };
             }
 
@@ -121,8 +175,8 @@ namespace DecorBlishhudModule.Refinement
         private static async Task SortAndPopulate(string type, Func<Item, IComparable> sortKeySelector)
         {
             _currentItemsByType[type] = _currentItemsByType[type]
-                .OrderBy(item => _ascended ? sortKeySelector(item) : null)
-                .ThenByDescending(item => !_ascended ? sortKeySelector(item) : null)
+                .OrderBy(item => _isAscending ? sortKeySelector(item) : null)
+                .ThenByDescending(item => !_isAscending ? sortKeySelector(item) : null)
                 .ToList();
 
             await PopulateTable(type);
@@ -138,8 +192,8 @@ namespace DecorBlishhudModule.Refinement
             {
                 _currentItemsByType[type] = _itemsByCategoryByType[type]
                     .SelectMany(category => category.Value)
-                    .OrderBy(item => _ascended ? item.Name : null)
-                    .ThenByDescending(item => !_ascended ? item.Name : null)
+                    .OrderBy(item => _isAscending ? item.Name : null)
+                    .ThenByDescending(item => !_isAscending ? item.Name : null)
                     .ToList();
             }
 
@@ -156,7 +210,7 @@ namespace DecorBlishhudModule.Refinement
                 // Add Name
                 var nameFlowPanel = new FlowPanel
                 {
-                    Parent = name,
+                    Parent = _name,
                     FlowDirection = ControlFlowDirection.TopToBottom,
                     Size = new Point(255, 30),
                 };
@@ -186,55 +240,55 @@ namespace DecorBlishhudModule.Refinement
                 // Add Default columns
                 new Label
                 {
-                    Parent = defQty,
+                    Parent = _defQty,
                     Text = "    " + item.DefaultQty.ToString(),
-                    Size = new Point(60, 30),
+                    Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor
                 };
 
-                CreateCurrencyDisplay(defBuy, item.DefaultBuy, rowBackgroundColor);
-                CreateCurrencyDisplay(defSell, item.DefaultSell, rowBackgroundColor);
+                CreateCurrencyDisplay(_defBuy, item.DefaultBuy, rowBackgroundColor);
+                CreateCurrencyDisplay(_defSell, item.DefaultSell, rowBackgroundColor);
 
                 // Add Trade Efficiency (1x) columns
                 new Label
                 {
-                    Parent = eff1Qty,
+                    Parent = _eff1Qty,
                     Text = "    " + item.TradeEfficiency1Qty.ToString(),
-                    Size = new Point(60, 30),
+                    Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor
                 };
 
-                CreateCurrencyDisplay(eff1Buy, item.TradeEfficiency1Buy, rowBackgroundColor);
-                CreateCurrencyDisplay(eff1Sell, item.TradeEfficiency1Sell, rowBackgroundColor);
+                CreateCurrencyDisplay(_eff1Buy, item.TradeEfficiency1Buy, rowBackgroundColor);
+                CreateCurrencyDisplay(_eff1Sell, item.TradeEfficiency1Sell, rowBackgroundColor);
 
                 // Add Trade Efficiency (2x) columns
                 new Label
                 {
-                    Parent = eff2Qty,
+                    Parent = _eff2Qty,
                     Text = "    " + item.TradeEfficiency2Qty.ToString(),
-                    Size = new Point(60, 30),
+                    Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor
                 };
 
-                CreateCurrencyDisplay(eff2Buy, item.TradeEfficiency2Buy, rowBackgroundColor);
-                CreateCurrencyDisplay(eff2Sell, item.TradeEfficiency2Sell, rowBackgroundColor);
+                CreateCurrencyDisplay(_eff2Buy, item.TradeEfficiency2Buy, rowBackgroundColor);
+                CreateCurrencyDisplay(_eff2Sell, item.TradeEfficiency2Sell, rowBackgroundColor);
             }
 
             int labelHeight = 30;
             int padding = 40;
             int totalHeight = (labelHeight * itemCount) + padding;
 
-            name.Size = new Point(name.Size.X, totalHeight);
-            def.Size = new Point(def.Size.X, totalHeight + 35);
-            eff1.Size = new Point(eff1.Size.X, totalHeight + 35);
-            eff2.Size = new Point(eff2.Size.X, totalHeight + 35);
-            name.Location = new Point(name.Location.X, _tablePanel.Location.Y + 25);
+            _name.Size = new Point(_name.Size.X, totalHeight);
+            _def.Size = new Point(_def.Size.X, totalHeight + 35);
+            _eff1.Size = new Point(_eff1.Size.X, totalHeight + 35);
+            _eff2.Size = new Point(_eff2.Size.X, totalHeight + 35);
+            _name.Location = new Point(_name.Location.X, _tablePanel.Location.Y + 35);
 
             // Update the sizes of inner headers to match parent headers
             UpdateInnerPanelHeights();
@@ -246,7 +300,7 @@ namespace DecorBlishhudModule.Refinement
             {
                 Parent = parent,
                 Size = new Point(98, 30),
-                BackgroundColor = backgroundColor
+                BackgroundColor = backgroundColor,
             };
 
             // Add silver part if applicable
@@ -255,10 +309,10 @@ namespace DecorBlishhudModule.Refinement
                 Parent = flowPanel,
                 Text = value.Length >= 3
                     ? value.Length == 3
-                        ? " " + value.Substring(value.Length - 3, 1)
-                        : value.Substring(value.Length - 4, 2)
+                        ? "  " + value.Substring(value.Length - 3, 1)
+                        : " " + value.Substring(value.Length - 4, 2)
                     : string.Empty,
-                Size = value.Length > 2 ? new Point(18, 30) : new Point(45, 0),
+                Size = value.Length > 2 ? new Point(25, 30) : new Point(48, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
             };
@@ -273,7 +327,7 @@ namespace DecorBlishhudModule.Refinement
             {
                 Parent = flowPanel,
                 Text = value.Length >= 2 ? value.Substring(value.Length - 2) : value,
-                Size = new Point(25, 30),
+                Size = new Point(22, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
             };
@@ -289,31 +343,45 @@ namespace DecorBlishhudModule.Refinement
         private static void UpdateInnerPanelHeights()
         {
             // Match the height of the parent panels
-            defQty.Size = new Point(defQty.Size.X, def.Size.Y);
-            defBuy.Size = new Point(defBuy.Size.X, def.Size.Y);
-            defSell.Size = new Point(defSell.Size.X, def.Size.Y);
+            _defQty.Size = new Point(_defQty.Size.X, _def.Size.Y);
+            _defBuy.Size = new Point(_defBuy.Size.X, _def.Size.Y);
+            _defSell.Size = new Point(_defSell.Size.X, _def.Size.Y);
 
-            eff1Qty.Size = new Point(eff1Qty.Size.X, eff1.Size.Y);
-            eff1Buy.Size = new Point(eff1Buy.Size.X, eff1.Size.Y);
-            eff1Sell.Size = new Point(eff1Sell.Size.X, eff1.Size.Y);
+            _eff1Qty.Size = new Point(_eff1Qty.Size.X, _eff1.Size.Y);
+            _eff1Buy.Size = new Point(_eff1Buy.Size.X, _eff1.Size.Y);
+            _eff1Sell.Size = new Point(_eff1Sell.Size.X, _eff1.Size.Y);
 
-            eff2Qty.Size = new Point(eff2Qty.Size.X, eff2.Size.Y);
-            eff2Buy.Size = new Point(eff2Buy.Size.X, eff2.Size.Y);
-            eff2Sell.Size = new Point(eff2Sell.Size.X, eff2.Size.Y);
+            _eff2Qty.Size = new Point(_eff2Qty.Size.X, _eff2.Size.Y);
+            _eff2Buy.Size = new Point(_eff2Buy.Size.X, _eff2.Size.Y);
+            _eff2Sell.Size = new Point(_eff2Sell.Size.X, _eff2.Size.Y);
         }
 
         private static void ClearColumnContent()
         {
-            name.Children.Clear();
-            defQty.Children.Clear();
-            defBuy.Children.Clear();
-            defSell.Children.Clear();
-            eff1Qty.Children.Clear();
-            eff1Buy.Children.Clear();
-            eff1Sell.Children.Clear();
-            eff2Qty.Children.Clear();
-            eff2Buy.Children.Clear();
-            eff2Sell.Children.Clear();
+            _name.Children.Clear();
+            _defQty.Children.Clear();
+            _defBuy.Children.Clear();
+            _defSell.Children.Clear();
+            _eff1Qty.Children.Clear();
+            _eff1Buy.Children.Clear();
+            _eff1Sell.Children.Clear();
+            _eff2Qty.Children.Clear();
+            _eff2Buy.Children.Clear();
+            _eff2Sell.Children.Clear();
         }
+        private static void ResetHeaderIcons()
+        {
+            _name.Icon = _arrowNeutral;
+            _defQty.Icon = _arrowNeutral;
+            _defBuy.Icon = _arrowNeutral;
+            _defSell.Icon = _arrowNeutral;
+            _eff1Qty.Icon = _arrowNeutral;
+            _eff1Buy.Icon = _arrowNeutral;
+            _eff1Sell.Icon = _arrowNeutral;
+            _eff2Qty.Icon = _arrowNeutral;
+            _eff2Buy.Icon = _arrowNeutral;
+            _eff2Sell.Icon = _arrowNeutral;
+        }
+
     }
 }
