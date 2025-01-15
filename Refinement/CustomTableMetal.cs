@@ -129,7 +129,7 @@ namespace DecorBlishhudModule.Refinement
                 Title = text,
                 Width = xSize,
                 Location = new Point(10, 0),
-                Icon = _arrowNeutral
+                Icon = _arrowNeutral,
             };
 
             if (sortKeySelector != null)
@@ -174,15 +174,19 @@ namespace DecorBlishhudModule.Refinement
 
         private static async Task SortAndPopulate(string type, Func<Item, IComparable> sortKeySelector)
         {
-            _currentItemsByType[type] = _currentItemsByType[type]
+            var sortedItems = _currentItemsByType[type]
                 .OrderBy(item => _isAscending ? sortKeySelector(item) : null)
                 .ThenByDescending(item => !_isAscending ? sortKeySelector(item) : null)
                 .ToList();
 
-            await PopulateTable(type);
+            if (!sortedItems.SequenceEqual(_currentItemsByType[type]))
+            {
+                _currentItemsByType[type] = sortedItems;
+                await PopulateTable(type);
+            }
         }
 
-        private static async Task PopulateTable(string type)
+        public static async Task PopulateTable(string type)
         {
             // Clear existing content from columns
             ClearColumnContent();
@@ -213,9 +217,10 @@ namespace DecorBlishhudModule.Refinement
                     Parent = _name,
                     FlowDirection = ControlFlowDirection.TopToBottom,
                     Size = new Point(255, 30),
+                    Tooltip = await CustomTooltip(item)
                 };
-                var texture = await LeftSideSection.GetOrCreateTextureAsync(item.Name, item.Icon);
 
+                var texture = await LeftSideSection.GetOrCreateTextureAsync(item.Name, item.Icon);
                 if (texture != null)
                 {
                     new Image(texture)
@@ -224,8 +229,10 @@ namespace DecorBlishhudModule.Refinement
                         Size = new Point(30, 30),
                         Location = new Point(0, 0),
                         BackgroundColor = Color.Transparent,
+                        Tooltip = await CustomTooltip(item)
                     };
                 }
+
                 new Label
                 {
                     Parent = nameFlowPanel,
@@ -234,7 +241,8 @@ namespace DecorBlishhudModule.Refinement
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor,
-                    Padding = new Thickness(10, 0)
+                    Padding = new Thickness(10, 0),
+                    Tooltip = await CustomTooltip(item)
                 };
 
                 // Add Default columns
@@ -245,11 +253,12 @@ namespace DecorBlishhudModule.Refinement
                     Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
-                    BackgroundColor = rowBackgroundColor
+                    BackgroundColor = rowBackgroundColor,
+                    Tooltip = await CustomTooltip(item)
                 };
 
-                CreateCurrencyDisplay(_defBuy, item.DefaultBuy, rowBackgroundColor);
-                CreateCurrencyDisplay(_defSell, item.DefaultSell, rowBackgroundColor);
+                await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_defSell, item, item.DefaultSell, rowBackgroundColor);
 
                 // Add Trade Efficiency (1x) columns
                 new Label
@@ -259,11 +268,12 @@ namespace DecorBlishhudModule.Refinement
                     Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
-                    BackgroundColor = rowBackgroundColor
+                    BackgroundColor = rowBackgroundColor,
+                    Tooltip = await CustomTooltip(item)
                 };
 
-                CreateCurrencyDisplay(_eff1Buy, item.TradeEfficiency1Buy, rowBackgroundColor);
-                CreateCurrencyDisplay(_eff1Sell, item.TradeEfficiency1Sell, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell, rowBackgroundColor);
 
                 // Add Trade Efficiency (2x) columns
                 new Label
@@ -273,11 +283,12 @@ namespace DecorBlishhudModule.Refinement
                     Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
-                    BackgroundColor = rowBackgroundColor
+                    BackgroundColor = rowBackgroundColor,
+                    Tooltip = await CustomTooltip(item)
                 };
 
-                CreateCurrencyDisplay(_eff2Buy, item.TradeEfficiency2Buy, rowBackgroundColor);
-                CreateCurrencyDisplay(_eff2Sell, item.TradeEfficiency2Sell, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell, rowBackgroundColor);
             }
 
             int labelHeight = 30;
@@ -294,7 +305,7 @@ namespace DecorBlishhudModule.Refinement
             UpdateInnerPanelHeights();
         }
 
-        private static FlowPanel CreateCurrencyDisplay(FlowPanel parent, string value, Color backgroundColor)
+        private static async Task<FlowPanel> CreateCurrencyDisplay(FlowPanel parent, Item item, string value, Color backgroundColor)
         {
             var flowPanel = new FlowPanel
             {
@@ -315,11 +326,13 @@ namespace DecorBlishhudModule.Refinement
                 Size = value.Length > 2 ? new Point(25, 30) : new Point(48, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
+                Tooltip = await CustomTooltip(item)
             };
 
             new Image(_silver)
             {
                 Parent = value.Length > 2 ? flowPanel : null,
+                Tooltip = await CustomTooltip(item)
             };
 
             // Add copper part
@@ -330,11 +343,13 @@ namespace DecorBlishhudModule.Refinement
                 Size = new Point(22, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
+                Tooltip = await CustomTooltip(item)
             };
 
             new Image(_copper)
             {
                 Parent = flowPanel,
+                Tooltip = await CustomTooltip(item)
             };
 
             return flowPanel;
@@ -383,5 +398,36 @@ namespace DecorBlishhudModule.Refinement
             _eff2Sell.Icon = _arrowNeutral;
         }
 
+        private static Dictionary<Item, Tooltip> itemTooltips = new Dictionary<Item, Tooltip>();
+
+        private static async Task<Tooltip> CustomTooltip(Item item)
+        {
+            if (itemTooltips.ContainsKey(item))
+            {
+                return itemTooltips[item];
+            }
+
+            var customTooltip = new Tooltip();
+
+            var icon = new Image
+            {
+                Parent = customTooltip,
+                Texture = LeftSideSection.CreateIconTexture(await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(item.Icon)),
+                Size = new Point(30, 30),
+            };
+
+            var titleLabel = new Label
+            {
+                Parent = customTooltip,
+                Text = item.Name,
+                TextColor = Color.White,
+                Font = GameService.Content.DefaultFont18,
+                Location = new Point(35, 3),
+                AutoSizeWidth = true
+            };
+
+            itemTooltips[item] = customTooltip;
+            return customTooltip;
+        }
     }
 }

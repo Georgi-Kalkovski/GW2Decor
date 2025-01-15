@@ -537,7 +537,7 @@ namespace DecorBlishhudModule
             }
         }
 
-        private static Texture2D CreateIconTexture(byte[] iconResponse)
+        public static Texture2D CreateIconTexture(byte[] iconResponse)
         {
             try
             {
