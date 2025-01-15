@@ -572,7 +572,7 @@ namespace DecorBlishhudModule
             //customTab6.Enabled = false;
             //customTab7.Enabled = false;
 
-            //await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 
             await CustomTableFarm.Initialize(_farmPanel, "farm");
             await CustomTableLumber.Initialize(_lumberPanel, "lumber");
@@ -584,7 +584,7 @@ namespace DecorBlishhudModule
             // Start background tasks
             var guildHallTask = Task.Run(async () =>
             {
-                //await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
+                await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
                 customTab2.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
@@ -598,8 +598,8 @@ namespace DecorBlishhudModule
 
             var imagePreviewTask = Task.Run(async () =>
             {
-                //await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
-                //await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
+                await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
+                await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
                 customTab4.Enabled = true;
                 if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
             });
