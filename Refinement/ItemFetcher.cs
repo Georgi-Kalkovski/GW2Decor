@@ -79,7 +79,7 @@ namespace DecorBlishhudModule.Refinement
 
             return groupedItems;
         }
-        private static async Task<List<Item>> UpdateItemPrices(List<Item> items)
+        public static async Task<List<Item>> UpdateItemPrices(List<Item> items)
         {
             // Extract unique item IDs
             var itemIds = items.Select(i => i.Id).Distinct().ToList();

@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 
 namespace DecorBlishhudModule.Refinement
 {
@@ -13,6 +14,7 @@ namespace DecorBlishhudModule.Refinement
     {
         private static FlowPanel _tablePanel;
 
+        private static FlowPanel _nameTimer;
         private static FlowPanel _name;
         private static FlowPanel _def;
         private static FlowPanel _eff1;
@@ -29,13 +31,15 @@ namespace DecorBlishhudModule.Refinement
 
         private static Texture2D _copper = DecorModule.DecorModuleInstance.CopperCoin;
         private static Texture2D _silver = DecorModule.DecorModuleInstance.SilverCoin;
-
         private static Texture2D _effiency = DecorModule.DecorModuleInstance.Efficiency;
-
         private static Texture2D _arrowUp = DecorModule.DecorModuleInstance.ArrowUp;
         private static Texture2D _arrowDown = DecorModule.DecorModuleInstance.ArrowDown;
         private static Texture2D _arrowNeutral = DecorModule.DecorModuleInstance.ArrowNeutral;
 
+        private static Dictionary<Item, Tooltip> itemTooltips = new Dictionary<Item, Tooltip>();
+
+        private static Timer _updateTimer;
+        private static int secondsCounter = 0;
 
         private static string _activeColumn = "Name";
         private static bool _isAscending = true;
@@ -58,12 +62,12 @@ namespace DecorBlishhudModule.Refinement
             _tablePanel.ControlPadding = new Vector2(2, 0);
 
             // Create headers
-            _name = CreateHeader("Name", 255, 565, item => item.Name, type);
+            _name = await CreateHeader("Name", 255, 565, item => item.Name, type);
             _name.Icon = _arrowDown;
-            _def = CreateHeader("Default", 255, 600, null, type);
-            _eff1 = CreateHeader("Trade Efficiency (1x)", 255, 600, null, type);
+            _def = await CreateHeader("Default", 255, 600, null, type);
+            _eff1 = await CreateHeader("Trade Efficiency (1x)", 255, 600, null, type);
             _eff1.Icon = _effiency;
-            _eff2 = CreateHeader("Trade Efficiency (2x)", 255, 600, null, type);
+            _eff2 = await CreateHeader("Trade Efficiency (2x)", 255, 600, null, type);
             _eff2.Icon = _effiency;
 
             // Create Default columns
@@ -85,14 +89,18 @@ namespace DecorBlishhudModule.Refinement
             await PopulateTable(type);
         }
 
-        private static FlowPanel CreateHeader(string text, int xSize, int ySize, Func<Item, IComparable> sortKeySelector = null, string type = null)
+        private static async Task<FlowPanel> CreateHeader(string text, int xSize, int ySize, Func<Item, IComparable> sortKeySelector = null, string type = null)
         {
+            if (text == "Name")
+            {
+                await InitializeNameTimer(_tablePanel, type);
+            };
+
             var headerPanel = new FlowPanel
             {
-                Parent = _tablePanel,
+                Parent = text == "Name" ? _nameTimer : _tablePanel,
                 Title = text,
                 Size = new Point(xSize, ySize),
-                BackgroundColor = new Color(0, 0, 0, 75),
             };
 
             if (sortKeySelector != null)
@@ -122,7 +130,6 @@ namespace DecorBlishhudModule.Refinement
 
         private static FlowPanel CreateInnerHeader(string text, int xSize, Panel flowPanel, Func<Item, IComparable> sortKeySelector = null, string type = null)
         {
-
             var headerPanel = new FlowPanel
             {
                 Parent = flowPanel,
@@ -207,9 +214,9 @@ namespace DecorBlishhudModule.Refinement
             {
                 itemCount++;
 
-                // Determine if the current row is even
-                bool isEvenRow = itemCount % 2 == 0;
-                Color rowBackgroundColor = isEvenRow ? new Color(0, 0, 0, 100) : Color.Transparent;
+                // Determine if the current row is odd
+                bool isOddRow = itemCount % 2 == 0;
+                Color rowBackgroundColor = isOddRow ? new Color(0, 0, 0, 175) : new Color(0, 0, 0, 75);
 
                 // Add Name
                 var nameFlowPanel = new FlowPanel
@@ -217,6 +224,7 @@ namespace DecorBlishhudModule.Refinement
                     Parent = _name,
                     FlowDirection = ControlFlowDirection.TopToBottom,
                     Size = new Point(255, 30),
+                    Padding = new Thickness(10, 10),
                     Tooltip = await CustomTooltip(item)
                 };
 
@@ -228,8 +236,7 @@ namespace DecorBlishhudModule.Refinement
                         Parent = nameFlowPanel,
                         Size = new Point(30, 30),
                         Location = new Point(0, 0),
-                        BackgroundColor = Color.Transparent,
-                        Tooltip = await CustomTooltip(item)
+                        Tooltip = nameFlowPanel.Tooltip
                     };
                 }
 
@@ -241,8 +248,8 @@ namespace DecorBlishhudModule.Refinement
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor,
-                    Padding = new Thickness(10, 0),
-                    Tooltip = await CustomTooltip(item)
+                    Padding = new Thickness(10, 10),
+                    Tooltip = nameFlowPanel.Tooltip
                 };
 
                 // Add Default columns
@@ -254,7 +261,7 @@ namespace DecorBlishhudModule.Refinement
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor,
-                    Tooltip = await CustomTooltip(item)
+                    Tooltip = nameFlowPanel.Tooltip
                 };
 
                 await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
@@ -269,7 +276,7 @@ namespace DecorBlishhudModule.Refinement
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor,
-                    Tooltip = await CustomTooltip(item)
+                    Tooltip = nameFlowPanel.Tooltip
                 };
 
                 await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
@@ -284,7 +291,7 @@ namespace DecorBlishhudModule.Refinement
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
                     BackgroundColor = rowBackgroundColor,
-                    Tooltip = await CustomTooltip(item)
+                    Tooltip = nameFlowPanel.Tooltip
                 };
 
                 await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
@@ -292,14 +299,13 @@ namespace DecorBlishhudModule.Refinement
             }
 
             int labelHeight = 30;
-            int padding = 40;
+            int padding = 125;
             int totalHeight = (labelHeight * itemCount) + padding;
 
-            _name.Size = new Point(_name.Size.X, totalHeight);
-            _def.Size = new Point(_def.Size.X, totalHeight + 35);
-            _eff1.Size = new Point(_eff1.Size.X, totalHeight + 35);
-            _eff2.Size = new Point(_eff2.Size.X, totalHeight + 35);
-            _name.Location = new Point(_name.Location.X, _tablePanel.Location.Y + 35);
+            _name.Size = new Point(_name.Size.X, totalHeight - 35);
+            _def.Size = new Point(_def.Size.X, totalHeight);
+            _eff1.Size = new Point(_eff1.Size.X, totalHeight);
+            _eff2.Size = new Point(_eff2.Size.X, totalHeight);
 
             // Update the sizes of inner headers to match parent headers
             UpdateInnerPanelHeights();
@@ -312,6 +318,7 @@ namespace DecorBlishhudModule.Refinement
                 Parent = parent,
                 Size = new Point(98, 30),
                 BackgroundColor = backgroundColor,
+                Tooltip = await CustomTooltip(item)
             };
 
             // Add silver part if applicable
@@ -326,13 +333,13 @@ namespace DecorBlishhudModule.Refinement
                 Size = value.Length > 2 ? new Point(25, 30) : new Point(48, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
-                Tooltip = await CustomTooltip(item)
+                Tooltip = flowPanel.Tooltip
             };
 
             new Image(_silver)
             {
                 Parent = value.Length > 2 ? flowPanel : null,
-                Tooltip = await CustomTooltip(item)
+                Tooltip = flowPanel.Tooltip
             };
 
             // Add copper part
@@ -343,13 +350,13 @@ namespace DecorBlishhudModule.Refinement
                 Size = new Point(22, 30),
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
-                Tooltip = await CustomTooltip(item)
+                Tooltip = flowPanel.Tooltip
             };
 
             new Image(_copper)
             {
                 Parent = flowPanel,
-                Tooltip = await CustomTooltip(item)
+                Tooltip = flowPanel.Tooltip
             };
 
             return flowPanel;
@@ -357,18 +364,21 @@ namespace DecorBlishhudModule.Refinement
 
         private static void UpdateInnerPanelHeights()
         {
-            // Match the height of the parent panels
-            _defQty.Size = new Point(_defQty.Size.X, _def.Size.Y);
-            _defBuy.Size = new Point(_defBuy.Size.X, _def.Size.Y);
-            _defSell.Size = new Point(_defSell.Size.X, _def.Size.Y);
+            _nameTimer.Size = new Point(_name.Size.X, _name.Size.Y - 15);
+            _name.Location = new Point(0, 35);
 
-            _eff1Qty.Size = new Point(_eff1Qty.Size.X, _eff1.Size.Y);
-            _eff1Buy.Size = new Point(_eff1Buy.Size.X, _eff1.Size.Y);
-            _eff1Sell.Size = new Point(_eff1Sell.Size.X, _eff1.Size.Y);
+            _defQty.Size = new Point(_defQty.Size.X, _def.Size.Y - 86);
+            _defBuy.Size = new Point(_defBuy.Size.X, _def.Size.Y - 86);
+            _defSell.Size = new Point(_defSell.Size.X, _def.Size.Y - 86);
 
-            _eff2Qty.Size = new Point(_eff2Qty.Size.X, _eff2.Size.Y);
-            _eff2Buy.Size = new Point(_eff2Buy.Size.X, _eff2.Size.Y);
-            _eff2Sell.Size = new Point(_eff2Sell.Size.X, _eff2.Size.Y);
+            _eff1Qty.Size = new Point(_eff1Qty.Size.X, _eff1.Size.Y - 86);
+            _eff1Buy.Size = new Point(_eff1Buy.Size.X, _eff1.Size.Y - 86);
+            _eff1Sell.Size = new Point(_eff1Sell.Size.X, _eff1.Size.Y - 86);
+
+            _eff2Qty.Size = new Point(_eff2Qty.Size.X, _eff2.Size.Y - 86);
+            _eff2Buy.Size = new Point(_eff2Buy.Size.X, _eff2.Size.Y - 86);
+            _eff2Sell.Size = new Point(_eff2Sell.Size.X, _eff2.Size.Y - 86);
+
         }
 
         private static void ClearColumnContent()
@@ -384,6 +394,7 @@ namespace DecorBlishhudModule.Refinement
             _eff2Buy.Children.Clear();
             _eff2Sell.Children.Clear();
         }
+
         private static void ResetHeaderIcons()
         {
             _name.Icon = _arrowNeutral;
@@ -397,8 +408,6 @@ namespace DecorBlishhudModule.Refinement
             _eff2Buy.Icon = _arrowNeutral;
             _eff2Sell.Icon = _arrowNeutral;
         }
-
-        private static Dictionary<Item, Tooltip> itemTooltips = new Dictionary<Item, Tooltip>();
 
         private static async Task<Tooltip> CustomTooltip(Item item)
         {
@@ -428,6 +437,92 @@ namespace DecorBlishhudModule.Refinement
 
             itemTooltips[item] = customTooltip;
             return customTooltip;
+        }
+
+        private static async Task RefreshPrices(string type)
+        {
+            List<Item> items = _currentItemsByType[type];
+
+            items = await ItemFetcher.UpdateItemPrices(items);
+
+            _currentItemsByType[type] = items;
+
+            await UpdatePriceColumns(type);
+        }
+
+        private static async Task UpdatePriceColumns(string type)
+        {
+            // Clear the columns for prices
+            _defBuy.Children.Clear();
+            _defSell.Children.Clear();
+            _eff1Buy.Children.Clear();
+            _eff1Sell.Children.Clear();
+            _eff2Buy.Children.Clear();
+            _eff2Sell.Children.Clear();
+
+            foreach (var item in _currentItemsByType[type])
+            {
+                Color rowBackgroundColor = (_currentItemsByType[type].IndexOf(item) % 2 != 0)
+                    ? new Color(0, 0, 0, 175)
+                    : new Color(0, 0, 0, 75);
+
+                // Update Default prices
+                await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_defSell, item, item.DefaultSell, rowBackgroundColor);
+
+                // Update Efficiency (1x) prices
+                await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell, rowBackgroundColor);
+
+                // Update Efficiency (2x) prices
+                await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
+                await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell, rowBackgroundColor);
+            }
+        }
+
+        private static async Task InitializeNameTimer(Panel parentPanel, string type)
+        {
+            _nameTimer = new FlowPanel
+            {
+                Parent = parentPanel,
+                FlowDirection = ControlFlowDirection.TopToBottom,
+                Padding = new Thickness(10, 10)
+            };
+
+            var updateTimerLabel = new Label
+            {
+                Parent = _nameTimer,
+                Text = "      Prices will update in 30 s", // Initial countdown display
+                Font = GameService.Content.DefaultFont16,
+                TextColor = Color.White,
+                Size = new Point(255, 30),
+                ShowShadow = true,
+                ShadowColor = new Color(0, 0, 0, 255)
+            };
+
+            int secondsCounter = 30; // Starting countdown value
+
+            var secondsTimer = new Timer(1000); // Trigger every 1 second
+            secondsTimer.Elapsed += (sender, e) =>
+            {
+                if (secondsCounter > 0)
+                {
+                    secondsCounter--;
+                    updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s";
+                }
+            };
+            secondsTimer.AutoReset = true;
+            secondsTimer.Enabled = true;
+
+            var updateTimer = new Timer(31000); // Trigger every 31 seconds
+            updateTimer.Elapsed += async (sender, e) =>
+            {
+                secondsCounter = 30; // Reset the countdown
+                await RefreshPrices(type);
+                updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
+            };
+            updateTimer.AutoReset = true;
+            updateTimer.Enabled = true;
         }
     }
 }
