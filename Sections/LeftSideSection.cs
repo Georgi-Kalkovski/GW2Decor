@@ -13,6 +13,7 @@ using DecorBlishhudModule.Model;
 using DecorBlishhudModule.CustomControls;
 using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
+using DecorBlishhudModule.CustomControls.CustomTab;
 
 namespace DecorBlishhudModule
 {
@@ -25,6 +26,10 @@ namespace DecorBlishhudModule
         private static Dictionary<string, List<Decoration>> _guildHallDecorationsCache;
         private static Panel lastClickedIconPanel = null;
         private static bool isOperationRunning = false;
+
+        private static LoadingSpinner _loaderSpinner = null;
+        private static Label _loadingLabel = null;
+        private static Label _loadingLabel2 = null;
 
         private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
         {
@@ -260,6 +265,38 @@ namespace DecorBlishhudModule
                                 decorationIconImage.Opacity = 1f;
                             }
                         };
+                        var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
+
+                        CustomTab lastSelectedTab = null;
+
+                        decorWindow.TabChanged += (s, e) =>
+                        {
+                            if (decorWindow.SelectedTabGroup3 != null)
+                            {
+                                if (_loaderSpinner != null) _loaderSpinner.Visible = false;
+                                if (_loadingLabel != null) _loadingLabel.Visible = false;
+                                if (_loadingLabel2 != null) _loadingLabel2.Visible = false;
+                            }
+                            if (decorWindow.SelectedTabGroup2 != null && decorWindow.SelectedTabGroup2 != lastSelectedTab)
+                            {
+                                if (_loaderSpinner != null && _loadingLabel != null && _loadingLabel2 != null)
+                                {
+                                    if (decorWindow.SelectedTabGroup2.Name == "Icons Preview")
+                                    {
+                                        _loaderSpinner.Visible = true;
+                                        _loadingLabel.Visible = true;
+                                        _loadingLabel2.Visible = true;
+                                    }
+                                    else
+                                    {
+                                        _loaderSpinner.Visible = false;
+                                        _loadingLabel.Visible = false;
+                                        _loadingLabel2.Visible = false;
+                                    }
+                                }
+                            }
+                            lastSelectedTab = decorWindow.SelectedTabGroup2;
+                        };
 
                         decorationIconImage.Click += async (s, e) =>
                         {
@@ -268,7 +305,6 @@ namespace DecorBlishhudModule
                                 return;
                             }
 
-                            var decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
                             var loaded = DecorModule.DecorModuleInstance.Loaded;
 
                             if (lastClickedIconPanel != null && lastClickedIconPanel.BackgroundColor == new Color(254, 254, 176))
@@ -282,14 +318,14 @@ namespace DecorBlishhudModule
 
                             lastClickedIconPanel = borderPanel;
 
-                            var loaderSpinner = new LoadingSpinner
+                            _loaderSpinner = new LoadingSpinner
                             {
                                 Parent = decorWindow,
                                 Size = new Point(32, 32),
                                 Location = new Point(727, 320),
                             };
 
-                            var loadingLabel = new Label
+                            _loadingLabel = new Label
                             {
                                 Parent = decorWindow,
                                 Text = "Loading...",
@@ -299,10 +335,10 @@ namespace DecorBlishhudModule
                                 AutoSizeWidth = true,
                             };
 
-                            var loadingLabel2 = new Label();
+                            _loadingLabel2 = new Label();
                             if (!loaded)
                             {
-                                loadingLabel2 = new Label
+                                _loadingLabel2 = new Label
                                 {
                                     Parent = decorWindow,
                                     Text = "The image may take longer as the full data is fetched.",
@@ -334,13 +370,12 @@ namespace DecorBlishhudModule
                             finally
                             {
                                 isOperationRunning = false;
-
-                                loaderSpinner.Dispose();
-                                loadingLabel.Dispose();
-                                loadingLabel2.Dispose();
+                                _loaderSpinner.Dispose();
+                                _loadingLabel.Dispose();
+                                _loadingLabel2.Dispose();
                             }
                         };
-                    }
+                    };
                 }
                 else
                 {
