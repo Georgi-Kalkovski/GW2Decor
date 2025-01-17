@@ -228,7 +228,7 @@ namespace DecorBlishhudModule.Refinement
                     Tooltip = await CustomTooltip(item)
                 };
 
-                var texture = LeftSideSection.CreateIconTexture(await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(item.Icon));
+                var texture = await LeftSideSection.GetOrCreateTextureAsync(item.Name, item.Icon);
                 if (texture != null)
                 {
                     new Image(texture)
