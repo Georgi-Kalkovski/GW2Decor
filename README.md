@@ -9,8 +9,11 @@ Ready for some decorating? Whether you're building a cozy home or a grand guild 
 Decor is a simple previewer for both Homestead and Guild Hall decorations. 
 
 Homestead Handiwork
+
 ![image](https://github.com/user-attachments/assets/4648825d-dd76-4282-8784-c7094279818c)
+
 Guild Hall Scribe
+
 ![image](https://github.com/user-attachments/assets/683b1ab2-5a03-42d7-9cce-faf09991d3d6)
 
 ### 🔳 Icons Preview
@@ -18,6 +21,7 @@ Guild Hall Scribe
 The Icons Previewer displays all available decorations on the left. Clicking on an icon reveals a preview of that decoration on the right.
 
 Icons Preview
+
 ![image](https://github.com/user-attachments/assets/963f8896-f986-4e44-96dc-6236fe68a180)
 
 ![image](https://github.com/user-attachments/assets/6425f030-a12f-4b21-aaa0-8465708690dd)
@@ -28,6 +32,7 @@ You can also click on the name or the image to copy its name.
 The Images Previewer showcases both the icon and its corresponding decoration image.
 
 Image Preview
+
 ![image](https://github.com/user-attachments/assets/0d295bc7-d6b1-43b9-a333-d6d7e80c45b4)
 
 ![image](https://github.com/user-attachments/assets/1f046f11-4b02-4f7c-8064-32816c355088)
@@ -40,7 +45,7 @@ Decor also includes a search function, allowing you to quickly find what you're 
 
 ![image](https://github.com/user-attachments/assets/77fbdbe0-1705-4ebf-a4e7-e253d553797b)
 
-### 🌱🪵🪨 Refinement (Farm, Lumber Mill, Metal Forge)
+### 🌱🪓⛏️ Refinement (Farm, Lumber Mill, Metal Forge)
 ---
 The Refinement Tabs include all the materials that are used to get the Refinement materials from the refiners required for crafting homestead decorations. Each resource table is updated every 30 seconds.
 
