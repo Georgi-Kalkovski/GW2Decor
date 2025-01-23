@@ -47,7 +47,7 @@ Decor also includes a search function, allowing you to quickly find what you're 
 
 ### 🌱🪓⛏️ Refinement (Farm, Lumber Mill, Metal Forge)
 ---
-The Refinement Tabs include all the materials that are used to get the Refinement materials from the refiners required for crafting homestead decorations. Each resource table is updated every 30 seconds.
+The Refinement Tabs include all the materials that are used to get the Refinement materials from the refiners required for crafting homestead decorations. Each resource table is updated every 60 seconds.
 
 ![image](https://github.com/user-attachments/assets/fdb4ed0d-afab-414b-9635-fb31c67156bb)
 ![image](https://github.com/user-attachments/assets/797f7f8c-081f-4634-8af7-3a8c001ff67d)

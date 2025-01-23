@@ -500,7 +500,7 @@ namespace DecorBlishhudModule.Refinement
                 ShadowColor = new Color(0,0,0, 255)
             };
 
-            int secondsCounter = 30; // Starting countdown value
+            int secondsCounter = 60; // Starting countdown value
 
             var secondsTimer = new Timer(1000); // Trigger every 1 second
             secondsTimer.Elapsed += (sender, e) =>
@@ -514,10 +514,10 @@ namespace DecorBlishhudModule.Refinement
             secondsTimer.AutoReset = true;
             secondsTimer.Enabled = true;
 
-            var updateTimer = new Timer(31000); // Trigger every 31 seconds
+            var updateTimer = new Timer(61000); // Trigger every 31 seconds
             updateTimer.Elapsed += async (sender, e) =>
             {
-                secondsCounter = 30; // Reset the countdown
+                secondsCounter = 60; // Reset the countdown
                 await RefreshPrices(type);
                 updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
             };
