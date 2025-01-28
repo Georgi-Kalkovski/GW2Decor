@@ -203,6 +203,12 @@ namespace DecorBlishhudModule
             // Set up signature and license labels
             _signatureLabelManager = new SignatureSection(_decorWindow);
             _wikiLicenseManager = new WikiLicenseSection(_decorWindow);
+
+            // Wait for assets to finish loading
+            while (!_loaded)
+            {
+                await Task.Delay(100);
+            }
         }
 
         protected override void Unload()
