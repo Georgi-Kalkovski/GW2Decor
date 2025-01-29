@@ -243,12 +243,6 @@ namespace DecorBlishhudModule
             _x2Active?.Dispose();
             _copy?.Dispose();
             _heart?.Dispose();
-            _copperCoin?.Dispose();
-            _silverCoin?.Dispose();
-            _arrowUp?.Dispose();
-            _arrowDown?.Dispose();
-            _arrowNeutral?.Dispose();
-            _efficiancy?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
@@ -574,9 +568,6 @@ namespace DecorBlishhudModule
             // Disable the tabs initially
             customTab2.Enabled = false;
             customTab4.Enabled = false;
-            //customTab5.Enabled = false;
-            //customTab6.Enabled = false;
-            //customTab7.Enabled = false;
 
             await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
 

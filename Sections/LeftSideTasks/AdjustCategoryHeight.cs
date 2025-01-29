@@ -19,7 +19,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
             else
             {
                 int baseHeight = 45;
-                int heightIncrementPerDecorationSet = _isIconView ? 52 : 312;
+                int heightIncrementPerDecorationSet = _isIconView ? 53 : 312;
                 int numDecorationSets = (int)Math.Ceiling(visibleDecorationCount / (_isIconView ? 9.0 : 4.0));
                 int calculatedHeight = baseHeight + numDecorationSets * heightIncrementPerDecorationSet;
 

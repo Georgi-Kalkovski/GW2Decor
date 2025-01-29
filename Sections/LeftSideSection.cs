@@ -223,12 +223,12 @@ namespace DecorBlishhudModule
             {
                 // Fetch or create the icon texture
                 var iconTexture = await GetOrCreateTextureAsync(decoration.Name, decoration.IconUrl);
-
                 if (iconTexture == null)
                 {
                     Logger.Warn($"Icon texture for '{decoration.Name}' could not be loaded.");
                     return;
                 }
+                var tooltip = await DecorationCustomTooltip.CreateTooltipWithIconsAsync(decoration, iconTexture);
                 if (_isIconView == true)
                 {
                     if (iconTexture != null)
@@ -245,7 +245,7 @@ namespace DecorBlishhudModule
                             Parent = borderPanel,
                             Size = new Point(45),
                             Location = new Point(2, 2),
-                            BasicTooltipText = decoration.Name,
+                            Tooltip = tooltip
                         };
 
                         borderPanel.MouseEntered += (sender, e) =>
@@ -390,8 +390,7 @@ namespace DecorBlishhudModule
                         Parent = categoryFlowPanel,
                         Size = new Point(254, 300),
                         BackgroundColor = new Color(0, 0, 0, 36),
-                        BasicTooltipText = decoration.Name,
-
+                        Tooltip = tooltip
                     };
 
                     // Icon and text container (horizontal layout)
@@ -400,7 +399,7 @@ namespace DecorBlishhudModule
                         Parent = mainContainer,
                         Location = new Point(0, 0),
                         Size = new Point(256, 50),
-                        BasicTooltipText = decoration.Name,
+                        Tooltip = tooltip,
                         BackgroundTexture = DecorModule.DecorModuleInstance.BlackTexture,
                     };
 
@@ -410,7 +409,7 @@ namespace DecorBlishhudModule
                         Parent = iconTextContainer,
                         Location = new Point(3, 3),
                         Size = new Point(44, 44),
-                        BasicTooltipText = decoration.Name,
+                        Tooltip = tooltip
                     };
 
                     // Decoration Name Label
@@ -423,7 +422,7 @@ namespace DecorBlishhudModule
                         Font = decoration.Name.ToString().Length > 30 ? GameService.Content.DefaultFont12 : GameService.Content.DefaultFont14,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Middle,
-                        BasicTooltipText = decoration.Name,
+                        Tooltip = tooltip
                     };
 
                     // Image Panel
@@ -451,7 +450,7 @@ namespace DecorBlishhudModule
                         Parent = mainContainer,
                         Location = new Point(xOffset + 2, centeredYOffset - 1),
                         Size = new Point(width - 3, height),
-                        BasicTooltipText = decoration.Name,
+                        Tooltip = tooltip
                     };
 
                     mainContainer.MouseEntered += (sender, e) =>

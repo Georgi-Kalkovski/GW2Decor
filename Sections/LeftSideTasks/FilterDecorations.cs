@@ -16,16 +16,17 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
             foreach (var categoryFlowPanel in decorationsFlowPanel.Children.OfType<FlowPanel>())
             {
                 bool hasVisibleDecoration = false;
-
                 var visibleDecorations = new List<Panel>();
 
                 foreach (var decorationIconPanel in categoryFlowPanel.Children.OfType<Panel>())
                 {
                     var decorationIcon = decorationIconPanel.Children.OfType<Image>().FirstOrDefault();
 
-                    if (decorationIcon != null)
+                    if (decorationIcon != null && decorationIcon.Tooltip != null)
                     {
-                        bool matchesSearch = decorationIcon.BasicTooltipText?.ToLower().Contains(searchText) ?? false;
+                        // Find the text from the Tooltip (specifically the Label containing the decoration name)
+                        var tooltipLabel = decorationIcon.Tooltip.Children.OfType<Label>().FirstOrDefault();
+                        bool matchesSearch = tooltipLabel != null && tooltipLabel.Text.ToLower().Contains(searchText);
 
                         decorationIconPanel.Visible = matchesSearch;
 
@@ -41,10 +42,10 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
 
                 if (hasVisibleDecoration)
                 {
-                    // Sort visible decorations by name (BasicTooltipText)
+                    // Sort visible decorations by name (from Tooltip)
                     visibleDecorations.Sort((a, b) =>
-                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
-                                       b.Children.OfType<Image>().FirstOrDefault().BasicTooltipText,
+                        string.Compare(a.Children.OfType<Image>().FirstOrDefault().Tooltip.Children.OfType<Label>().FirstOrDefault()?.Text,
+                                       b.Children.OfType<Image>().FirstOrDefault().Tooltip.Children.OfType<Label>().FirstOrDefault()?.Text,
                                        StringComparison.OrdinalIgnoreCase));
 
                     // Remove all visible decorations from the category panel first
