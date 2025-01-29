@@ -38,9 +38,6 @@ namespace DecorBlishhudModule.Refinement
 
         private static Dictionary<Item, Tooltip> itemTooltips = new Dictionary<Item, Tooltip>();
 
-        private static Timer _updateTimer;
-        private static int secondsCounter = 0;
-
         private static string _activeColumn = "Name";
         private static bool _isAscending = true;
 

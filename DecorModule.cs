@@ -236,13 +236,6 @@ namespace DecorBlishhudModule
             _farmTab?.Dispose();
             _lumberTab?.Dispose();
             _metalTab?.Dispose();
-            _info?.Dispose();
-            _blackTexture?.Dispose();
-            _x?.Dispose();
-            _x2?.Dispose();
-            _x2Active?.Dispose();
-            _copy?.Dispose();
-            _heart?.Dispose();
             _decorationIcon?.Dispose();
             _decorationImage?.Dispose();
             DecorModuleInstance = null;
