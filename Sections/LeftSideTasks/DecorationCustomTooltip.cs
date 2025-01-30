@@ -16,10 +16,28 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
         public static async Task<Tooltip> CreateTooltipWithIconsAsync(Decoration decoration, Texture2D mainIcon)
         {
             // Fetch icons for ingredients
-            var icon1 = await GetIconTextureAsync(decoration?.CraftingIngredientIcon1);
-            var icon2 = await GetIconTextureAsync(decoration?.CraftingIngredientIcon2);
-            var icon3 = await GetIconTextureAsync(decoration?.CraftingIngredientIcon3);
-            var icon4 = await GetIconTextureAsync(decoration?.CraftingIngredientIcon4);
+            Texture2D icon1 = null;
+            Texture2D icon2 = null;
+            Texture2D icon3 = null;
+            Texture2D icon4 = null;
+            if (decoration.CraftingIngredientName1 != null)
+            {
+                icon1 = await LeftSideSection.GetOrCreateTextureAsync(decoration.CraftingIngredientName1, decoration.CraftingIngredientIcon1);
+                if (decoration.CraftingIngredientName2 != null)
+                {
+                    icon2 = await LeftSideSection.GetOrCreateTextureAsync(decoration.CraftingIngredientName2, decoration.CraftingIngredientIcon2);
+
+                    if (decoration.CraftingIngredientName3 != null)
+                    {
+                        icon3 = await LeftSideSection.GetOrCreateTextureAsync(decoration.CraftingIngredientName3, decoration.CraftingIngredientIcon3);
+
+                        if (decoration.CraftingIngredientName4 != null)
+                        {
+                            icon4 = await LeftSideSection.GetOrCreateTextureAsync(decoration.CraftingIngredientName4, decoration.CraftingIngredientIcon4);
+                        }
+                    }
+                }
+            }
 
             // Now pass these icons to the tooltip creation method
             return await CustomTooltip(decoration, mainIcon, icon1, icon2, icon3, icon4);
@@ -135,12 +153,6 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                     AutoSizeWidth = true
                 };
             }
-        }
-        private static async Task<Texture2D> GetIconTextureAsync(string iconUrl)
-        {
-            if (string.IsNullOrEmpty(iconUrl)) return null;
-            var byteArray = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(iconUrl);
-            return LeftSideSection.CreateIconTexture(byteArray);
         }
     }
 }

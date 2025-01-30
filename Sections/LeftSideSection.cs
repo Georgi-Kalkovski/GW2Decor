@@ -245,6 +245,7 @@ namespace DecorBlishhudModule
                             Parent = borderPanel,
                             Size = new Point(45),
                             Location = new Point(2, 2),
+                            BasicTooltipText = decoration.Name,
                             Tooltip = tooltip
                         };
 
@@ -354,7 +355,7 @@ namespace DecorBlishhudModule
                             try
                             {
                                 var decorModule = DecorModule.DecorModuleInstance;
-
+                                decorModule.DecorationImage.Tooltip = tooltip;
                                 await Task.Run(async () =>
                                 {
                                     try
@@ -409,6 +410,7 @@ namespace DecorBlishhudModule
                         Parent = iconTextContainer,
                         Location = new Point(3, 3),
                         Size = new Point(44, 44),
+                        BasicTooltipText = decoration.Name,
                         Tooltip = tooltip
                     };
 
