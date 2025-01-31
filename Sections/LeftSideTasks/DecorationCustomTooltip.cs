@@ -71,7 +71,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                 Text = decoration.Name,
                 TextColor = Color.White,
                 Font = GameService.Content.DefaultFont16,
-                Location = new Point(50, 5),
+                Location = new Point(50, decoration.Book != null ? 5 : 10),
                 AutoSizeWidth = true
             };
 

@@ -438,17 +438,44 @@ namespace DecorBlishhudModule.Refinement
 
         private static async Task RefreshPrices(string type)
         {
+            // Ensure _currentItemsByType has the key and is not null
+            if (!_currentItemsByType.ContainsKey(type) || _currentItemsByType[type] == null)
+            {
+                Console.WriteLine($"Error: _currentItemsByType does not contain key: {type} or is null");
+                return;
+            }
+
             List<Item> items = _currentItemsByType[type];
 
-            items = await ItemFetcher.UpdateItemPrices(items);
+            // Ensure items are not null or empty
+            if (items == null || items.Count == 0)
+            {
+                Console.WriteLine("Error: No items found to update prices.");
+                return;
+            }
 
-            _currentItemsByType[type] = items;
+            try
+            {
+                items = await ItemFetcher.UpdateItemPrices(items);
+                _currentItemsByType[type] = items;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating item prices: {ex.Message}");
+                return;
+            }
 
             await UpdatePriceColumns(type);
         }
 
         private static async Task UpdatePriceColumns(string type)
         {
+            if (!_currentItemsByType.ContainsKey(type) || _currentItemsByType[type] == null)
+            {
+                Console.WriteLine($"Error: Cannot update price columns. _currentItemsByType[{type}] is null.");
+                return;
+            }
+
             // Clear the columns for prices
             _defBuy.Children.Clear();
             _defSell.Children.Clear();
@@ -463,17 +490,22 @@ namespace DecorBlishhudModule.Refinement
                     ? new Color(0, 0, 0, 175)
                     : new Color(0, 0, 0, 75);
 
-                // Update Default prices
-                await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
-                await CreateCurrencyDisplay(_defSell, item, item.DefaultSell, rowBackgroundColor);
+                try
+                {
+                    // Ensure price values are not null before passing to CreateCurrencyDisplay
+                    await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_defSell, item, item.DefaultSell, rowBackgroundColor);
 
-                // Update Efficiency (1x) prices
-                await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
-                await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell, rowBackgroundColor);
 
-                // Update Efficiency (2x) prices
-                await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
-                await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell, rowBackgroundColor);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error creating currency display for item {item?.Name}: {ex.Message}");
+                }
             }
         }
 
@@ -494,7 +526,7 @@ namespace DecorBlishhudModule.Refinement
                 TextColor = Color.White,
                 Size = new Point(255, 30),
                 ShowShadow = true,
-                ShadowColor = new Color(0,0,0, 255)
+                ShadowColor = new Color(0, 0, 0, 255)
             };
 
             int secondsCounter = 60; // Starting countdown value
@@ -514,9 +546,16 @@ namespace DecorBlishhudModule.Refinement
             var updateTimer = new Timer(61000); // Trigger every 31 seconds
             updateTimer.Elapsed += async (sender, e) =>
             {
-                secondsCounter = 60; // Reset the countdown
-                await RefreshPrices(type);
-                updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
+                try
+                {
+                    secondsCounter = 60; // Reset the countdown
+                    await RefreshPrices(type);
+                    updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error in price update timer: {ex.Message}");
+                }
             };
             updateTimer.AutoReset = true;
             updateTimer.Enabled = true;
