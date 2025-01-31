@@ -479,7 +479,11 @@ namespace DecorBlishhudModule
 
                         decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
 
-                        decorationImage = new Image(borderedTexture) { Parent = decorWindow };
+                        decorationImage = new Image(borderedTexture)
+                        {
+                            Parent = decorWindow,
+                            Tooltip = tooltip
+                        };
 
                         await BigImageSection.UpdateDecorationImageAsync(decoration, decorWindow, decorationImage);
                     };
