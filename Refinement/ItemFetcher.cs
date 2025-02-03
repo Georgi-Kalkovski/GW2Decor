@@ -91,7 +91,15 @@ namespace DecorBlishhudModule.Refinement
                         Id = itemId,
                         Name = columns[0].InnerText.Trim(),
                         Icon = "https://wiki.guildwars2.com" + imageUrl,
-                        DefaultQty = defaultQty
+                        DefaultQty = defaultQty,
+                        DefaultBuy = columns[2].InnerText.Trim(),
+                        DefaultSell = columns[3].InnerText.Trim(),
+                        TradeEfficiency1Qty = int.TryParse(columns[4].InnerText.Trim(), out var te1xQty) ? te1xQty : 0,
+                        TradeEfficiency1Buy = columns[5].InnerText.Trim(),
+                        TradeEfficiency1Sell = columns[6].InnerText.Trim(),
+                        TradeEfficiency2Qty = double.TryParse(columns[7].InnerText.Trim(), out var te2xQty) ? te2xQty : 0.5,
+                        TradeEfficiency2Buy = columns[8].InnerText.Trim(),
+                        TradeEfficiency2Sell = columns[9].InnerText.Trim()
                     });
                 }
 
