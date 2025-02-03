@@ -435,18 +435,23 @@ namespace DecorBlishhudModule.Refinement
             itemTooltips[item] = customTooltip;
             return customTooltip;
         }
+
         private static async Task RefreshPrices(string type)
         {
-            // Ensure _currentItemsByType has the key and is not null
+            if (_currentItemsByType == null)
+            {
+                Console.WriteLine("Error: _currentItemsByType is null.");
+                return;
+            }
+
             if (!_currentItemsByType.ContainsKey(type) || _currentItemsByType[type] == null)
             {
-                Console.WriteLine($"Error: _currentItemsByType does not contain key: {type} or is null");
+                Console.WriteLine($"Error: _currentItemsByType does not contain key '{type}' or is null.");
                 return;
             }
 
             List<Item> items = _currentItemsByType[type];
 
-            // Ensure items are not null or empty
             if (items == null || items.Count == 0)
             {
                 Console.WriteLine("Error: No items found to update prices.");
@@ -455,27 +460,60 @@ namespace DecorBlishhudModule.Refinement
 
             try
             {
-                items = await ItemFetcher.UpdateItemPrices(items);
-                _currentItemsByType[type] = items;
+                var updatedItems = await ItemFetcher.UpdateItemPrices(items);
+                if (updatedItems == null)
+                {
+                    Console.WriteLine("Error: UpdateItemPrices returned null.");
+                    return;
+                }
+
+                _currentItemsByType[type] = updatedItems;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error updating item prices: {ex.Message}");
+                Console.WriteLine($"Error updating item prices: {ex}");
                 return;
             }
 
-            await UpdatePriceColumns(type);
+            try
+            {
+                await UpdatePriceColumns(type);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdatePriceColumns: {ex}");
+            }
         }
 
         private static async Task UpdatePriceColumns(string type)
         {
+            if (_currentItemsByType == null)
+            {
+                Console.WriteLine("Error: _currentItemsByType is null.");
+                return;
+            }
+
             if (!_currentItemsByType.ContainsKey(type) || _currentItemsByType[type] == null)
             {
                 Console.WriteLine($"Error: Cannot update price columns. _currentItemsByType[{type}] is null.");
                 return;
             }
 
-            // Clear the columns for prices
+            List<Item> items = _currentItemsByType[type];
+
+            if (items.Count == 0)
+            {
+                Console.WriteLine($"Error: _currentItemsByType[{type}] is empty.");
+                return;
+            }
+
+            // Check if UI elements are null before clearing them
+            if (_defBuy == null || _defSell == null || _eff1Buy == null || _eff1Sell == null || _eff2Buy == null || _eff2Sell == null)
+            {
+                Console.WriteLine("Error: One or more UI elements are null. Cannot update price columns.");
+                return;
+            }
+
             _defBuy.Children.Clear();
             _defSell.Children.Clear();
             _eff1Buy.Children.Clear();
@@ -483,81 +521,124 @@ namespace DecorBlishhudModule.Refinement
             _eff2Buy.Children.Clear();
             _eff2Sell.Children.Clear();
 
-            foreach (var item in _currentItemsByType[type])
+            foreach (var item in items)
             {
-                Color rowBackgroundColor = (_currentItemsByType[type].IndexOf(item) % 2 != 0)
+                if (item == null)
+                {
+                    Console.WriteLine("Warning: Found null item in _currentItemsByType[type]. Skipping...");
+                    continue;
+                }
+
+                Color rowBackgroundColor = (items.IndexOf(item) % 2 != 0)
                     ? new Color(0, 0, 0, 175)
                     : new Color(0, 0, 0, 75);
 
                 try
                 {
                     // Ensure price values are not null before passing to CreateCurrencyDisplay
-                    await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy, rowBackgroundColor);
-                    await CreateCurrencyDisplay(_defSell, item, item.DefaultSell, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_defBuy, item, item.DefaultBuy ?? null, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_defSell, item, item.DefaultSell ?? null, rowBackgroundColor);
 
-                    await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy, rowBackgroundColor);
-                    await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff1Buy, item, item.TradeEfficiency1Buy ?? null, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff1Sell, item, item.TradeEfficiency1Sell ?? null, rowBackgroundColor);
 
-                    await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy, rowBackgroundColor);
-                    await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff2Buy, item, item.TradeEfficiency2Buy ?? null, rowBackgroundColor);
+                    await CreateCurrencyDisplay(_eff2Sell, item, item.TradeEfficiency2Sell ?? null, rowBackgroundColor);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error creating currency display for item {item?.Name}: {ex.Message}");
+                    Console.WriteLine($"Error creating currency display for item {item.Name ?? "Unknown"}: {ex.Message}");
                 }
             }
         }
 
         private static async Task InitializeNameTimer(Panel parentPanel, string type)
         {
-            _nameTimer = new FlowPanel
+            if (parentPanel == null)
             {
-                Parent = parentPanel,
-                FlowDirection = ControlFlowDirection.TopToBottom,
-                Padding = new Thickness(10, 10)
-            };
+                Console.WriteLine("Error: parentPanel is null. Cannot initialize name timer.");
+                return;
+            }
 
-            var updateTimerLabel = new Label
+            if (string.IsNullOrEmpty(type))
             {
-                Parent = _nameTimer,
-                Text = "      Prices will update in 30 s", // Initial countdown display
-                Font = GameService.Content.DefaultFont16,
-                TextColor = Color.White,
-                Size = new Point(255, 30),
-                ShowShadow = true,
-                ShadowColor = new Color(0, 0, 0, 255)
-            };
+                Console.WriteLine("Error: type is null or empty. Cannot initialize name timer.");
+                return;
+            }
 
-            int secondsCounter = 60; // Starting countdown value
-
-            var secondsTimer = new Timer(1000); // Trigger every 1 second
-            secondsTimer.Elapsed += (sender, e) =>
+            try
             {
-                if (secondsCounter > 0)
+                _nameTimer = new FlowPanel
                 {
-                    secondsCounter--;
-                    updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s";
-                }
-            };
-            secondsTimer.AutoReset = true;
-            secondsTimer.Enabled = true;
+                    Parent = parentPanel,
+                    FlowDirection = ControlFlowDirection.TopToBottom,
+                    Padding = new Thickness(10, 10)
+                };
 
-            var updateTimer = new Timer(61000); // Trigger every 31 seconds
-            updateTimer.Elapsed += async (sender, e) =>
+                if (_nameTimer == null)
+                {
+                    Console.WriteLine("Error: _nameTimer could not be created.");
+                    return;
+                }
+
+                if (GameService.Content.DefaultFont16 == null)
+                {
+                    Console.WriteLine("Error: GameService.Content.DefaultFont16 is null. Cannot create label.");
+                    return;
+                }
+
+                var updateTimerLabel = new Label
+                {
+                    Parent = _nameTimer,
+                    Text = "      Prices will update in 60 s", // Initial countdown display
+                    Font = GameService.Content.DefaultFont16, // No fallback
+                    TextColor = Color.White,
+                    Size = new Point(255, 30),
+                    ShowShadow = true,
+                    ShadowColor = new Color(0, 0, 0, 255)
+                };
+
+                if (updateTimerLabel == null)
+                {
+                    Console.WriteLine("Error: Failed to create updateTimerLabel.");
+                    return;
+                }
+
+                int secondsCounter = 60; // Starting countdown value
+
+                var secondsTimer = new Timer(1000); // Trigger every 1 second
+                secondsTimer.Elapsed += (sender, e) =>
+                {
+                    if (secondsCounter > 0)
+                    {
+                        secondsCounter--;
+                        updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s";
+                    }
+                };
+                secondsTimer.AutoReset = true;
+                secondsTimer.Enabled = true;
+
+                var updateTimer = new Timer(61000); // Trigger every 61 seconds
+                updateTimer.Elapsed += async (sender, e) =>
+                {
+                    try
+                    {
+                        secondsCounter = 60; // Reset the countdown
+                        await RefreshPrices(type);
+                        updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error in price update timer: {ex.Message}");
+                    }
+                };
+                updateTimer.AutoReset = true;
+                updateTimer.Enabled = true;
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    secondsCounter = 60; // Reset the countdown
-                    await RefreshPrices(type);
-                    updateTimerLabel.Text = $"      Prices will update in {secondsCounter} s"; // Reset label visually
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error in price update timer: {ex.Message}");
-                }
-            };
-            updateTimer.AutoReset = true;
-            updateTimer.Enabled = true;
+                Console.WriteLine($"Unexpected error in InitializeNameTimer: {ex.Message}");
+            }
         }
     }
 }

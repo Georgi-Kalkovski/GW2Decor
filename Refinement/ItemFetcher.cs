@@ -28,11 +28,16 @@ namespace DecorBlishhudModule.Refinement
                 return new Dictionary<string, List<Item>>();
             }
 
-            string response = null;
+            if (DecorModule.DecorModuleInstance?.Client == null)
+            {
+                Logger.Error("HTTP client is not initialized.");
+                return new Dictionary<string, List<Item>>();
+            }
 
+            string response;
             try
             {
-                response = await RetryPolicyAsync(() => DecorModule.DecorModuleInstance.Client.GetStringAsync(url));
+                response = await RetryPolicyAsync(() => DecorModule.DecorModuleInstance.Client.GetStringAsync(url)) ?? string.Empty;
             }
             catch (HttpRequestException ex)
             {
@@ -40,25 +45,34 @@ namespace DecorBlishhudModule.Refinement
                 return new Dictionary<string, List<Item>>();
             }
 
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                Logger.Error("Received an empty response from the server.");
+                return new Dictionary<string, List<Item>>();
+            }
+
             try
             {
-                // Parse JSON response
                 var jsonDoc = JsonDocument.Parse(response);
 
                 if (!jsonDoc.RootElement.TryGetProperty("parse", out var parseElement) ||
-                    !parseElement.TryGetProperty("text", out var textElement))
+                    !parseElement.TryGetProperty("text", out var textElement) ||
+                    !textElement.TryGetProperty("*", out var contentElement))
                 {
                     Logger.Error("Invalid response structure from the server.");
                     return new Dictionary<string, List<Item>>();
                 }
 
-                string htmlContent = textElement.GetProperty("*").GetString();
-
-                // Parse HTML content
+                string htmlContent = contentElement.GetString() ?? string.Empty;
                 var htmlDoc = new HtmlDocument();
                 htmlDoc.LoadHtml(htmlContent);
 
                 var rows = htmlDoc.DocumentNode.SelectNodes("//table//tr") ?? new HtmlNodeCollection(null);
+                if (rows.Count == 0)
+                {
+                    Logger.Warn("No table rows found in the HTML content.");
+                    return new Dictionary<string, List<Item>>();
+                }
 
                 List<Item> items = new List<Item>();
                 foreach (var row in rows.Skip(1))
@@ -66,36 +80,23 @@ namespace DecorBlishhudModule.Refinement
                     var columns = row.SelectNodes("td") ?? new HtmlNodeCollection(null);
                     if (columns.Count < 10) continue;
 
-                    // Extract item data safely
-                    string id = columns[2].SelectSingleNode(".//span[@data-id]")?.GetAttributeValue("data-id", "0");
-                    var imageNode = columns[0].SelectSingleNode(".//img");
-                    string imageUrl = imageNode?.GetAttributeValue("src", "");
+                    string id = columns[2].SelectSingleNode(".//span[@data-id]")?.GetAttributeValue("data-id", "0") ?? "0";
+                    string imageUrl = columns[0].SelectSingleNode(".//img")?.GetAttributeValue("src", "") ?? "";
 
                     int.TryParse(id, out var itemId);
+                    int.TryParse(columns[1].InnerText?.Trim() ?? "0", out var defaultQty);
 
-                    var item = new Item
+                    items.Add(new Item
                     {
                         Id = itemId,
                         Name = columns[0].InnerText.Trim(),
                         Icon = "https://wiki.guildwars2.com" + imageUrl,
-                        DefaultQty = int.TryParse(columns[1].InnerText.Trim(), out var defaultQty) ? defaultQty : 0,
-                        DefaultBuy = columns[2].InnerText.Trim(),
-                        DefaultSell = columns[3].InnerText.Trim(),
-                        TradeEfficiency1Qty = int.TryParse(columns[4].InnerText.Trim(), out var te1xQty) ? te1xQty : 0,
-                        TradeEfficiency1Buy = columns[5].InnerText.Trim(),
-                        TradeEfficiency1Sell = columns[6].InnerText.Trim(),
-                        TradeEfficiency2Qty = double.TryParse(columns[7].InnerText.Trim(), out var te2xQty) ? te2xQty : 0.5,
-                        TradeEfficiency2Buy = columns[8].InnerText.Trim(),
-                        TradeEfficiency2Sell = columns[9].InnerText.Trim()
-                    };
-
-                    items.Add(item);
+                        DefaultQty = defaultQty
+                    });
                 }
 
-                // Update item prices and group by name
-                var updatedItems = await UpdateItemPrices(items);
-                return updatedItems.GroupBy(i => i.Name)
-                                   .ToDictionary(g => g.Key, g => g.ToList());
+                return await UpdateItemPrices(items)
+                       .ContinueWith(t => t.Result.GroupBy(i => i.Name).ToDictionary(g => g.Key, g => g.ToList()));
             }
             catch (Exception ex)
             {
@@ -106,10 +107,21 @@ namespace DecorBlishhudModule.Refinement
 
         public static async Task<List<Item>> UpdateItemPrices(List<Item> items)
         {
-            // Extract unique item IDs
+            if (items == null || items.Count == 0)
+            {
+                Logger.Warn("No items provided for price update.");
+                return new List<Item>();
+            }
+
             var itemIds = items.Select(i => i.Id).Distinct().ToList();
-            int batchSize = 200; // Guild Wars 2 API supports up to 200 IDs per request
-            var batches = itemIds.Batch(batchSize); // Helper method to split list into chunks
+            int batchSize = 200;
+            var batches = itemIds.Batch(batchSize) ?? new List<IEnumerable<int>>();
+
+            if (DecorModule.DecorModuleInstance?.Client == null)
+            {
+                Logger.Error("HTTP client is not initialized.");
+                return items;
+            }
 
             foreach (var batch in batches)
             {
@@ -119,21 +131,28 @@ namespace DecorBlishhudModule.Refinement
                 try
                 {
                     string priceResponse = await RetryPolicyAsync(() => DecorModule.DecorModuleInstance.Client.GetStringAsync(priceApiUrl));
+
+                    if (string.IsNullOrWhiteSpace(priceResponse))
+                    {
+                        Logger.Error($"Received an empty response from the price API for batch {ids}.");
+                        continue;
+                    }
+
                     var priceData = JsonSerializer.Deserialize<List<ItemPrice>>(priceResponse, new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
-                    });
+                    }) ?? new List<ItemPrice>();
 
                     foreach (var item in items)
                     {
-                        var priceInfo = priceData?.FirstOrDefault(p => p.Id == item.Id);
+                        var priceInfo = priceData.FirstOrDefault(p => p.Id == item.Id);
                         if (priceInfo != null)
                         {
-                            item.DefaultBuy = (priceInfo.Buys?.Unit_Price * item.DefaultQty).ToString();
-                            item.DefaultSell = (priceInfo.Sells?.Unit_Price * item.DefaultQty).ToString();
+                            item.DefaultBuy = ((priceInfo.Buys?.Unit_Price ?? 0) * item.DefaultQty).ToString();
+                            item.DefaultSell = ((priceInfo.Sells?.Unit_Price ?? 0) * item.DefaultQty).ToString();
 
-                            item.TradeEfficiency1Buy = (priceInfo.Buys?.Unit_Price * item.TradeEfficiency1Qty).ToString();
-                            item.TradeEfficiency1Sell = (priceInfo.Sells?.Unit_Price * item.TradeEfficiency1Qty).ToString();
+                            item.TradeEfficiency1Buy = ((priceInfo.Buys?.Unit_Price ?? 0) * item.TradeEfficiency1Qty).ToString();
+                            item.TradeEfficiency1Sell = ((priceInfo.Sells?.Unit_Price ?? 0) * item.TradeEfficiency1Qty).ToString();
 
                             item.TradeEfficiency2Buy = Math.Ceiling((priceInfo.Buys?.Unit_Price ?? 0) * item.TradeEfficiency2Qty).ToString();
                             item.TradeEfficiency2Sell = Math.Ceiling((priceInfo.Sells?.Unit_Price ?? 0) * item.TradeEfficiency2Qty).ToString();

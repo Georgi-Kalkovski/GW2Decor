@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 public static class LinqExtensions
 {
@@ -13,20 +13,29 @@ public static class LinqExtensions
 
         using (var enumerator = source.GetEnumerator())
         {
-            while (enumerator.MoveNext())
+            while (true)
             {
-                yield return GetBatch(enumerator, size - 1);
+                var batch = GetBatch(enumerator, size);
+                if (batch is not null)
+                    yield return batch;
+                else
+                    yield break;
             }
         }
     }
 
-    private static IEnumerable<T> GetBatch<T>(IEnumerator<T> enumerator, int size)
+    private static IEnumerable<T>? GetBatch<T>(IEnumerator<T> enumerator, int size)
     {
-        yield return enumerator.Current;
+        if (!enumerator.MoveNext())
+            return null;
+
+        var batch = new List<T> { enumerator.Current };
 
         for (int i = 0; i < size && enumerator.MoveNext(); i++)
         {
-            yield return enumerator.Current;
+            batch.Add(enumerator.Current);
         }
+
+        return batch;
     }
 }
