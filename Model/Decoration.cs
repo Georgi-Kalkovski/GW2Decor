@@ -4,13 +4,9 @@
     public class Decoration
     {
         public string Name { get; set; }
-
         public string IconUrl { get; set; }
-
         public string ImageUrl { get; set; }
-
         public string Book { get; set; }
-
         public string CraftingRating { get; set; }
 
         // Crafting Ingredient 1
@@ -22,7 +18,6 @@
         public string CraftingIngredientName2 { get; set; }
         public string CraftingIngredientQty2 { get; set; }
         public string CraftingIngredientIcon2 { get; set; }
-
 
         // Crafting Ingredient 3
         public string CraftingIngredientName3 { get; set; }
