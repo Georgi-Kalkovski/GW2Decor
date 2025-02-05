@@ -121,20 +121,22 @@ namespace DecorBlishhudModule.Refinement
                 return new List<Item>();
             }
 
+            if (DecorModule.DecorModuleInstance == null || DecorModule.DecorModuleInstance.Client == null)
+            {
+                Logger.Error("DecorModuleInstance or its HTTP client is not initialized.");
+                return items;
+            }
+
             var itemIds = items.Select(i => i.Id).Distinct().ToList();
             int batchSize = 200;
             var batches = itemIds.Batch(batchSize) ?? new List<IEnumerable<int>>();
-
-            if (DecorModule.DecorModuleInstance?.Client == null)
-            {
-                Logger.Error("HTTP client is not initialized.");
-                return items;
-            }
 
             foreach (var batch in batches)
             {
                 string ids = string.Join(",", batch);
                 string priceApiUrl = $"https://api.guildwars2.com/v2/commerce/prices?ids={ids}";
+
+                Logger.Info($"Fetching price data from: {priceApiUrl}");
 
                 try
                 {
@@ -169,7 +171,15 @@ namespace DecorBlishhudModule.Refinement
                 }
                 catch (HttpRequestException ex)
                 {
-                    Logger.Error($"Error fetching prices for batch {ids}: {ex.Message}");
+                    Logger.Error($"HTTP request error while fetching prices for batch {ids}: {ex.Message}");
+                }
+                catch (JsonException ex)
+                {
+                    Logger.Error($"JSON parsing error while processing price data for batch {ids}: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Unexpected error in UpdateItemPrices for batch {ids}: {ex.Message}");
                 }
             }
 
@@ -188,6 +198,11 @@ namespace DecorBlishhudModule.Refinement
                 {
                     Logger.Warn($"Retrying due to error: {ex.Message}");
                     await Task.Delay(1000);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error($"Unexpected error: {ex.Message}");
+                    break;
                 }
             }
             throw new HttpRequestException("Failed after multiple retries.");
