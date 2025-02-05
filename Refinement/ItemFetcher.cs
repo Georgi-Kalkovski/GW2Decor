@@ -135,9 +135,6 @@ namespace DecorBlishhudModule.Refinement
             {
                 string ids = string.Join(",", batch);
                 string priceApiUrl = $"https://api.guildwars2.com/v2/commerce/prices?ids={ids}";
-
-                Logger.Info($"Fetching price data from: {priceApiUrl}");
-
                 try
                 {
                     string priceResponse = await RetryPolicyAsync(() => DecorModule.DecorModuleInstance.Client.GetStringAsync(priceApiUrl));
