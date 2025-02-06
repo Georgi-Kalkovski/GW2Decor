@@ -26,7 +26,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                     {
                         // Find the text from the Tooltip (specifically the Label containing the decoration name)
                         var tooltipLabel = decorationIcon.Tooltip.Children.OfType<Label>().FirstOrDefault();
-                        bool matchesSearch = tooltipLabel != null && tooltipLabel.Text.ToLower().Contains(searchText);
+                        bool matchesSearch = tooltipLabel != null && searchText.Split(' ').All(word => tooltipLabel.Text.ToLower().Contains(word));
 
                         decorationIconPanel.Visible = matchesSearch;
 
