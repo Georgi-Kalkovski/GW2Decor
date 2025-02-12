@@ -391,6 +391,7 @@ namespace DecorBlishhudModule
                         Parent = categoryFlowPanel,
                         Size = new Point(254, 300),
                         BackgroundColor = new Color(0, 0, 0, 36),
+                        BasicTooltipText = decoration.Name,
                         Tooltip = tooltip
                     };
 
@@ -400,6 +401,7 @@ namespace DecorBlishhudModule
                         Parent = mainContainer,
                         Location = new Point(0, 0),
                         Size = new Point(256, 50),
+                        BasicTooltipText = decoration.Name,
                         Tooltip = tooltip,
                         BackgroundTexture = DecorModule.DecorModuleInstance.BlackTexture,
                     };
@@ -424,6 +426,7 @@ namespace DecorBlishhudModule
                         Font = decoration.Name.ToString().Length > 30 ? GameService.Content.DefaultFont12 : GameService.Content.DefaultFont14,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         VerticalAlignment = VerticalAlignment.Middle,
+                        BasicTooltipText = decoration.Name,
                         Tooltip = tooltip
                     };
 
@@ -452,6 +455,7 @@ namespace DecorBlishhudModule
                         Parent = mainContainer,
                         Location = new Point(xOffset + 2, centeredYOffset - 1),
                         Size = new Point(width - 3, height),
+                        BasicTooltipText = decoration.Name,
                         Tooltip = tooltip
                     };
 
@@ -482,6 +486,7 @@ namespace DecorBlishhudModule
                         decorationImage = new Image(borderedTexture)
                         {
                             Parent = decorWindow,
+                            BasicTooltipText = decoration.Name,
                             Tooltip = tooltip
                         };
 
