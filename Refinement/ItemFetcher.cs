@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Blish_HUD;
 using HtmlAgilityPack;
+using System.Globalization;
 
 namespace DecorBlishhudModule.Refinement
 {
@@ -97,7 +98,7 @@ namespace DecorBlishhudModule.Refinement
                         TradeEfficiency1Qty = int.TryParse(columns[4].InnerText.Trim(), out var te1Qty) ? te1Qty : 0,
                         TradeEfficiency1Buy = columns[5].InnerText.Trim(),
                         TradeEfficiency1Sell = columns[6].InnerText.Trim(),
-                        TradeEfficiency2Qty = double.TryParse(columns[7].InnerText.Trim(), out var te2Qty) ? te2Qty : 0.5,
+                        TradeEfficiency2Qty = ParseDoubleInvariant(columns[7].InnerText.Trim(), 0.5),
                         TradeEfficiency2Buy = columns[8].InnerText.Trim(),
                         TradeEfficiency2Sell = columns[9].InnerText.Trim()
                     });
@@ -203,6 +204,43 @@ namespace DecorBlishhudModule.Refinement
                 }
             }
             throw new HttpRequestException("Failed after multiple retries.");
+        }
+
+        public static double ParseDoubleInvariant(string value, double defaultValue = 0.5)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return defaultValue;
+
+            value = value.Trim();
+
+            bool hasComma = value.Contains(",");
+            bool hasDot = value.Contains(".");
+
+            if (hasComma && hasDot)
+            {
+                int lastComma = value.LastIndexOf(",");
+                int lastDot = value.LastIndexOf(".");
+
+                if (lastDot > lastComma)
+                {
+                    value = value.Replace(",", "");
+                }
+                else
+                {
+                    value = value.Replace(".", "").Replace(",", ".");
+                }
+            }
+            else if (hasComma)
+            {
+                value = value.Replace(",", ".");
+            }
+
+            if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedValue))
+            {
+                return parsedValue;
+            }
+
+            return defaultValue;
         }
     }
 }

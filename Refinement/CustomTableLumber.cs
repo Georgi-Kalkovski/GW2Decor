@@ -78,9 +78,9 @@ namespace DecorBlishhudModule.Refinement
             _eff1Sell = CreateInnerHeader("Sell", 93, _eff1, item => item.TradeEfficiency1Sell, type);
 
             // Create Efficiency (2x) columns
-            _eff2Qty = CreateInnerHeader("Qty", 68, _eff2, item => item.TradeEfficiency2Qty, type);
-            _eff2Buy = CreateInnerHeader("Buy", 93, _eff2, item => item.TradeEfficiency2Buy, type);
-            _eff2Sell = CreateInnerHeader("Sell", 93, _eff2, item => item.TradeEfficiency2Sell, type);
+            _eff2Qty = CreateInnerHeader("Qty", 68, _eff2, item => ItemFetcher.ParseDoubleInvariant(item.TradeEfficiency2Qty.ToString()), type);
+            _eff2Buy = CreateInnerHeader("Buy", 93, _eff2, item => ItemFetcher.ParseDoubleInvariant(item.TradeEfficiency2Buy), type);
+            _eff2Sell = CreateInnerHeader("Sell", 93, _eff2, item => ItemFetcher.ParseDoubleInvariant(item.TradeEfficiency2Sell), type);
 
             // Fetch and populate the table with items
             await PopulateTable(type);
@@ -283,7 +283,7 @@ namespace DecorBlishhudModule.Refinement
                 new Label
                 {
                     Parent = _eff2Qty,
-                    Text = "    " + item.TradeEfficiency2Qty.ToString(),
+                    Text = "    " + ItemFetcher.ParseDoubleInvariant(item.TradeEfficiency2Qty.ToString()).ToString(),
                     Size = new Point(68, 30),
                     TextColor = Color.White,
                     Font = GameService.Content.DefaultFont16,
