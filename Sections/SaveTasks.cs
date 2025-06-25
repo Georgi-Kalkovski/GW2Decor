@@ -43,7 +43,6 @@ namespace DecorBlishhudModule
                 try
                 {
                     System.Windows.Forms.Clipboard.SetText(text);
-                    Logger.Info($"Copied '{text}' to clipboard.");
                 }
                 catch (Exception ex)
                 {

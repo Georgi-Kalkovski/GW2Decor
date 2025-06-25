@@ -59,7 +59,27 @@ namespace DecorBlishhudModule.Sections
             {
                 try
                 {
-                    var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                    byte[] imageResponse;
+                    string localImagePath = LeftSideSection.GetImageAndIconFilePath(decoration.ImageUrl);
+                    var semaphore = LeftSideSection.GetFileSemaphore(localImagePath);
+
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        if (File.Exists(localImagePath))
+                        {
+                            imageResponse = File.ReadAllBytes(localImagePath);
+                        }
+                        else
+                        {
+                            imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                            File.WriteAllBytes(localImagePath, imageResponse);
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     var borderedTexture = CreateBorderedTexture(imageResponse);
 

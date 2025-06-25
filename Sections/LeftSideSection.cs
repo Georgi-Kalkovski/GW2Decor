@@ -14,6 +14,7 @@ using DecorBlishhudModule.CustomControls;
 using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
 using DecorBlishhudModule.CustomControls.CustomTab;
+using System.Threading;
 
 namespace DecorBlishhudModule
 {
@@ -565,7 +566,27 @@ namespace DecorBlishhudModule
 
             try
             {
-                var iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(iconUrl);
+                byte[] iconResponse;
+                string localImagePath = GetImageAndIconFilePath(iconUrl);
+                var semaphore = GetFileSemaphore(localImagePath);
+
+                await semaphore.WaitAsync();
+                try
+                {
+                    if (File.Exists(localImagePath))
+                    {
+                        iconResponse = File.ReadAllBytes(localImagePath);
+                    }
+                    else
+                    {
+                        iconResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(iconUrl);
+                        File.WriteAllBytes(localImagePath, iconResponse);
+                    }
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
                 var newTexture = CreateIconTexture(iconResponse);
 
                 if (newTexture != null)
@@ -634,6 +655,36 @@ namespace DecorBlishhudModule
         {
             CleanupSharedTextureCache();
             this.Unload();
+        }
+
+        public static string GetImageAndIconFilePath(string iconUrl)
+        {
+            string fileName = Path.GetFileName(new Uri(iconUrl).AbsolutePath);
+            string iconDirectory = Path.Combine(DecorModule.DecorModuleInstance.DirectoriesManager.GetFullDirectoryPath("decor"));
+
+            // Ensure directory exists
+            if (!Directory.Exists(iconDirectory))
+            {
+                Directory.CreateDirectory(iconDirectory);
+            }
+
+            return Path.Combine(iconDirectory, fileName);
+        }
+
+        private static readonly Dictionary<string, SemaphoreSlim> _fileSemaphores = new();
+        private static readonly object _semaphoreLock = new();
+
+        public static SemaphoreSlim GetFileSemaphore(string path)
+        {
+            lock (_semaphoreLock)
+            {
+                if (!_fileSemaphores.TryGetValue(path, out var semaphore))
+                {
+                    semaphore = new SemaphoreSlim(1, 1);
+                    _fileSemaphores[path] = semaphore;
+                }
+                return semaphore;
+            }
         }
     }
 }

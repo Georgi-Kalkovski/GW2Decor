@@ -11,6 +11,7 @@ using DecorBlishhudModule.Sections.LeftSideTasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -108,6 +109,15 @@ namespace DecorBlishhudModule
 
         protected override async Task LoadAsync()
         {
+            // Get the manifest registered directories with the DirectoriesManager. Those store data.
+            foreach (string directoryName in DirectoriesManager.RegisteredDirectories)
+            {
+                string fullDirectoryPath = DirectoriesManager.GetFullDirectoryPath(directoryName);
+                var allFiles = Directory.EnumerateFiles(fullDirectoryPath, "*", SearchOption.AllDirectories).ToList();
+
+                Logger.Info($"'{directoryName}' can be found at '{fullDirectoryPath}' and has {allFiles.Count} total files within it.");
+            }
+
             // Load assets
             _homesteadIconUnactive = ContentsManager.GetTexture("test/homesteadIconUnactive.png");
             _homesteadIconHover = ContentsManager.GetTexture("test/homesteadIconHover.png");

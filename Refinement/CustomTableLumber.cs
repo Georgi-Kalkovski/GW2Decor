@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
@@ -415,10 +416,32 @@ namespace DecorBlishhudModule.Refinement
 
             var customTooltip = new Tooltip();
 
+            byte[] imageResponse;
+            string localImagePath = LeftSideSection.GetImageAndIconFilePath(item.Icon);
+            var semaphore = LeftSideSection.GetFileSemaphore(localImagePath);
+
+            await semaphore.WaitAsync();
+            try
+            {
+                if (File.Exists(localImagePath))
+                {
+                    imageResponse = File.ReadAllBytes(localImagePath);
+                }
+                else
+                {
+                    imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(item.Icon);
+                    File.WriteAllBytes(localImagePath, imageResponse);
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+
             var icon = new Image
             {
                 Parent = customTooltip,
-                Texture = LeftSideSection.CreateIconTexture(await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(item.Icon)),
+                Texture = LeftSideSection.CreateIconTexture(imageResponse),
                 Size = new Point(30, 30),
             };
 

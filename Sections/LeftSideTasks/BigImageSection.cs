@@ -16,6 +16,8 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
 
         private static Panel bigImagePanel;
 
+        private static DateTime _lastImageShownTime = DateTime.MinValue;
+        
         public static async Task UpdateDecorationImageAsync(Decoration decoration, Container _decorWindow, Image _decorationImage)
         {
             _decorationImage.ZIndex = 101;
@@ -52,20 +54,39 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
             {
                 try
                 {
-                    var imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                    byte[] imageResponse;
+                    string localImagePath = LeftSideSection.GetImageAndIconFilePath(decoration.ImageUrl);
+                    var semaphore = LeftSideSection.GetFileSemaphore(localImagePath);
+
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        if (File.Exists(localImagePath))
+                        {
+                            imageResponse = File.ReadAllBytes(localImagePath);
+                        }
+                        else
+                        {
+                            imageResponse = await DecorModule.DecorModuleInstance.Client.GetByteArrayAsync(decoration.ImageUrl);
+                            File.WriteAllBytes(localImagePath, imageResponse);
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     var borderedTexture = CreateBorderedTexture(imageResponse);
 
                     if (borderedTexture != null)
                     {
                         _decorationImage.Texture = borderedTexture;
-
                         AdjustImageSize(borderedTexture, _decorationImage);
                         CenterImageInParent(_decorationImage, _decorWindow);
-
                         PositionXIconAtTopLeft(textureXImage, _decorationImage);
 
                         bigImagePanel.Visible = true;
+                        _lastImageShownTime = DateTime.Now;
                         if (_decorationImage.Visible)
                         {
                             textureXImage.Visible = true;
@@ -90,7 +111,8 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                 _decorationImage.Click += async (s, e) =>
                 {
                     await Task.Delay(100);
-                    if (_decorationImage.Visible || bigImagePanel.Visible || textureXImage.Visible)
+
+                    if ((DateTime.Now - _lastImageShownTime).TotalMilliseconds > 200)
                     {
                         _decorationImage.Visible = false;
                         bigImagePanel.Visible = false;
@@ -101,7 +123,8 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                 _decorWindow.Click += async (s, e) =>
                 {
                     await Task.Delay(100);
-                    if (_decorationImage.Visible || bigImagePanel.Visible || textureXImage.Visible)
+
+                    if ((DateTime.Now - _lastImageShownTime).TotalMilliseconds > 200)
                     {
                         _decorationImage.Visible = false;
                         bigImagePanel.Visible = false;
