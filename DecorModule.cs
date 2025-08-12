@@ -10,6 +10,7 @@ using DecorBlishhudModule.Sections;
 using DecorBlishhudModule.Sections.LeftSideTasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
@@ -299,6 +300,37 @@ namespace DecorBlishhudModule
                 BackgroundTexture = _x,
             };
 
+            var checkboxFlowPanel = new Panel()
+            {
+                Parent = _decorWindow,
+                Location = new Point(searchTextBox.Right + 20, searchTextBox.Top),
+                Width = 200,
+                Height = 50
+            };
+
+            var checkboxSpinner = new CustomLoadingSpinner
+            {
+                Parent = checkboxFlowPanel,
+                Location = new Point(0, 0)
+            };
+
+            var checkboxLoading = new Label()
+            {
+                Parent = checkboxFlowPanel,
+                Location = new Point(checkboxSpinner.Right, -8),
+                Text = "Loading... Please wait",
+                Size = new Point(200, 50)
+            };
+
+            var checkbox = new Checkbox
+            {
+                Parent = checkboxFlowPanel,
+                Location = new Point(15, 9),
+                Text = "Display Categories",
+                Checked = true,
+                Visible = false
+            };
+
             _homesteadDecorationsFlowPanel = new FlowPanel
             {
                 Parent = _decorWindow,
@@ -444,6 +476,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = true;
+                    clearButton.Visible = !string.IsNullOrEmpty(searchTextBox.Text);
+                    checkboxFlowPanel.Visible = true;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = false;
@@ -464,6 +498,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = true;
+                    clearButton.Visible = !string.IsNullOrEmpty(searchTextBox.Text);
+                    checkboxFlowPanel.Visible = true;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = false;
@@ -484,6 +520,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = true;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = true;
+                    clearButton.Visible = !string.IsNullOrEmpty(searchTextBox.Text);
+                    checkboxFlowPanel.Visible = true;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = false;
@@ -504,6 +542,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = true;
                     searchTextBox.Visible = true;
+                    clearButton.Visible = !string.IsNullOrEmpty(searchTextBox.Text);
+                    checkboxFlowPanel.Visible = true;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = false;
@@ -523,6 +563,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = false;
+                    clearButton.Visible = false;
+                    checkboxFlowPanel.Visible = false;
                     _farmPanel.Visible = true;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = false;
@@ -541,6 +583,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = false;
+                    clearButton.Visible = false;
+                    checkboxFlowPanel.Visible = false;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = true;
                     _metalPanel.Visible = false;
@@ -559,6 +603,8 @@ namespace DecorBlishhudModule
                     homesteadDecorationsBigFlowPanel.Visible = false;
                     guildHallDecorationsBigFlowPanel.Visible = false;
                     searchTextBox.Visible = false;
+                    clearButton.Visible = false;
+                    checkboxFlowPanel.Visible = false;
                     _farmPanel.Visible = false;
                     _lumberPanel.Visible = false;
                     _metalPanel.Visible = true;
@@ -572,8 +618,14 @@ namespace DecorBlishhudModule
             customTab2.Enabled = false;
             customTab4.Enabled = false;
 
-            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+            Dictionary<Control, int> _originalHeightsHomestead = new Dictionary<Control, int>();
+            Dictionary<Control, int> _originalHeightsGuildHall = new Dictionary<Control, int>();
+            Dictionary<Control, int> _originalHeightsHomesteadBig = new Dictionary<Control, int>();
+            Dictionary<Control, int> _originalHeightsGuildHallBig = new Dictionary<Control, int>();
 
+            await LeftSideSection.PopulateHomesteadIconsInFlowPanel(_homesteadDecorationsFlowPanel, true);
+            LeftSideSection.StoreCurrentHeightsForPanel(_homesteadDecorationsFlowPanel, _originalHeightsHomestead);
+            await ApplySearchFilterAsync();
             await CustomTableFarm.Initialize(_farmPanel, "farm");
             await CustomTableLumber.Initialize(_lumberPanel, "lumber");
             await CustomTableMetal.Initialize(_metalPanel, "metal");
@@ -585,8 +637,14 @@ namespace DecorBlishhudModule
             var guildHallTask = Task.Run(async () =>
             {
                 await LeftSideSection.PopulateGuildHallIconsInFlowPanel(guildHallDecorationsFlowPanel, true);
+                LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsFlowPanel, _originalHeightsGuildHall);
+                await ApplySearchFilterAsync();
                 customTab2.Enabled = true;
-                if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
+
+                if (customTab2.Enabled && customTab4.Enabled) 
+                {
+                    _loaded = true;
+                }
             });
             _ = guildHallTask.ContinueWith(t =>
             {
@@ -600,8 +658,18 @@ namespace DecorBlishhudModule
             {
                 await LeftSideSection.PopulateHomesteadBigIconsInFlowPanel(homesteadDecorationsBigFlowPanel, false);
                 await LeftSideSection.PopulateGuildHallBigIconsInFlowPanel(guildHallDecorationsBigFlowPanel, false);
+                LeftSideSection.StoreCurrentHeightsForPanel(homesteadDecorationsBigFlowPanel, _originalHeightsHomesteadBig);
+                LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsBigFlowPanel, _originalHeightsGuildHallBig);
+                await ApplySearchFilterAsync();
                 customTab4.Enabled = true;
-                if (customTab2.Enabled && customTab4.Enabled) { _loaded = true; }
+
+                if (customTab2.Enabled && customTab4.Enabled)
+                {
+                    _loaded = true;
+                    checkbox.Visible = true;
+                    checkboxLoading.Visible = false;
+                    checkboxSpinner.Visible = false;
+                }
             });
             _ = imagePreviewTask.ContinueWith(t =>
             {
@@ -612,7 +680,34 @@ namespace DecorBlishhudModule
             });
 
             // Search functionality
-            searchTextBox.TextChanged += async (sender, args) =>
+            searchTextBox.TextChanged += async (s, e) =>
+            {
+                await ApplySearchFilterAsync();
+            };
+
+            clearButton.Click += (s, e) =>
+            {
+                searchTextBox.Text = string.Empty;
+            };
+
+            checkbox.Click += async (s, e) =>
+            {
+                if (_originalHeightsHomestead.Count != _homesteadDecorationsFlowPanel.Children.Count)
+                    LeftSideSection.StoreCurrentHeightsForPanel(_homesteadDecorationsFlowPanel, _originalHeightsHomestead);
+                if (_originalHeightsGuildHall.Count != guildHallDecorationsFlowPanel.Children.Count)
+                    LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsFlowPanel, _originalHeightsGuildHall);
+                if (_originalHeightsHomesteadBig.Count != homesteadDecorationsBigFlowPanel.Children.Count)
+                    LeftSideSection.StoreCurrentHeightsForPanel(homesteadDecorationsBigFlowPanel, _originalHeightsHomesteadBig);
+                if (_originalHeightsGuildHallBig.Count != guildHallDecorationsBigFlowPanel.Children.Count)
+                    LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsBigFlowPanel, _originalHeightsGuildHallBig);
+
+                LeftSideSection.ApplyCheckboxLogic(_homesteadDecorationsFlowPanel, _originalHeightsHomestead, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(guildHallDecorationsFlowPanel, _originalHeightsGuildHall, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(homesteadDecorationsBigFlowPanel, _originalHeightsHomesteadBig, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(guildHallDecorationsBigFlowPanel, _originalHeightsGuildHallBig, checkbox.Checked);
+            };
+
+            async Task ApplySearchFilterAsync()
             {
                 string searchText = searchTextBox.Text.ToLower();
                 await FilterDecorations.FilterDecorationsAsync(_homesteadDecorationsFlowPanel, searchText, true);
@@ -621,12 +716,17 @@ namespace DecorBlishhudModule
                 await FilterDecorations.FilterDecorationsAsync(guildHallDecorationsBigFlowPanel, searchText, false);
 
                 clearButton.Visible = !string.IsNullOrEmpty(searchText);
-            };
 
-            clearButton.Click += (s, e) =>
-            {
-                searchTextBox.Text = string.Empty;
-            };
+                LeftSideSection.StoreCurrentHeightsForPanel(_homesteadDecorationsFlowPanel, _originalHeightsHomestead);
+                LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsFlowPanel, _originalHeightsGuildHall);
+                LeftSideSection.StoreCurrentHeightsForPanel(homesteadDecorationsBigFlowPanel, _originalHeightsHomesteadBig);
+                LeftSideSection.StoreCurrentHeightsForPanel(guildHallDecorationsBigFlowPanel, _originalHeightsGuildHallBig);
+
+                LeftSideSection.ApplyCheckboxLogic(_homesteadDecorationsFlowPanel, _originalHeightsHomestead, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(guildHallDecorationsFlowPanel, _originalHeightsGuildHall, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(homesteadDecorationsBigFlowPanel, _originalHeightsHomesteadBig, checkbox.Checked);
+                LeftSideSection.ApplyCheckboxLogic(guildHallDecorationsBigFlowPanel, _originalHeightsGuildHallBig, checkbox.Checked);
+            }
         }
     }
 }
