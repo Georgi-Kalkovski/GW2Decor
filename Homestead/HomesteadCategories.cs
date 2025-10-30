@@ -26,6 +26,7 @@ namespace DecorBlishhudModule.Homestead
                 "End of Dragons",
                 "Secrets of the Obscure",
                 "Janthir Wilds",
+                "Visions of Eternity",
                 "Lunar New Year",
                 "Super Adventure Box",
                 "Dragon Bash",
