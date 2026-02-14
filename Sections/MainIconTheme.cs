@@ -1,105 +1,167 @@
-﻿using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Microsoft.Xna.Framework.Graphics;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Microsoft.Xna.Framework.Graphics;
+using Newtonsoft.Json.Linq;
 
 namespace DecorBlishhudModule
 {
     public static class MainIconTheme
     {
+        private const string WikiUrl =
+            "https://wiki.guildwars2.com/api.php?action=parse&page=Main_Page&format=json&prop=text";
+
         public static async Task<Texture2D> GetThemeIconAsync(
             Texture2D defaultIcon,
-            Texture2D _homesteadIconMenuLunar,
-            Texture2D _homesteadIconMenuSAB,
-            Texture2D _homesteadIconMenuDragonBash,
-            Texture2D _homesteadIconMenuFOTFW,
-            Texture2D _homesteadIconMenuHalloween,
-            Texture2D wintersdayIcon
-        )
+            Texture2D lunarIcon,
+            Texture2D sabIcon,
+            Texture2D dragonBashIcon,
+            Texture2D fotfwIcon,
+            Texture2D halloweenIcon,
+            Texture2D wintersdayIcon)
         {
-            const string Url = "https://wiki.guildwars2.com/api.php?action=parse&page=Main_Page&format=json&prop=text";
+            if (DecorModule.DecorModuleInstance?.Client == null)
+                return defaultIcon;
 
-            int currentYear = DateTime.Now.Year;
+            int year = DateTime.Now.Year;
 
-            var iconMapping = new Dictionary<Texture2D, List<string>>
-            {
-                // Lunar New Year events, including the current year variant
-                { _homesteadIconMenuLunar, new List<string>
-                    {
-                        "id=\"Current_release:_“Lunar_New_Year”",
-                        $"id=\"Current_release:_“Lunar_New_Year_{currentYear}”"
-                    }
-                },
-
-                // Super Adventure Festival, no year variant but including it in case
-                { _homesteadIconMenuSAB, new List<string>
-                    {
-                        "id=\"Current_release:_“Super_Adventure_Festival”",
-                        $"id=\"Current_release:_“Super_Adventure_Festival_{currentYear}”"
-                    }
-                },
-
-                // Dragon Bash events, same as above
-                { _homesteadIconMenuDragonBash, new List<string>
-                    {
-                        "id=\"Current_release:_“Dragon_Bash”",
-                        $"id=\"Current_release:_“Dragon_Bash_{currentYear}”"
-                    }
-                },
-
-                // Festival of the Four Winds events
-                { _homesteadIconMenuFOTFW, new List<string>
-                    {
-                        "id=\"Current_release:_“Festival_of_the_Four_Winds”",
-                        $"id=\"Current_release:_“Festival_of_the_Four_Winds_{currentYear}”"
-                    }
-                },
-
-                // Halloween events (with or without year)
-                { _homesteadIconMenuHalloween, new List<string>
-                    {
-                        "id=\"Current_release:_“Halloween”",
-                        "id=\"Current_release:_“Shadow_of_the_Mad_King”",
-                        $"id=\"Current_release:_“Halloween_{currentYear}”",
-                        $"id=\"Current_release:_“Shadow_of_the_Mad_King_{currentYear}”"
-                    }
-                },
-
-                // Wintersday events, including the current year variant
-                { wintersdayIcon, new List<string>
-                    {
-                        "id=\"Current_release:_“Wintersday”",
-                        "id=\"Current_release:_“A_Very_Merry_Wintersday”",
-                        $"id=\"Current_release:_“Wintersday_{currentYear}”",
-                        $"id=\"Current_release:_“A_Very_Merry_Wintersday_{currentYear}”"
-                    }
-                },
-            };
+            var eventMap = BuildEventMap(
+                year,
+                lunarIcon,
+                sabIcon,
+                dragonBashIcon,
+                fotfwIcon,
+                halloweenIcon,
+                wintersdayIcon);
 
             try
             {
-                DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-                string jsonResponse = await DecorModule.DecorModuleInstance.Client.GetStringAsync(Url);
+                DecorModule.DecorModuleInstance.Client.DefaultRequestHeaders.UserAgent
+                    .ParseAdd("Mozilla/5.0");
 
-                // Parse the JSON response
-                JObject parsedResponse = JObject.Parse(jsonResponse);
-                string parsedText = parsedResponse["parse"]?["text"]?["*"]?.ToString() ?? string.Empty;
+                string response = await DecorModule.DecorModuleInstance.Client.GetStringAsync(WikiUrl);
+                string htmlText = ExtractHtml(response);
 
-                foreach (var entry in iconMapping)
+                if (string.IsNullOrWhiteSpace(htmlText))
+                    return defaultIcon;
+
+                htmlText = Normalize(htmlText);
+
+                foreach (var entry in eventMap)
                 {
-                    foreach (var keyword in entry.Value)
+                    foreach (var marker in entry.Value)
                     {
-                        if (parsedText.Contains(keyword))
-                        {
+                        if (htmlText.Contains(marker))
                             return entry.Key;
-                        }
                     }
                 }
             }
-            catch { }
+            catch (HttpRequestException)
+            {
+                // network failure → fallback icon
+            }
+            catch (Exception)
+            {
+                // parsing or unexpected failure → fallback icon
+            }
 
             return defaultIcon;
+        }
+
+        private static Dictionary<Texture2D, List<string>> BuildEventMap(
+            int year,
+            Texture2D lunar,
+            Texture2D sab,
+            Texture2D dragonBash,
+            Texture2D fotfw,
+            Texture2D halloween,
+            Texture2D wintersday)
+        {
+            return new Dictionary<Texture2D, List<string>>
+{
+    {
+        lunar, new List<string>
+        {
+            $"current_release:lunar_new_year",
+            $"current_release:lunar_new_year_{year}",
+            $"current_release:_\"lunar_new_year\"",
+            $"current_release:_\"lunar_new_year_{year}\""
+        }
+    },
+    {
+        sab, new List<string>
+        {
+            $"current_release:super_adventure_festival",
+            $"current_release:super_adventure_festival_{year}",
+            $"current_release:_\"super_adventure_festival\"",
+            $"current_release:_\"super_adventure_festival_{year}\""
+        }
+    },
+    {
+        dragonBash, new List<string>
+        {
+            $"current_release:dragon_bash",
+            $"current_release:dragon_bash_{year}",
+            $"current_release:_\"dragon_bash\"",
+            $"current_release:_\"dragon_bash_{year}\""
+        }
+    },
+    {
+        fotfw, new List<string>
+        {
+            $"current_release:festival_of_the_four_winds",
+            $"current_release:festival_of_the_four_winds_{year}",
+            $"current_release:_\"festival_of_the_four_winds\"",
+            $"current_release:_\"festival_of_the_four_winds_{year}\""
+        }
+    },
+    {
+        halloween, new List<string>
+        {
+            $"current_release:halloween",
+            $"current_release:shadow_of_the_mad_king",
+            $"current_release:halloween_{year}",
+            $"current_release:shadow_of_the_mad_king_{year}",
+            $"current_release:_\"halloween\"",
+            $"current_release:_\"shadow_of_the_mad_king\"",
+            $"current_release:_\"halloween_{year}\"",
+            $"current_release:_\"shadow_of_the_mad_king_{year}\""
+        }
+    },
+    {
+        wintersday, new List<string>
+        {
+            $"current_release:wintersday",
+            $"current_release:a_very_merry_wintersday",
+            $"current_release:wintersday_{year}",
+            $"current_release:a_very_merry_wintersday_{year}",
+            $"current_release:_\"wintersday\"",
+            $"current_release:_\"a_very_merry_wintersday\"",
+            $"current_release:_\"wintersday_{year}\"",
+            $"current_release:_\"a_very_merry_wintersday_{year}\""
+        }
+    }
+};
+
+        }
+
+        private static string ExtractHtml(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return string.Empty;
+
+            JObject parsed = JObject.Parse(json);
+            return parsed["parse"]?["text"]?["*"]?.ToString() ?? string.Empty;
+        }
+
+        private static string Normalize(string input)
+        {
+            return input
+                .ToLowerInvariant()
+                .Replace("“", "\"")
+                .Replace("”", "\"")
+                .Replace(" ", "_");
         }
     }
 }
