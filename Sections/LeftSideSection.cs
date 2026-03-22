@@ -32,6 +32,9 @@ namespace DecorBlishhudModule
         private static Label _loadingLabel = null;
         private static Label _loadingLabel2 = null;
 
+        private static DateTime _lastClickTime = DateTime.MinValue;
+        private const int DoubleClickThresholdMs = 300;
+
         private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
         {
             return _homesteadDecorationsCache != null
@@ -110,7 +113,7 @@ namespace DecorBlishhudModule
                     OuterControlPadding = new Vector2(6, 4),
                 };
 
-                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
+                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView, true));
                 await Task.WhenAll(tasks);
             });
 
@@ -171,7 +174,7 @@ namespace DecorBlishhudModule
                     OuterControlPadding = new Vector2(6, 4),
                 };
 
-                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
+                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView, false));
                 await Task.WhenAll(tasks);
             });
 
@@ -232,7 +235,7 @@ namespace DecorBlishhudModule
                     OuterControlPadding = new Vector2(10, 10),
                 };
 
-                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
+                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView, true));
                 await Task.WhenAll(tasks);
             });
 
@@ -293,7 +296,7 @@ namespace DecorBlishhudModule
                     OuterControlPadding = new Vector2(10, 10),
                 };
 
-                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView));
+                var tasks = decorations.Select(decoration => CreateDecorationIconsImagesAsync(decoration, categoryFlowPanel, _isIconView, false));
                 await Task.WhenAll(tasks);
             });
 
@@ -302,7 +305,7 @@ namespace DecorBlishhudModule
             await OrderDecorations.OrderDecorationsAsync(guildHallDecorationsFlowPanel, _isIconView);
         }
 
-        public static async Task CreateDecorationIconsImagesAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView)
+        public static async Task CreateDecorationIconsImagesAsync(Decoration decoration, FlowPanel categoryFlowPanel, bool _isIconView, bool isHomestead)
         {
             try
             {
@@ -386,6 +389,32 @@ namespace DecorBlishhudModule
 
                         decorationIconImage.Click += async (s, e) =>
                         {
+                            var now = DateTime.UtcNow;
+                            var timeDiff = (now - _lastClickTime).TotalMilliseconds;
+
+                            if (timeDiff <= DoubleClickThresholdMs)
+                            {
+                                string pageName = decoration.Name;
+
+                                if (isHomestead)
+                                {
+                                    pageName += " (Handiwork)";
+                                }
+
+                                string url = $"https://wiki.guildwars2.com/wiki/{Uri.EscapeDataString(pageName)}";
+
+                                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                                {
+                                    FileName = url,
+                                    UseShellExecute = true
+                                });
+
+                                _lastClickTime = DateTime.MinValue;
+                                return;
+                            }
+
+                            _lastClickTime = now;
+
                             if (isOperationRunning)
                             {
                                 return;
@@ -542,6 +571,35 @@ namespace DecorBlishhudModule
                         Size = new Point(width - 3, height),
                         BasicTooltipText = decoration.Name,
                         Tooltip = tooltip
+                    };
+
+                    mainContainer.Click += (s, e) =>
+                    {
+                        var now = DateTime.UtcNow;
+                        var timeDiff = (now - _lastClickTime).TotalMilliseconds;
+
+                        if (timeDiff <= DoubleClickThresholdMs)
+                        {
+                            string pageName = decoration.Name;
+
+                            if (isHomestead)
+                            {
+                                pageName += " (Handiwork)";
+                            }
+
+                            string url = $"https://wiki.guildwars2.com/wiki/{Uri.EscapeDataString(pageName)}";
+
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = url,
+                                UseShellExecute = true
+                            });
+
+                            _lastClickTime = DateTime.MinValue;
+                            return;
+                        }
+
+                        _lastClickTime = now;
                     };
 
                     mainContainer.MouseEntered += (sender, e) =>

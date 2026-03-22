@@ -56,6 +56,9 @@ namespace DecorBlishhudModule
         private Texture2D _x2;
         private Texture2D _x2Active;
         private Texture2D _copy;
+        private Texture2D _zoom;
+        private Texture2D _click;
+        private Texture2D _empty;
         private Texture2D _heart;
         private Texture2D _copperCoin;
         private Texture2D _silverCoin;
@@ -147,6 +150,9 @@ namespace DecorBlishhudModule
             _x2 = ContentsManager.GetTexture("test/x2.png");
             _x2Active = ContentsManager.GetTexture("test/x2_active.png");
             _copy = ContentsManager.GetTexture("test/copy.png");
+            _zoom = ContentsManager.GetTexture("test/zoom.png");
+            _click = ContentsManager.GetTexture("test/click.png");
+            _empty = ContentsManager.GetTexture("test/empty.png");
             _heart = ContentsManager.GetTexture("test/heart.png");
             _copperCoin = ContentsManager.GetTexture("test/coin_copper.png");
             _silverCoin = ContentsManager.GetTexture("test/coin_silver.png");
@@ -484,7 +490,12 @@ namespace DecorBlishhudModule
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoVisible(true);
-                    InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
+                    InfoSection.SetInfo(new[]
+                    {
+                        ("test/empty.png","                                                     "),
+                        ("test/click.png", "Double-click on an icon to go to its wiki page."),
+                        ("test/copy.png", "Click on the name or the image to copy its name."),
+                    });
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab3)
                 {
@@ -506,7 +517,12 @@ namespace DecorBlishhudModule
                     _wikiLicenseManager.UpdateFlowPanelPosition(false);
                     _signatureLabelManager.UpdateFlowPanelPosition(false);
                     InfoSection.UpdateInfoVisible(true);
-                    InfoSection.UpdateInfoText("    Click on the name or the image\n            to copy its name.");
+                    InfoSection.SetInfo(new[]
+                    {
+                        ("test/empty.png","                                                  "),
+                        ("test/click.png", "Double-click on an icon to go to its wiki page."),
+                        ("test/copy.png", "Click on the name or the image to copy its name."),
+                    });
                 }
                 else if (activeTabGroup1 == customTab1 && activeTabGroup2 == customTab4)
                 {
@@ -528,7 +544,12 @@ namespace DecorBlishhudModule
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoVisible(true);
-                    InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
+                    InfoSection.SetInfo(new[]
+                    {
+                        ("test/zoom.png", "Click on the image to zoom in."),
+                        ("test/click.png", "Double-click on an icon to go to its wiki page."),
+                        ("test/copy.png", "The copy icon copies the decoration name."),
+                    });
                 }
                 else if (activeTabGroup1 == customTab2 && activeTabGroup2 == customTab4)
                 {
@@ -550,7 +571,12 @@ namespace DecorBlishhudModule
                     _wikiLicenseManager.UpdateFlowPanelPosition(true);
                     _signatureLabelManager.UpdateFlowPanelPosition(true);
                     InfoSection.UpdateInfoVisible(true);
-                    InfoSection.UpdateInfoText("    Click on the image to zoom in.\nCopy icon copies the decoration name.");
+                    InfoSection.SetInfo(new[]
+                    {
+                        ("test/zoom.png", "Click on the image to zoom in."),
+                        ("test/click.png", "Double-click on an icon to go to its wiki page."),
+                        ("test/copy.png", "The copy icon copies the decoration name."),
+                    });
                 }
                 else if (activeTabGroup3 == customTab5)
                 {
@@ -641,7 +667,7 @@ namespace DecorBlishhudModule
                 await ApplySearchFilterAsync();
                 customTab2.Enabled = true;
 
-                if (customTab2.Enabled && customTab4.Enabled) 
+                if (customTab2.Enabled && customTab4.Enabled)
                 {
                     _loaded = true;
                 }

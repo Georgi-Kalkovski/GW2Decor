@@ -1,110 +1,110 @@
 ﻿using Blish_HUD;
-using DecorBlishhudModule.CustomControls.CustomTab;
-using DecorBlishhudModule;
-using Microsoft.Xna.Framework;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework.Graphics;
 using Blish_HUD.Controls;
+using DecorBlishhudModule;
+using DecorBlishhudModule.CustomControls.CustomTab;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using System;
 
 public class InfoSection
 {
     private static CustomTabbedWindow2 _decorWindow = DecorModule.DecorModuleInstance.DecorWindow;
-    private static Texture2D _info = DecorModule.DecorModuleInstance.Info;
-
-    private static Image _infoIcon;
-    private static Panel _infoTextPanel;
-    private static Panel _infoTextPanelBackground;
-    private static Label _infoText;
+    private static FlowPanel _infoContainer;
+    private static FlowPanel _firstPanel;
+    private static FlowPanel _secondPanel;
 
     public static void InitializeInfoPanel()
     {
-        // Create Info Panel and Text
-        _infoIcon = new Image
+        int containerWidth = 550;
+        int containerHeight = 150;
+
+        _infoContainer = new FlowPanel
         {
             Parent = _decorWindow,
-            Location = new Point(_decorWindow.Width - 120, 5),
-            Width = 35,
-            Height = 35,
-            Texture = _info,
+            Location = new Point(_decorWindow.Width - containerWidth - 100, -2),
+            Size = new Point(containerWidth, containerHeight),
+            FlowDirection = ControlFlowDirection.SingleLeftToRight, // <-- row layout
+            CanScroll = false,
+            ControlPadding = new Vector2(4, 0), // horizontal padding between panels
         };
 
-        _infoTextPanel = new Panel
+        _infoContainer.ZIndex = 100;
+
+        // Create the two sub-panels
+        _firstPanel = new FlowPanel
         {
-            Parent = _decorWindow,
-            Size = new Point(300, 60),
-            Location = new Point(_decorWindow.Width - 430, -5),
-            ShowBorder = true,
-            Visible = false,
-            Opacity = 0,
-            ZIndex = 1
+            Width = (int)(_infoContainer.Width * 0.4), // half width
+            Height = _infoContainer.Height,
+            Parent = _infoContainer,
+            FlowDirection = ControlFlowDirection.SingleTopToBottom,
+            ControlPadding = new Vector2(0, 2),
+            CanScroll = false,
         };
 
-        _infoTextPanelBackground = new Panel
+        _secondPanel = new FlowPanel
         {
-            Parent = _infoTextPanel,
-            Size = new Point(300, 60),
-            Location = new Point(0, 0),
-            BackgroundColor = new Color(0, 0, 0, 205),
-            ZIndex = 0
+            Width = (int)(_firstPanel.Width*4), // half width
+            Height = _infoContainer.Height,
+            Parent = _infoContainer,
+            FlowDirection = ControlFlowDirection.SingleTopToBottom,
+            ControlPadding = new Vector2(0, 2),
+            CanScroll = false,
         };
 
-        _infoText = new Label
+        // Set default info items
+        SetInfo(new[]
         {
-            Parent = _infoTextPanel,
-            Text = "    Click on the name or the image\n            to copy its name.",
-            Location = new Point(10, 0),
-            Width = 270,
-            Height = 45,
-            ShowShadow = true,
-            WrapText = true,
-            StrokeText = true,
-            TextColor = Color.White,
-            ShadowColor = new Color(0, 0, 0),
-            Font = GameService.Content.DefaultFont16,
-        };
-
-        _infoIcon.MouseEntered += async (sender, args) => await AnimatePanel(_infoTextPanel, true);
-        _infoIcon.MouseLeft += async (sender, args) => await AnimatePanel(_infoTextPanel, false);
+              ("test/empty.png","                                                  "),
+              ("test/click.png", "Double-click on an icon to go to its wiki page."),
+              ("test/copy.png", "Click on the name or the image to copy its name."),
+        });
     }
 
-    private static async Task AnimatePanel(Panel panel, bool fadeIn)
+    public static void SetInfo((string iconPath, string text)[] items)
     {
-        var targetOpacity = fadeIn ? 1.0f : 0.0f;
-        var step = fadeIn ? 0.1f : -0.1f;
+        _firstPanel.ClearChildren();
+        _secondPanel.ClearChildren();
 
-        if (fadeIn)
+        for (int i = 0; i < items.Length; i++)
         {
-            panel.Visible = true;
-        }
+            int iconSize = 22;
+            var textSize = GameService.Content.DefaultFont14.MeasureString(items[i].text);
+            int panelHeight = Math.Max(iconSize, (int)textSize.Height);
 
-        while ((fadeIn && panel.Opacity < targetOpacity) || (!fadeIn && panel.Opacity > targetOpacity))
-        {
-            panel.Opacity = MathHelper.Clamp(panel.Opacity + step, 0.0f, 1.0f);
-            await Task.Delay(16); // Smooth animation at ~60fps
-        }
+            FlowPanel parentPanel = (i == 0) ? _firstPanel : _secondPanel;
 
-        panel.Opacity = targetOpacity;
+            // Instead of making a full-width panel, make a small container just for icon+label
+            int panelWidth = iconSize + 4 + (int)textSize.Width; // icon + spacing + text width
+            var panel = new Panel
+            {
+                Size = new Point(panelWidth, panelHeight),
+                Parent = parentPanel
+            };
 
-        if (!fadeIn)
-        {
-            panel.Visible = false;
+            var icon = new Image
+            {
+                Parent = panel,
+                Size = new Point(iconSize, iconSize),
+                Location = new Point(0, (panelHeight - iconSize) / 2),
+                Texture = DecorModule.DecorModuleInstance.ContentsManager.GetTexture(items[i].iconPath)
+            };
+
+            var label = new Label
+            {
+                Parent = panel,
+                Location = new Point(icon.Right + 4, 0),
+                Size = new Point(panelWidth + (icon.Width + 4), panelHeight),
+                Text = items[i].text,
+                Font = GameService.Content.DefaultFont14,
+                TextColor = Color.White,
+                StrokeText = false,
+                ShowShadow = false,
+                WrapText = true
+            };
         }
     }
-
-    public static void UpdateInfoText(string newText)
-    {
-        _infoText.Text = newText;
-    }
-
     public static void UpdateInfoVisible(bool visible)
     {
-        if (visible == true)
-        {
-            _infoIcon.Visible = true;
-        }
-        if (visible == false)
-        {
-            _infoIcon.Visible = false;
-        }
+        _infoContainer.Visible = visible;
     }
 }
