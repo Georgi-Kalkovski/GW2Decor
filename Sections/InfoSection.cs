@@ -23,17 +23,16 @@ public class InfoSection
             Parent = _decorWindow,
             Location = new Point(_decorWindow.Width - containerWidth - 100, -2),
             Size = new Point(containerWidth, containerHeight),
-            FlowDirection = ControlFlowDirection.SingleLeftToRight, // <-- row layout
+            FlowDirection = ControlFlowDirection.SingleLeftToRight,
             CanScroll = false,
-            ControlPadding = new Vector2(4, 0), // horizontal padding between panels
+            ControlPadding = new Vector2(4, 0),
         };
 
         _infoContainer.ZIndex = 100;
 
-        // Create the two sub-panels
         _firstPanel = new FlowPanel
         {
-            Width = (int)(_infoContainer.Width * 0.4), // half width
+            Width = (int)(_infoContainer.Width * 0.4),
             Height = _infoContainer.Height,
             Parent = _infoContainer,
             FlowDirection = ControlFlowDirection.SingleTopToBottom,
@@ -43,7 +42,7 @@ public class InfoSection
 
         _secondPanel = new FlowPanel
         {
-            Width = (int)(_firstPanel.Width*4), // half width
+            Width = (int)(_firstPanel.Width*4),
             Height = _infoContainer.Height,
             Parent = _infoContainer,
             FlowDirection = ControlFlowDirection.SingleTopToBottom,
@@ -73,8 +72,7 @@ public class InfoSection
 
             FlowPanel parentPanel = (i == 0) ? _firstPanel : _secondPanel;
 
-            // Instead of making a full-width panel, make a small container just for icon+label
-            int panelWidth = iconSize + 4 + (int)textSize.Width; // icon + spacing + text width
+            int panelWidth = iconSize + 4 + (int)textSize.Width;
             var panel = new Panel
             {
                 Size = new Point(panelWidth, panelHeight),

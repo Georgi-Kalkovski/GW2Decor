@@ -32,9 +32,6 @@ namespace DecorBlishhudModule
         private static Label _loadingLabel = null;
         private static Label _loadingLabel2 = null;
 
-        private static DateTime _lastClickTime = DateTime.MinValue;
-        private const int DoubleClickThresholdMs = 300;
-
         private static Task<Dictionary<string, List<Decoration>>> FetchHomesteadDecorationsAsync()
         {
             return _homesteadDecorationsCache != null
@@ -389,10 +386,7 @@ namespace DecorBlishhudModule
 
                         decorationIconImage.Click += async (s, e) =>
                         {
-                            var now = DateTime.UtcNow;
-                            var timeDiff = (now - _lastClickTime).TotalMilliseconds;
-
-                            if (timeDiff <= DoubleClickThresholdMs)
+                            if (e.IsDoubleClick)
                             {
                                 string pageName = decoration.Name;
 
@@ -409,11 +403,8 @@ namespace DecorBlishhudModule
                                     UseShellExecute = true
                                 });
 
-                                _lastClickTime = DateTime.MinValue;
                                 return;
                             }
-
-                            _lastClickTime = now;
 
                             if (isOperationRunning)
                             {
@@ -575,10 +566,7 @@ namespace DecorBlishhudModule
 
                     mainContainer.Click += (s, e) =>
                     {
-                        var now = DateTime.UtcNow;
-                        var timeDiff = (now - _lastClickTime).TotalMilliseconds;
-
-                        if (timeDiff <= DoubleClickThresholdMs)
+                        if (e.IsDoubleClick)
                         {
                             string pageName = decoration.Name;
 
@@ -595,11 +583,8 @@ namespace DecorBlishhudModule
                                 UseShellExecute = true
                             });
 
-                            _lastClickTime = DateTime.MinValue;
                             return;
                         }
-
-                        _lastClickTime = now;
                     };
 
                     mainContainer.MouseEntered += (sender, e) =>

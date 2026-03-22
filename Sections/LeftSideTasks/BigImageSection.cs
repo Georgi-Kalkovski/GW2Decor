@@ -112,7 +112,7 @@ namespace DecorBlishhudModule.Sections.LeftSideTasks
                 {
                     await Task.Delay(100);
 
-                    if ((DateTime.Now - _lastImageShownTime).TotalMilliseconds > 200)
+                    if (e.IsDoubleClick)
                     {
                         _decorationImage.Visible = false;
                         bigImagePanel.Visible = false;
