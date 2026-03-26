@@ -16,7 +16,7 @@ public class InfoSection
     public static void InitializeInfoPanel()
     {
         int containerWidth = 550;
-        int containerHeight = 150;
+        int containerHeight = 50;
 
         _infoContainer = new FlowPanel
         {
